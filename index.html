@@ -41,6 +41,11 @@
             overflow-y: scroll;
         }
 
+        /* Add this to your CSS */
+th.sortable { cursor: pointer; user-select: none; position: relative; }
+th.sortable:hover { background-color: #f1f3f4; color: var(--primary); }
+th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left: 5px; }
+
         /* --- HEADER --- */
         header {
             height: var(--header-h); padding: 0 24px;
@@ -128,10 +133,10 @@
         .t-right { text-align: right; }
         .w-code { width: 80px; font-family: 'Roboto Mono', monospace; color: var(--text-sub); }
         .w-name { width: auto; font-weight: 500; }
-        .w-uom { width: 80px; }
-        .w-num { width: 100px; }
-        .w-calc { width: 100px; background: #f8f9fa; color: var(--text-sub); }
-        .w-stat { width: 90px; }
+        .w-uom { width: 90px; }
+        .w-num { width: 110px; }
+        .w-calc { width: 110px; background: #f8f9fa; color: var(--text-sub); }
+        .w-stat { width: 110px; }
         
         /* Inputs */
         .cell-input {
@@ -214,17 +219,17 @@
             </div>
             <table>
                 <thead>
-                    <tr>
-                        <th class="w-code t-left">Code</th>
-                        <th class="w-name t-left">Product Name</th>
-                        <th class="w-uom t-left">UOM</th>
-                        <th class="w-num t-right">Conv (Kg)</th>
-                        <th class="w-num t-right">Buy Cost</th>
-                        <th class="w-calc t-right">Cost/Pc</th>
-                        <th class="w-num t-right">Sell Price</th>
-                        <th class="w-stat t-right">Margin %</th>
-                    </tr>
-                </thead>
+    <tr>
+        <th class="w-code t-left sortable" onclick="sortMaster('id')">Code</th>
+        <th class="w-name t-left sortable" onclick="sortMaster('name')">Product Name</th>
+        <th class="w-uom t-left">UOM</th>
+        <th class="w-num t-right sortable" onclick="sortMaster('conv')">Conv</th>
+        <th class="w-num t-right sortable" onclick="sortMaster('costKg')">Buy Cost</th>
+        <th class="w-calc t-right sortable" onclick="sortMaster('costPc')">Cost/Pc</th>
+        <th class="w-num t-right sortable" onclick="sortMaster('spPiece')">Sell Price</th>
+        <th class="w-stat t-right sortable" onclick="sortMaster('margin')">Margin %</th>
+    </tr>
+</thead>
                 <tbody id="master-body">
                     <tr><td colspan="8" style="text-align:center; padding:20px;">Connecting to Firebase...</td></tr>
                 </tbody>
@@ -278,16 +283,16 @@
                 </div>
                 <table>
                     <thead>
-                        <tr>
-                            <th class="w-code t-left">Code</th>
-                            <th class="w-name t-left">Item (CSV)</th>
-                            <th class="w-num t-right">Qty</th>
-                            <th class="w-num t-right">PO Rate</th>
-                            <th class="w-num t-right">My Cost</th>
-                            <th class="w-num t-right">Profit</th>
-                            <th class="w-num t-right">Margin %</th>
-                        </tr>
-                    </thead>
+    <tr>
+        <th class="w-code t-left sortable" onclick="sortIndent('code')">Code</th>
+        <th class="w-name t-left sortable" onclick="sortIndent('name')">Item (CSV)</th>
+        <th class="w-num t-right sortable" onclick="sortIndent('qty')">Qty</th>
+        <th class="w-num t-right sortable" onclick="sortIndent('poRate')">PO Rate</th>
+        <th class="w-num t-right sortable" onclick="sortIndent('myCost')">My Cost</th>
+        <th class="w-num t-right sortable" onclick="sortIndent('indentProfit')">Profit</th>
+        <th class="w-num t-right sortable" onclick="sortIndent('marginPct')">Margin %</th>
+    </tr>
+</thead>
                     <tbody id="indent-body"></tbody>
                 </table>
             </div>
@@ -659,6 +664,72 @@
         saveProducts();
         closeAddModal();
     }
+
+    // --- SORTING LOGIC ---
+let sortState = { key: null, direction: 1 }; // 1 = asc, -1 = desc
+
+function genericSort(dataArray, key, renderCallback) {
+    // Toggle direction
+    if (sortState.key === key) {
+        sortState.direction *= -1;
+    } else {
+        sortState.key = key;
+        sortState.direction = 1;
+    }
+
+    dataArray.sort((a, b) => {
+        let valA, valB;
+
+        // 1. Handle Calculated Fields (Master List)
+        if (key === 'margin') {
+            const costA = (a.costKg || 0) * (a.conv || 0);
+            const costB = (b.costKg || 0) * (b.conv || 0);
+            valA = a.spPiece > 0 ? ((a.spPiece - costA) / a.spPiece) : -999;
+            valB = b.spPiece > 0 ? ((b.spPiece - costB) / b.spPiece) : -999;
+        } 
+        else if (key === 'costPc') {
+            valA = (a.costKg || 0) * (a.conv || 0);
+            valB = (b.costKg || 0) * (b.conv || 0);
+        }
+        // 2. Handle Indent/History Calculated Fields
+        else if (key === 'indentProfit') {
+            // (PO - Cost) * Qty
+            const costA = (a.poRate - (a.myCost || a.frozenCost)) * a.qty;
+            const costB = (b.poRate - (b.myCost || b.frozenCost)) * b.qty;
+            valA = costA; valB = costB;
+        }
+        // 3. Handle Direct Properties
+        else {
+            valA = a[key];
+            valB = b[key];
+        }
+
+        // Handle Text vs Numbers
+        if (typeof valA === 'string') {
+            valA = valA.toLowerCase();
+            valB = valB.toLowerCase();
+        }
+
+        if (valA < valB) return -1 * sortState.direction;
+        if (valA > valB) return 1 * sortState.direction;
+        return 0;
+    });
+
+    renderCallback(); // Refresh the table
+}
+
+// Wrapper functions for HTML onclick events
+function sortMaster(key) {
+    genericSort(products, key, renderMasterTable);
+}
+
+function sortIndent(key) {
+    genericSort(currentIndent, key, renderIndentPreview);
+}
+
+function sortHistory(key) {
+    genericSort(history, key, renderHistoryTable);
+}
 </script>
 <script>
     if ('serviceWorker' in navigator) {
