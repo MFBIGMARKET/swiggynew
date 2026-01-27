@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swiggy Ops Cloud</title>
-    <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" href="logo.png">
-<link rel="apple-touch-icon" href="logo.png">
-<meta name="theme-color" content="#1a73e8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Swiggy Ops Suite</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -24,8 +19,9 @@
             --border: #dadce0;
             --text-main: #202124;
             --text-sub: #5f6368;
-            --green: #137333;
-            --red: #c5221f;
+            --green: #188038;
+            --red: #d93025;
+            --orange: #f57c00;
             --header-h: 64px;
             --toolbar-h: 56px;
         }
@@ -41,27 +37,36 @@
             overflow-y: scroll;
         }
 
-        /* Add this to your CSS */
-th.sortable { cursor: pointer; user-select: none; position: relative; }
-th.sortable:hover { background-color: #f1f3f4; color: var(--primary); }
-th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left: 5px; }
-
-        /* --- HEADER --- */
+        /* --- HEADER & DOODLES --- */
         header {
             height: var(--header-h); padding: 0 24px;
             background: var(--surface); border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3);
+            overflow: hidden;
         }
-        .brand { display: flex; align-items: center; gap: 8px; font-size: 20px; color: var(--text-sub); }
+        .brand { display: flex; align-items: center; gap: 8px; font-size: 20px; color: var(--text-sub); z-index: 2; }
         .brand strong { color: var(--primary); font-weight: 500; }
+        
+        .doodle-container {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 40px;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .doodle { width: 40px; height: 40px; fill: none; stroke: var(--primary); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
         /* --- BUTTONS --- */
         .btn {
             height: 36px; padding: 0 16px; border-radius: 4px; border: 1px solid var(--border);
             background: white; color: var(--primary); font-weight: 500; font-size: 13px;
-            cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; z-index: 2;
         }
         .btn:hover { background-color: #f6fafe; border-color: #d2e3fc; }
         .btn-filled { background-color: var(--primary); color: white; border: none; box-shadow: 0 1px 2px rgba(60,64,67,0.3); }
@@ -87,34 +92,11 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
         }
         .search-wrapper input { border:none; background:transparent; outline:none; margin-left:8px; width:100%; font-size:13px; }
 
-        /* --- MAIN --- */
+        /* --- MAIN CONTENT --- */
         .main { margin-top: calc(var(--header-h) + var(--toolbar-h)); padding: 24px; }
         .hidden { display: none !important; }
 
-        /* --- KPI CARDS --- */
-        .kpi-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px;
-        }
-        .kpi-card {
-            background: white; padding: 20px; border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(60,64,67,0.1); border: 1px solid var(--border);
-            display: flex; flex-direction: column;
-        }
-        .kpi-label { font-size: 12px; font-weight: 500; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .kpi-value { font-size: 24px; font-weight: 700; color: var(--text-main); }
-        .kpi-sub { font-size: 12px; margin-top: 4px; }
-        
-        .kpi-pos { color: var(--green); }
-        .kpi-neg { color: var(--red); }
-
         /* --- TABLE --- */
-        .card { background: white; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; box-shadow: 0 1px 2px rgba(60,64,67,0.1); }
-        .card-header {
-            padding: 12px 24px; border-bottom: 1px solid var(--border); background: #fff;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .card-title { font-size: 16px; font-weight: 500; }
-
         table { width: 100%; border-collapse: collapse; background: white; table-layout: fixed; }
         th {
             padding: 12px 16px; background: #fff;
@@ -124,66 +106,141 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
         td {
             padding: 8px 16px; border-bottom: 1px solid #f1f3f4;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 44px;
+            font-size: 13px;
         }
         tbody tr:nth-child(even) { background-color: #f8f9fa; }
         tbody tr:hover { background-color: #e8f0fe !important; }
 
-        /* Alignment & Widths */
         .t-left { text-align: left; }
         .t-right { text-align: right; }
-        .w-code { width: 80px; font-family: 'Roboto Mono', monospace; color: var(--text-sub); }
-        .w-name { width: auto; font-weight: 500; }
-        .w-uom { width: 90px; }
-        .w-num { width: 110px; }
-        .w-calc { width: 110px; background: #f8f9fa; color: var(--text-sub); }
-        .w-stat { width: 110px; }
-        
-        /* Inputs */
+        .t-center { text-align: center; }
+
+        /* Column Config */
+        .w-code { width: 70px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
+        .w-name { width: auto; font-weight: 500; min-width: 150px; }
+        .w-uom { width: 100px; }
+        .w-num { width: 95px; }
+        .w-calc { width: 95px; background-color: #f8f9fa; color: #5f6368; }
+        .w-stat { width: 110px; font-weight: 700; }
+        .w-action { width: 60px; }
+
+        /* History Table Widths */
+        .h-date { width: 110px; }
+        .h-id { width: 80px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
+        .h-items { width: 80px; text-align: right; }
+        .h-money { width: 120px; text-align: right; font-weight: 500; }
+        .h-profit { width: 120px; text-align: right; font-weight: 700; }
+        .h-margin { width: 120px; text-align: right; }
+        .h-action { width: 80px; text-align: center; }
+
         .cell-input {
             width: 100%; padding: 6px; border: 1px solid #dadce0; border-radius: 4px;
             text-align: right; outline: none; transition: 0.2s; font-family: inherit; font-size: 13px;
             background: white;
         }
-        .cell-input:focus { border: 2px solid var(--primary); }
+        .cell-input:focus { border: 2px solid var(--primary); box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
 
-        /* Upload */
-        .upload-area {
-            border: 2px dashed #dadce0; border-radius: 8px; background: white;
-            height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.2s; margin-bottom: 20px;
+        .card { background: white; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; box-shadow: 0 1px 2px rgba(60,64,67,0.1); }
+        .card-header {
+            padding: 12px 24px; border-bottom: 1px solid var(--border); background: #fff;
+            display: flex; justify-content: space-between; align-items: center;
         }
+        .card-title { font-size: 16px; font-weight: 500; }
+
+        /* --- KPI & MARGIN --- */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; margin-bottom: 8px; }
+        .kpi-value { font-size: 24px; font-weight: 900; color: var(--text-main); letter-spacing: -0.5px; }
+        .kpi-pos { color: var(--green); } .kpi-neg { color: var(--red); }
+
+        .margin-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }
+        .ma-card { 
+            background: white; border: 1px solid var(--border); border-radius: 8px; padding: 0; 
+            text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; 
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer; /* Indicates it's interactive */
+        }
+        .ma-card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 5; }
+
+        .ma-header { padding: 12px 5px; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .ma-content { padding: 12px 15px; }
+        .ma-stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .ma-stat-label { font-size: 11px; color: #777; font-weight: 600; }
+        .ma-stat-val { font-size: 14px; font-weight: 700; color: #333; }
+        .ma-profit-val { font-size: 15px; font-weight: 800; }
+
+        .bd-loss { border-top: 4px solid var(--red); } .bd-loss .ma-header { background-color: #ffebee; color: #c62828; } .bd-loss .ma-profit-val { color: var(--red); }
+        .bd-low { border-top: 4px solid var(--orange); } .bd-low .ma-header { background-color: #fff3e0; color: #ef6c00; } .bd-low .ma-profit-val { color: var(--orange); }
+        .bd-mid { border-top: 4px solid #fdd835; } .bd-mid .ma-header { background-color: #fffde7; color: #f9a825; } .bd-mid .ma-profit-val { color: #f9a825; }
+        .bd-ok { border-top: 4px solid #29b6f6; } .bd-ok .ma-header { background-color: #e1f5fe; color: #0277bd; } .bd-ok .ma-profit-val { color: #0288d1; }
+        .bd-good { border-top: 4px solid var(--primary); } .bd-good .ma-header { background-color: #e3f2fd; color: #1565c0; } .bd-good .ma-profit-val { color: var(--primary); }
+        .bd-great { border-top: 4px solid var(--green); } .bd-great .ma-header { background-color: #e8f5e9; color: #2e7d32; } .bd-great .ma-profit-val { color: var(--green); }
+
+        .text-green { color: var(--green); } .text-red { color: var(--red); }
+
+        /* Interactive Rows */
+        .clickable-row { cursor: pointer; transition: background 0.1s; }
+        .clickable-row:hover { background-color: #e3f2fd !important; }
+
+        .upload-area { border: 2px dashed #dadce0; border-radius: 8px; background: #fafafa; height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; margin-bottom: 20px; }
         .upload-area:hover { border-color: var(--primary); background: #f4f8ff; }
 
-        /* Colors */
-        .txt-green { color: var(--green); font-weight: 700; }
-        .txt-red { color: var(--red); font-weight: 700; }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; }
         .modal { background: white; width: 500px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         .modal-body { padding: 24px; }
         .modal-footer { padding: 12px 24px; background: #f8f9fa; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; border-radius: 0 0 8px 8px; }
 
+        /* TOOLTIPS */
+        .floating-tooltip { position: absolute; background: white; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-radius: 6px; z-index: 2000; display: none; font-size: 12px; }
+        
+        #price-tooltip { padding: 10px; width: 250px; }
+        #price-tooltip h4 { margin: 0 0 8px 0; font-size: 13px; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        
+        #margin-tooltip { width: 300px; max-height: 350px; overflow-y: auto; }
+        .mt-header { padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid var(--border); font-weight: 700; position: sticky; top: 0; }
+        .mt-item { padding: 8px 15px; border-bottom: 1px solid #f1f3f4; display: flex; justify-content: space-between; }
+        .mt-item:hover { background: #f8f9fa; }
+
+        .hist-row { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text-sub); }
+        .hist-row span:last-child { font-weight: 500; color: var(--text-main); }
+
+        th.sortable { cursor: pointer; user-select: none; }
+        th.sortable:hover { background-color: #f1f3f4; color: var(--primary); }
+
+        .date-picker { padding: 8px 12px; border: 1px solid #dadce0; border-radius: 4px; font-family: 'Roboto', sans-serif; color: var(--text-main); outline: none; cursor: pointer; background: white; }
+        .date-picker:focus { border-color: var(--primary); }
     </style>
 </head>
 <body>
 
+<div id="price-tooltip" class="floating-tooltip"></div>
+<div id="margin-tooltip" class="floating-tooltip"></div>
+
 <!-- HEADER -->
 <header>
+    <!-- DOODLE ILLUSTRATIONS -->
+    <div class="doodle-container">
+        <!-- Carrot -->
+        <svg class="doodle" viewBox="0 0 24 24"><path d="M16.8,2.2c-0.8-0.8-2.1-0.8-2.9,0l-0.7,0.7C12.8,3.3,12.8,4,13.2,4.4l0.7,0.7L3.1,16c-1.3,1.3-1.6,3.4-0.6,4.9c0.2,0.3,0.5,0.6,0.9,0.9c0.3,0.2,0.6,0.4,1,0.5c0.4,0.1,0.8,0.2,1.2,0.1c1.2-0.2,2.3-0.9,3-1.6l10.8-10.8l0.7,0.7c0.4,0.4,1.1,0.4,1.5,0l0.7-0.7C23,8.3,23,7,22.2,6.2L16.8,2.2z M17,17c-1.7,0-3,1.3-3,3s1.3,3,3,3s3-1.3,3-3S18.7,17,17,17z"/></svg>
+        <!-- Apple -->
+        <svg class="doodle" viewBox="0 0 24 24"><path d="M12,2c-0.6,0-1,0.4-1,1v2.2C9.6,4.5,8,4.3,6.5,4.8C4,5.7,2.2,8.4,2.2,11.5c0,3.5,2.7,8.2,7.2,10.2c0.8,0.3,1.7,0.4,2.6,0.4s1.8-0.1,2.6-0.4c4.5-1.9,7.2-6.7,7.2-10.2c0-3.1-1.8-5.8-4.3-6.7c-1.5-0.5-3.1-0.3-4.5,0.4V3C13,2.4,12.6,2,12,2z M12,7c1.7,0,3,1.3,3,3s-1.3,3-3,3s-3-1.3-3-3S10.3,7,12,7z"/></svg>
+        <!-- Leaf -->
+        <svg class="doodle" viewBox="0 0 24 24"><path d="M17,8C8,10,5.9,16.17,3.82,21.34L5.71,22l1-2.3A4.49,4.49,0,0,0,8,20C19,20,22,3,22,3C21,5,14,5.25,9,6.25C4,7.25,2,11.5,2,13.5a6.22,6.22,0,0,0,1.75,3.75C7,13,17,8,17,8Z"/></svg>
+    </div>
+
     <div class="brand">
         <span class="material-icons" style="color:var(--primary)">cloud_queue</span>
         <span>Swiggy<strong>Ops</strong> Cloud</span>
     </div>
     <div style="display:flex; gap:10px;">
+        <button class="btn btn-icon" onclick="toggleSettings()" title="Clear Data"><span class="material-icons">delete_sweep</span></button>
         <input type="file" id="masterUpload" accept=".csv" style="display:none" onchange="handleMasterUpload(this)">
         <button class="btn" onclick="document.getElementById('masterUpload').click()">
-            <span class="material-icons">upload</span> Bulk Update
+            <span class="material-icons">upload</span> Update Prices
         </button>
         <button class="btn btn-filled" onclick="openAddModal()">
-            <span class="material-icons">add</span> Add Item
+            <span class="material-icons">add</span> New Product
         </button>
     </div>
 </header>
@@ -193,6 +250,7 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
     <div class="tabs">
         <div class="tab active" onclick="switchTab('view-master')">Price Master</div>
         <div class="tab" onclick="switchTab('view-indent')">Indent Analyzer</div>
+        <div class="tab" onclick="switchTab('view-history')">History</div>
     </div>
     <div class="search-wrapper">
         <span class="material-icons" style="font-size:20px; color:#5f6368">search</span>
@@ -203,11 +261,17 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
 <!-- CONTENT -->
 <div class="main">
 
+    <!-- SETTINGS PANEL (Hidden) -->
+    <div id="settings-panel" class="hidden" style="margin-bottom:20px; padding:15px; background:#fff3f3; border:1px solid #ffcdd2; border-radius:8px;">
+        <strong>Data Management:</strong>
+        <button class="btn btn-filled" style="background:#d93025; border:none;" onclick="clearAllData()">Clear All Data</button>
+    </div>
+
     <!-- 1. PRICE MASTER TAB -->
     <div id="view-master">
         <div class="card">
             <div class="card-header">
-                <span class="card-title">Master Price List</span>
+                <span class="card-title">Product Master List</span>
                 <div style="display:flex; gap:10px;">
                     <button id="btn-edit-master" class="btn" onclick="toggleEditMode()">
                         <span class="material-icons">edit</span> Edit Costs
@@ -219,19 +283,19 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
             </div>
             <table>
                 <thead>
-    <tr>
-        <th class="w-code t-left sortable" onclick="sortMaster('id')">Code</th>
-        <th class="w-name t-left sortable" onclick="sortMaster('name')">Product Name</th>
-        <th class="w-uom t-left">UOM</th>
-        <th class="w-num t-right sortable" onclick="sortMaster('conv')">Conv</th>
-        <th class="w-num t-right sortable" onclick="sortMaster('costKg')">Buy Cost</th>
-        <th class="w-calc t-right sortable" onclick="sortMaster('costPc')">Cost/Pc</th>
-        <th class="w-num t-right sortable" onclick="sortMaster('spPiece')">Sell Price</th>
-        <th class="w-stat t-right sortable" onclick="sortMaster('margin')">Margin %</th>
-    </tr>
-</thead>
+                    <tr>
+                        <th class="w-code t-left sortable" onclick="sortMaster('id')">Code</th>
+                        <th class="w-name t-left sortable" onclick="sortMaster('name')">Product Name</th>
+                        <th class="w-uom t-left">UOM</th>
+                        <th class="w-num t-right sortable" onclick="sortMaster('conv')">Conv (Kg)</th>
+                        <th class="w-num t-right sortable" onclick="sortMaster('costKg')">Buy Cost</th>
+                        <th class="w-calc t-right sortable" onclick="sortMaster('costPc')">Cost/Pc</th>
+                        <th class="w-num t-right sortable" onclick="sortMaster('spPiece')">Sell Price</th>
+                        <th class="w-stat t-right sortable" onclick="sortMaster('margin')">Margin %</th>
+                    </tr>
+                </thead>
                 <tbody id="master-body">
-                    <tr><td colspan="8" style="text-align:center; padding:20px;">Connecting to Firebase...</td></tr>
+                    <tr><td colspan="8" style="text-align:center; padding:20px;">Loading data from Firebase...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -251,7 +315,7 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
         <!-- Results State -->
         <div id="indent-preview" class="hidden">
             
-            <!-- KPI CARDS -->
+            <!-- MAIN KPIs -->
             <div class="kpi-grid">
                 <div class="kpi-card">
                     <div class="kpi-label">Total Revenue</div>
@@ -271,32 +335,118 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
                 </div>
             </div>
 
+            <!-- MARGIN BREAKDOWN GRID -->
+            <div class="margin-grid" id="margin-distribution"></div>
+
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Indent Details</span>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <button class="btn btn-filled" onclick="applyIndentPricesToMaster()">
-                            <span class="material-icons">update</span> Apply Prices to Master
+                        <input type="date" id="indent-date" class="date-picker">
+                        <button class="btn btn-filled" onclick="saveIndentToHistory()">
+                            <span class="material-icons">save</span> Save Indent
+                        </button>
+                        <button class="btn" onclick="applyIndentPricesToMaster()">
+                            <span class="material-icons">update</span> Apply Prices
                         </button>
                         <button class="btn" onclick="resetIndent()">Close</button>
                     </div>
                 </div>
                 <table>
                     <thead>
-    <tr>
-        <th class="w-code t-left sortable" onclick="sortIndent('code')">Code</th>
-        <th class="w-name t-left sortable" onclick="sortIndent('name')">Item (CSV)</th>
-        <th class="w-num t-right sortable" onclick="sortIndent('qty')">Qty</th>
-        <th class="w-num t-right sortable" onclick="sortIndent('poRate')">PO Rate</th>
-        <th class="w-num t-right sortable" onclick="sortIndent('myCost')">My Cost</th>
-        <th class="w-num t-right sortable" onclick="sortIndent('indentProfit')">Profit</th>
-        <th class="w-num t-right sortable" onclick="sortIndent('marginPct')">Margin %</th>
-    </tr>
-</thead>
+                        <tr>
+                            <th class="w-code t-left sortable" onclick="sortIndent('code')">Code</th>
+                            <th class="w-name t-left sortable" onclick="sortIndent('name')">Item (CSV)</th>
+                            <th class="w-num t-right sortable" onclick="sortIndent('qty')">Qty</th>
+                            <th class="w-num t-right sortable" onclick="sortIndent('poRate')">PO Rate</th>
+                            <th class="w-num t-right sortable" onclick="sortIndent('myCost')">My Cost</th>
+                            <th class="w-num t-right sortable" onclick="sortIndent('profit')">Profit</th>
+                            <th class="w-stat t-right sortable" onclick="sortIndent('marginPct')">Margin %</th>
+                        </tr>
+                    </thead>
                     <tbody id="indent-body"></tbody>
                 </table>
             </div>
         </div>
+    </div>
+
+    <!-- 3. INDENT HISTORY TAB -->
+    <div id="view-history" class="hidden">
+        
+        <!-- HISTORY LIST -->
+        <div id="history-list-view">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Indent History</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="h-date t-left">Date</th>
+                            <th class="h-id t-left">ID</th>
+                            <th class="h-items t-right">Items</th>
+                            <th class="h-money t-right">Revenue</th>
+                            <th class="h-money t-right">Total Cost</th>
+                            <th class="h-profit t-right">Profit</th>
+                            <th class="h-margin t-right">Margin %</th>
+                            <th class="h-action t-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- HISTORY DETAIL VIEW (Same Layout as Analyzer) -->
+        <div id="history-detail-view" class="hidden">
+             <div style="margin-bottom:15px;">
+                <button class="btn" onclick="closeHistoryDetail()"><span class="material-icons">arrow_back</span> Back to History</button>
+            </div>
+            
+            <!-- HIST KPI CARDS -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Revenue</div>
+                    <div class="kpi-value" id="hist-kpi-rev">₹0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Cost</div>
+                    <div class="kpi-value" id="hist-kpi-cost">₹0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Profit</div>
+                    <div class="kpi-value" id="hist-kpi-profit">₹0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Margin</div>
+                    <div class="kpi-value" id="hist-kpi-margin">0%</div>
+                </div>
+            </div>
+
+            <!-- HIST MARGIN GRID -->
+            <div class="margin-grid" id="hist-margin-distribution"></div>
+
+            <div class="card">
+                 <div class="card-header">
+                    <span class="card-title" id="hist-detail-title">Indent Detail</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="w-code t-left">Code</th>
+                            <th class="w-name t-left">Item Name</th>
+                            <th class="w-num t-right">Qty</th>
+                            <th class="w-num t-right">PO Rate</th>
+                            <th class="w-num t-right">Frozen Cost</th>
+                            <th class="w-num t-right">Profit</th>
+                            <th class="w-stat t-right">Margin %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hist-detail-body"></tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
 </div>
@@ -331,17 +481,15 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
 
     // --- ⚠️ PASTE YOUR FIREBASE CONFIG HERE ---
     const firebaseConfig = {
-          apiKey: "AIzaSyB6OFRosamp5U5lKnAxl0wptGt5-eHL6ZQ",
-  authDomain: "swiggymargin.firebaseapp.com",
-  projectId: "swiggymargin",
-  storageBucket: "swiggymargin.firebasestorage.app",
-  messagingSenderId: "531917441854",
-  appId: "1:531917441854:web:c48880dfe0638ad901fa6f",
-        // 👇 YOU MUST ADD THIS LINE 👇
-        databaseURL: "https://swiggymargin-default-rtdb.firebaseio.com/" 
+        apiKey: "AIzaSyB6OFRosamp5U5lKnAxl0wptGt5-eHL6ZQ",
+        authDomain: "swiggymargin.firebaseapp.com",
+        projectId: "swiggymargin",
+        storageBucket: "swiggymargin.firebasestorage.app",
+        messagingSenderId: "531917441854",
+        appId: "1:531917441854:web:c48880dfe0638ad901fa6f",
+        databaseURL: "https://swiggymargin-default-rtdb.firebaseio.com"
     };
 
-    // Initialize Firebase
     let db;
     try {
         const app = initializeApp(firebaseConfig);
@@ -351,62 +499,162 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
         console.error("Firebase Config Error:", e);
     }
 
-    // Expose DB functions to global scope
     window.db = db;
     window.dbRef = ref;
     window.dbSet = set;
     window.dbGet = get;
     window.dbChild = child;
 
-    // Load Data on Start
     if(window.loadProductsGlobal) window.loadProductsGlobal();
 </script>
 
 <script>
     let products = [];
+    let indents = [];
     let currentIndent = []; 
     let isEditMode = false;
+    let sortState = { key: null, direction: 1 };
+    let currentBucketsData = []; // Store bucket data for hover interaction
 
-    // --- DATA HANDLING (FIREBASE WRAPPER) ---
+    // --- DATA HANDLING ---
     window.loadProductsGlobal = async function() {
         setTimeout(async () => {
-            if (!window.db) {
-                console.warn("DB not ready");
-                return;
-            }
-            
+            if (!window.db) { console.warn("DB not ready"); return; }
             const dbRef = window.dbRef(window.db);
             try {
-                const snapshot = await window.dbGet(window.dbChild(dbRef, `products`));
-                if (snapshot.exists()) {
-                    products = snapshot.val() || [];
-                } else {
-                    products = [];
-                }
+                // Load Data
+                const pSnap = await window.dbGet(window.dbChild(dbRef, `products`));
+                const iSnap = await window.dbGet(window.dbChild(dbRef, `indents`));
+
+                products = pSnap.exists() ? pSnap.val() : [];
+                indents = iSnap.exists() ? iSnap.val() : [];
+
                 renderMasterTable();
             } catch (error) {
-                console.error("Error getting data", error);
-                document.getElementById('master-body').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Database Error: Check Console & Config</td></tr>';
+                console.error("Error", error);
             }
         }, 1000);
     };
 
-    function saveProducts() {
+    function saveData(key, data) {
         if (!window.db) return;
-        window.dbSet(window.dbRef(window.db, 'products'), products)
-            .then(() => console.log("Saved to Cloud"))
-            .catch((e) => alert("Save failed: " + e.message));
-        renderMasterTable();
+        window.dbSet(window.dbRef(window.db, key), data);
     }
+
+    // --- SORTING ---
+    function genericSort(dataArray, key, renderCallback) {
+        if (sortState.key === key) { sortState.direction *= -1; } 
+        else { sortState.key = key; sortState.direction = 1; }
+
+        dataArray.sort((a, b) => {
+            let valA, valB;
+            if (key === 'margin') {
+                const cA = (a.costKg||0)*(a.conv||0); const cB = (b.costKg||0)*(b.conv||0);
+                valA = a.spPiece>0 ? ((a.spPiece-cA)/a.spPiece) : (cA>0?-999:0);
+                valB = b.spPiece>0 ? ((b.spPiece-cB)/b.spPiece) : (cB>0?-999:0);
+            } else if (key === 'profit') {
+                valA = (a.profit !== undefined) ? a.profit : (a.spPiece - (a.costKg*a.conv));
+                valB = (b.profit !== undefined) ? b.profit : (b.spPiece - (b.costKg*b.conv));
+            } else if (key === 'costPc') {
+                valA = (a.costKg||0)*(a.conv||0); valB = (b.costKg||0)*(b.conv||0);
+            } else if (key === 'marginPct') {
+                valA = a.marginPct || 0; valB = b.marginPct || 0;
+            } else {
+                valA = a[key]!==undefined?a[key]:""; valB = b[key]!==undefined?b[key]:"";
+            }
+
+            if (typeof valA === 'number' && typeof valB === 'number') {
+                return (valA - valB) * sortState.direction;
+            } else {
+                valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase();
+                if (valA < valB) return -1 * sortState.direction;
+                if (valA > valB) return 1 * sortState.direction;
+                return 0;
+            }
+        });
+        renderCallback();
+    }
+
+    function sortMaster(key) { genericSort(products, key, renderMasterTable); }
+    function sortIndent(key) { genericSort(currentIndent, key, renderIndentPreview); }
 
     // --- NAVIGATION ---
     function switchTab(tabId) {
         document.querySelectorAll('.main > div').forEach(d => d.classList.add('hidden'));
         document.getElementById(tabId).classList.remove('hidden');
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        
         const activeBtn = Array.from(document.querySelectorAll('.tab')).find(t => t.getAttribute('onclick').includes(tabId));
         if(activeBtn) activeBtn.classList.add('active');
+        
+        if (tabId === 'view-history') {
+            closeHistoryDetail(); 
+            renderIndentHistory();
+        }
+    }
+
+    // --- TOOLTIP LOGIC ---
+    const tooltip = document.getElementById('price-tooltip');
+    
+    function showHistory(e, id) {
+        const p = products.find(x => x.id === id);
+        if(!p) return;
+        let html = `<h4>Price History: ${p.name}</h4>`;
+        if (!p.history || p.history.length === 0) { html += '<div class="hist-row">No history recorded.</div>'; } 
+        else {
+            const recent = p.history.slice(-5).reverse();
+            recent.forEach(h => {
+                html += `<div class="hist-row"><span>${h.date} (${h.source})</span><span>₹${h.sell}</span></div>`;
+            });
+        }
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.pageX - 260) + 'px'; 
+        tooltip.style.top = (e.pageY + 15) + 'px';
+    }
+    function hideHistory() { tooltip.style.display = 'none'; }
+    
+    function addToHistory(product, source, cost, sell) {
+        if (!product.history) product.history = [];
+        const today = new Date().toISOString().split('T')[0];
+        product.history.push({ date: today, source: source, cost: cost, sell: sell });
+        if(product.history.length > 10) product.history.shift();
+    }
+
+    // --- MARGIN TOOLTIP LOGIC ---
+    function showMarginTooltip(e, index) {
+        const bucket = currentBucketsData[index];
+        if(!bucket || bucket.items.length === 0) return;
+
+        const tt = document.getElementById('margin-tooltip');
+        let html = `<div class="mt-header">${bucket.label} (${bucket.count} items)</div>`;
+        
+        bucket.items.forEach(item => {
+            const color = item.profit >= 0 ? 'text-green' : 'text-red';
+            html += `
+                <div class="mt-item">
+                    <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:10px;">${item.name}</span>
+                    <span class="${color}" style="font-weight:700;">₹${item.profit.toFixed(0)}</span>
+                </div>
+            `;
+        });
+        
+        tt.innerHTML = html;
+        tt.style.display = 'block';
+        
+        // Position intelligently
+        const x = e.pageX; 
+        const y = e.pageY;
+        
+        if (x + 320 > window.innerWidth) {
+            tt.style.left = (x - 310) + 'px'; // Show to left if near edge
+        } else {
+            tt.style.left = (x + 15) + 'px';
+        }
+        tt.style.top = (y + 15) + 'px';
+    }
+
+    function hideMarginTooltip() {
+        document.getElementById('margin-tooltip').style.display = 'none';
     }
 
     // --- 1. PRICE MASTER LOGIC ---
@@ -427,9 +675,11 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
             const costPc = (p.costKg || 0) * (p.conv || 0);
             const profit = (p.spPiece || 0) - costPc;
             const marginPct = (p.spPiece > 0) ? (profit / p.spPiece) * 100 : 0;
-            const colorClass = marginPct >= 0 ? 'txt-green' : 'txt-red';
+            const colorClass = marginPct >= 0 ? 'text-green' : 'text-red';
 
             const tr = document.createElement('tr');
+            const hoverEvents = `onmouseenter="showHistory(event, ${p.id})" onmouseleave="hideHistory()"`;
+
             if (isEditMode) {
                 tr.innerHTML = `
                     <td class="w-code t-left">${p.id}</td>
@@ -448,8 +698,8 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
                     <td class="w-uom t-left" style="color:#5f6368">${p.uom}</td>
                     <td class="w-num t-right">${p.conv}</td>
                     <td class="w-num t-right">₹${p.costKg}</td>
-                    <td class="w-calc t-right">₹${costPc.toFixed(2)}</td>
-                    <td class="w-num t-right"><b>₹${p.spPiece}</b></td>
+                    <td class="w-calc t-right cell-hover" ${hoverEvents}>₹${costPc.toFixed(2)}</td>
+                    <td class="w-num t-right cell-hover" ${hoverEvents}><b>₹${p.spPiece}</b></td>
                     <td class="w-stat t-right ${colorClass}">${marginPct.toFixed(0)}%</td>
                 `;
             }
@@ -474,7 +724,7 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
                 else p[inp.dataset.field] = parseFloat(inp.value) || 0;
             }
         });
-        saveProducts(); // Save to Firebase
+        saveData('products', products);
         toggleEditMode();
     }
 
@@ -511,7 +761,6 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
             const poRate = parseFloat(r[idxRate])||0;
             const csvName = idxName > -1 ? r[idxName] : 'Unknown';
 
-            // Cost Lookup from Master
             const master = products.find(p => p && p.id === code);
             let myCost = 0;
             if (master) { myCost = (master.costKg || 0) * (master.conv || 0); }
@@ -527,6 +776,7 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
         }
         
         renderKPIs(tItems, tRev, tCost, tProf);
+        renderMarginDistribution(currentIndent, 'margin-distribution');
         renderIndentPreview();
         document.getElementById('indent-upload-area').classList.add('hidden');
         document.getElementById('indent-preview').classList.remove('hidden');
@@ -534,7 +784,6 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
 
     function renderKPIs(items, rev, cost, prof) {
         const marginOverall = rev > 0 ? (prof / rev) * 100 : 0;
-        
         document.getElementById('kpi-rev').innerText = '₹' + rev.toFixed(0);
         document.getElementById('kpi-cost').innerText = '₹' + cost.toFixed(0);
         
@@ -547,26 +796,85 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
         elMarg.className = 'kpi-value ' + (marginOverall >= 0 ? 'kpi-pos' : 'kpi-neg');
     }
 
+    function renderMarginDistribution(data, elementId) {
+        // Initialize buckets with empty item arrays
+        const buckets = [
+            { label: 'Loss (<0%)', count: 0, val: 0, prof: 0, cls: 'bd-loss', items: [] },
+            { label: '0% - 5%', count: 0, val: 0, prof: 0, cls: 'bd-low', items: [] },
+            { label: '5% - 10%', count: 0, val: 0, prof: 0, cls: 'bd-mid', items: [] },
+            { label: '10% - 20%', count: 0, val: 0, prof: 0, cls: 'bd-ok', items: [] },
+            { label: '20% - 50%', count: 0, val: 0, prof: 0, cls: 'bd-good', items: [] },
+            { label: 'Above 50%', count: 0, val: 0, prof: 0, cls: 'bd-great', items: [] }
+        ];
+
+        data.forEach(item => {
+            const m = item.marginPct;
+            const rev = item.poRate * item.qty;
+            const prof = item.profit;
+            let idx = 0;
+
+            if (m < 0) idx = 0;
+            else if (m < 5) idx = 1;
+            else if (m < 10) idx = 2;
+            else if (m < 20) idx = 3;
+            else if (m < 50) idx = 4;
+            else idx = 5;
+
+            buckets[idx].count++;
+            buckets[idx].val += rev;
+            buckets[idx].prof += prof;
+            buckets[idx].items.push(item);
+        });
+
+        // Store buckets globally
+        currentBucketsData = buckets;
+
+        const grid = document.getElementById(elementId);
+        grid.innerHTML = '';
+        
+        buckets.forEach((b, index) => {
+            // Added mouse events for tooltip
+            grid.innerHTML += `
+                <div class="ma-card ${b.cls}" onmouseenter="showMarginTooltip(event, ${index})" onmouseleave="hideMarginTooltip()">
+                    <div class="ma-header">${b.label}</div>
+                    <div class="ma-content">
+                        <div class="ma-stat-row">
+                            <span class="ma-stat-label">Items</span>
+                            <span class="ma-stat-val">${b.count}</span>
+                        </div>
+                        <div class="ma-stat-row">
+                            <span class="ma-stat-label">Sales</span>
+                            <span class="ma-stat-val">₹${b.val.toFixed(0)}</span>
+                        </div>
+                        <div class="ma-stat-row" style="margin-top:8px; padding-top:6px; border-top:1px dashed #eee;">
+                            <span class="ma-stat-label">Profit</span>
+                            <span class="ma-profit-val">₹${b.prof.toFixed(0)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
     function renderIndentPreview() {
         const tbody = document.getElementById('indent-body');
         tbody.innerHTML = '';
         currentIndent.forEach(item => {
             const tr = document.createElement('tr');
-            const colorClass = item.marginPct >= 0 ? 'txt-green' : 'txt-red';
+            const colorClass = item.marginPct >= 0 ? 'text-green' : 'text-red';
             tr.innerHTML = `
                 <td class="w-code t-left">${item.code}</td>
                 <td class="w-name t-left">${item.name}</td>
                 <td class="w-num t-right">${item.qty}</td>
                 <td class="w-num t-right">₹${item.poRate}</td>
                 <td class="w-num t-right">₹${item.myCost.toFixed(2)}</td>
-                <td class="w-num t-right ${item.profit<0?'txt-red':'txt-green'}">₹${item.profit.toFixed(0)}</td>
-                <td class="w-num t-right ${colorClass}">${item.marginPct.toFixed(0)}%</td>
+                <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
+                <td class="w-stat t-right ${colorClass}">${item.marginPct.toFixed(0)}%</td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // --- APPLY INDENT PRICES TO MASTER ---
     function applyIndentPricesToMaster() {
         let updateCount = 0;
         currentIndent.forEach(item => {
@@ -574,20 +882,59 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
             if (master) {
                 if (master.spPiece !== item.poRate) {
                     master.spPiece = item.poRate;
+                    addToHistory(master, 'Indent Upload', master.costKg, item.poRate);
                     updateCount++;
                 }
             }
         });
 
         if (updateCount > 0) {
-            saveProducts(); // Sync to Firebase
+            saveData('products', products);
             alert(`Success! Updated selling prices for ${updateCount} items.`);
             renderMasterTable();
-            switchTab('view-master'); // Go back to master list
+            switchTab('view-master');
             resetIndent();
         } else {
             alert("No price changes detected or matching items found.");
         }
+    }
+
+    function saveIndentToHistory() {
+        const dateStr = document.getElementById('indent-date').value;
+        if(!dateStr) { alert("Select Date"); return; }
+
+        let totalRev = 0, totalCost = 0;
+        currentIndent.forEach(i => { totalRev += i.poRate * i.qty; totalCost += i.myCost * i.qty; });
+        const profit = totalRev - totalCost;
+        const margin = totalRev > 0 ? (profit/totalRev)*100 : 0;
+
+        const record = {
+            id: Date.now(),
+            date: dateStr,
+            itemsCount: currentIndent.length,
+            items: currentIndent, // Save full items for drill down
+            totalRev,
+            totalCost,
+            profit,
+            margin
+        };
+
+        // CHECK IF DATE EXISTS
+        const existingIndex = indents.findIndex(x => x.date === dateStr);
+        if (existingIndex > -1) {
+             if(confirm("An indent already exists for this date. Overwrite it?")) {
+                 indents[existingIndex] = record;
+             } else {
+                 return;
+             }
+        } else {
+             indents.unshift(record);
+        }
+
+        saveData('indents', indents);
+        resetIndent();
+        renderIndentHistory();
+        switchTab('view-history');
     }
 
     function resetIndent() {
@@ -596,50 +943,101 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
         document.getElementById('indent-preview').classList.add('hidden');
     }
 
-    // --- MASTER UPLOAD HANDLER ---
-    function handleMasterUpload(input) {
-        const file = input.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-            const lines = e.target.result.split(/\r?\n/);
-            const h = parseCSVLine(lines[0]);
+    // --- 3. INDENT HISTORY ---
+    function renderIndentHistory() {
+        const tbody = document.getElementById('history-body');
+        tbody.innerHTML = '';
+        indents.forEach((rec, index) => {
+            const tr = document.createElement('tr');
+            tr.className = 'clickable-row';
+            tr.onclick = function() { viewHistoryDetail(index); };
             
-            const idxId = h.findIndex(x => x.toUpperCase().includes('ITEM_CODE'));
-            const idxName = h.findIndex(x => x.toUpperCase().includes('ITEM_NAME'));
-            const idxUom = h.findIndex(x => x.toUpperCase().includes('UOM'));
-            const idxConv = h.findIndex(x => x.includes('kg'));
-            const idxCost = h.findIndex(x => x.toUpperCase().includes('COST')); 
-            const idxRate = h.findIndex(x => x.toUpperCase().includes('RATE')); 
-
-            if(idxId < 0) { alert('Invalid CSV: Missing ITEM_CODE'); return; }
-
-            const newItems = [];
-            for(let i=1; i<lines.length; i++) {
-                if(!lines[i].trim()) continue;
-                const row = parseCSVLine(lines[i]);
-                const id = parseInt(row[idxId]);
-                
-                if(id) {
-                    newItems.push({
-                        id: id,
-                        name: (idxName > -1 ? row[idxName] : "Unknown"),
-                        uom: (idxUom > -1 ? row[idxUom] : "Unit"),
-                        conv: (idxConv > -1 ? parseFloat(row[idxConv]) || 0 : 0),
-                        costKg: (idxCost > -1 ? parseFloat(row[idxCost]) || 0 : 0),
-                        spPiece: (idxRate > -1 ? parseFloat(row[idxRate]) || 0 : 0)
-                    });
-                }
-            }
-            if(confirm(`Found ${newItems.length} items. Overwrite existing data?`)){
-                products = newItems;
-                saveProducts();
-            }
-        };
-        reader.readAsText(file);
+            const displayDate = formatDate(rec.date);
+            
+            tr.innerHTML = `
+                <td class="h-date t-left">${displayDate}</td>
+                <td class="h-id t-left">#${rec.id.toString().slice(-4)}</td>
+                <td class="h-items t-right">${rec.itemsCount || rec.items.length}</td>
+                <td class="h-money t-right">₹${rec.totalRev.toFixed(0)}</td>
+                <td class="h-money t-right">₹${rec.totalCost.toFixed(0)}</td>
+                <td class="h-profit t-right" style="color:${rec.profit<0?'var(--red)':'var(--green)'}">₹${rec.profit.toFixed(0)}</td>
+                <td class="h-margin t-right">${rec.margin.toFixed(1)}%</td>
+                <td class="w-action t-center" onclick="event.stopPropagation()">
+                    <button class="btn-icon" style="color:var(--red)" onclick="deleteIndent(${rec.id})"><span class="material-icons">delete</span></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    
+    function deleteIndent(id) {
+        if(!confirm("Delete this record permanently?")) return;
+        indents = indents.filter(x => x.id !== id);
+        saveData('indents', indents);
+        renderIndentHistory();
+        closeHistoryDetail(); // If open
     }
 
-    // --- CSV PARSER UTIL ---
+    function viewHistoryDetail(index) {
+        const rec = indents[index];
+        const displayDate = formatDate(rec.date);
+        
+        document.getElementById('hist-detail-title').innerText = `Indent Details: ${displayDate} (ID: #${rec.id.toString().slice(-4)})`;
+        
+        // Pop KPIs
+        document.getElementById('hist-kpi-rev').innerText = '₹' + rec.totalRev.toFixed(0);
+        document.getElementById('hist-kpi-cost').innerText = '₹' + rec.totalCost.toFixed(0);
+        
+        const elProf = document.getElementById('hist-kpi-profit');
+        elProf.innerText = '₹' + rec.profit.toFixed(0);
+        elProf.className = 'kpi-value ' + (rec.profit >= 0 ? 'kpi-pos' : 'kpi-neg');
+
+        const elMarg = document.getElementById('hist-kpi-margin');
+        elMarg.innerText = rec.margin.toFixed(1) + '%';
+        elMarg.className = 'kpi-value ' + (rec.margin >= 0 ? 'kpi-pos' : 'kpi-neg');
+
+        // Pop Distribution with Preview capability
+        renderMarginDistribution(rec.items, 'hist-margin-distribution');
+        
+        // Pop Table
+        const tbody = document.getElementById('hist-detail-body');
+        tbody.innerHTML = '';
+        rec.items.forEach(item => {
+             const tr = document.createElement('tr');
+             const mPct = item.marginPct || 0;
+             const colorClass = mPct >= 0 ? 'text-green' : 'text-red';
+             const cost = item.frozenCost || item.myCost; 
+
+             tr.innerHTML = `
+                <td class="w-code t-left">${item.code}</td>
+                <td class="w-name t-left">${item.name}</td>
+                <td class="w-num t-right">${item.qty}</td>
+                <td class="w-num t-right">₹${item.poRate}</td>
+                <td class="w-num t-right">₹${cost.toFixed(2)}</td>
+                <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
+                <td class="w-stat t-right ${colorClass}">${mPct.toFixed(0)}%</td>
+             `;
+             tbody.appendChild(tr);
+        });
+
+        // Switch View
+        document.getElementById('history-list-view').classList.add('hidden');
+        document.getElementById('history-detail-view').classList.remove('hidden');
+    }
+
+    function closeHistoryDetail() {
+        document.getElementById('history-detail-view').classList.add('hidden');
+        document.getElementById('history-list-view').classList.remove('hidden');
+    }
+
+    // --- UTILS ---
+    function formatDate(dateString) {
+        if(!dateString) return "";
+        const parts = dateString.split('-');
+        if(parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; 
+        return dateString;
+    }
+
     function parseCSVLine(line) {
         const regex = /(?:^|,)(?:"([^"]*)"|([^",]*))/g;
         let matches = [], match;
@@ -647,6 +1045,14 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
         return matches;
     }
 
+    function clearAllData() {
+        if(confirm("Delete all data?")) {
+            window.dbSet(window.dbRef(window.db, '/'), null);
+            location.reload();
+        }
+    }
+
+    function toggleSettings() { document.getElementById('settings-panel').classList.toggle('hidden'); }
     function openAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
     function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
     
@@ -654,90 +1060,56 @@ th.sortable::after { content: ' ⇅'; font-size: 10px; opacity: 0.3; margin-left
         const id = parseInt(document.getElementById('new-code').value);
         const name = document.getElementById('new-name').value;
         if(!id || !name) return;
+        
+        if(products.find(p => p.id === id)) { alert("ID Exists"); return; }
+
         products.push({
             id, name,
             uom: document.getElementById('new-uom').value || 'Unit',
             conv: parseFloat(document.getElementById('new-conv').value)||0,
             costKg: parseFloat(document.getElementById('new-cost').value)||0,
-            spPiece: parseFloat(document.getElementById('new-sp').value)||0
+            spPiece: parseFloat(document.getElementById('new-sp').value)||0,
+            history: [] // init
         });
-        saveProducts();
+        saveData('products', products);
         closeAddModal();
+        renderMasterTable();
     }
-
-    // --- SORTING LOGIC ---
-let sortState = { key: null, direction: 1 }; // 1 = asc, -1 = desc
-
-function genericSort(dataArray, key, renderCallback) {
-    // Toggle direction
-    if (sortState.key === key) {
-        sortState.direction *= -1;
-    } else {
-        sortState.key = key;
-        sortState.direction = 1;
-    }
-
-    dataArray.sort((a, b) => {
-        let valA, valB;
-
-        // 1. Handle Calculated Fields (Master List)
-        if (key === 'margin') {
-            const costA = (a.costKg || 0) * (a.conv || 0);
-            const costB = (b.costKg || 0) * (b.conv || 0);
-            valA = a.spPiece > 0 ? ((a.spPiece - costA) / a.spPiece) : -999;
-            valB = b.spPiece > 0 ? ((b.spPiece - costB) / b.spPiece) : -999;
-        } 
-        else if (key === 'costPc') {
-            valA = (a.costKg || 0) * (a.conv || 0);
-            valB = (b.costKg || 0) * (b.conv || 0);
-        }
-        // 2. Handle Indent/History Calculated Fields
-        else if (key === 'indentProfit') {
-            // (PO - Cost) * Qty
-            const costA = (a.poRate - (a.myCost || a.frozenCost)) * a.qty;
-            const costB = (b.poRate - (b.myCost || b.frozenCost)) * b.qty;
-            valA = costA; valB = costB;
-        }
-        // 3. Handle Direct Properties
-        else {
-            valA = a[key];
-            valB = b[key];
-        }
-
-        // Handle Text vs Numbers
-        if (typeof valA === 'string') {
-            valA = valA.toLowerCase();
-            valB = valB.toLowerCase();
-        }
-
-        if (valA < valB) return -1 * sortState.direction;
-        if (valA > valB) return 1 * sortState.direction;
-        return 0;
-    });
-
-    renderCallback(); // Refresh the table
-}
-
-// Wrapper functions for HTML onclick events
-function sortMaster(key) {
-    genericSort(products, key, renderMasterTable);
-}
-
-function sortIndent(key) {
-    genericSort(currentIndent, key, renderIndentPreview);
-}
-
-function sortHistory(key) {
-    genericSort(history, key, renderHistoryTable);
-}
-</script>
-<script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(() => console.log("Service Worker Registered"))
-            .catch((err) => console.log("Service Worker Failed", err));
+    
+    function handleMasterUpload(input) {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const lines = e.target.result.split(/\r?\n/);
+            const h = parseCSVLine(lines[0]);
+            const idxId = h.findIndex(x=>x.toUpperCase().includes('CODE'));
+            const idxName = h.findIndex(x=>x.toUpperCase().includes('NAME'));
+            if(idxId < 0) { alert('Invalid CSV'); return; }
+            const newItems = [];
+            for(let i=1; i<lines.length; i++) {
+                const row = parseCSVLine(lines[i]);
+                const id = parseInt(row[idxId]);
+                if(id) {
+                    newItems.push({
+                        id: id,
+                        name: (idxName > -1 ? row[idxName] : "Unknown"),
+                        uom: (idxUom > -1 ? row[idxUom] : "Unit"),
+                        conv: (idxConv > -1 ? parseFloat(row[idxConv]) || 0 : 0),
+                        costKg: (idxCost > -1 ? parseFloat(row[idxCost]) || 0 : 0),
+                        spPiece: (idxRate > -1 ? parseFloat(row[idxRate]) || 0 : 0),
+                        history: []
+                    });
+                }
+            }
+            if(confirm(`Found ${newItems.length} items. Overwrite existing data?`)){
+                products = newItems;
+                saveData('products', products);
+                renderMasterTable();
+            }
+        };
+        reader.readAsText(file);
     }
 </script>
-
 </body>
 </html>
