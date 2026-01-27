@@ -37,7 +37,7 @@
             overflow-y: scroll;
         }
 
-        /* --- HEADER & DOODLES --- */
+        /* --- HEADER --- */
         header {
             height: var(--header-h); padding: 0 24px;
             background: var(--surface); border-bottom: 1px solid var(--border);
@@ -49,19 +49,6 @@
         .brand { display: flex; align-items: center; gap: 8px; font-size: 20px; color: var(--text-sub); z-index: 2; }
         .brand strong { color: var(--primary); font-weight: 500; }
         
-        .doodle-container {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            gap: 40px;
-            opacity: 0.15;
-            pointer-events: none;
-            z-index: 1;
-        }
-        .doodle { width: 40px; height: 40px; fill: none; stroke: var(--primary); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
         /* --- BUTTONS --- */
         .btn {
             height: 36px; padding: 0 16px; border-radius: 4px; border: 1px solid var(--border);
@@ -105,9 +92,17 @@
         }
         td {
             padding: 8px 16px; border-bottom: 1px solid #f1f3f4;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 44px;
+            height: 48px; 
+            vertical-align: middle; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
             font-size: 13px;
         }
+        .td-input {
+            overflow: visible !important;
+            text-overflow: clip !important;
+            padding-top: 4px; padding-bottom: 4px; 
+        }
+
         tbody tr:nth-child(even) { background-color: #f8f9fa; }
         tbody tr:hover { background-color: #e8f0fe !important; }
 
@@ -125,13 +120,13 @@
         .w-action { width: 60px; }
 
         /* History Table Widths */
-        .h-date { width: 110px; }
-        .h-id { width: 80px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
-        .h-items { width: 80px; text-align: right; }
-        .h-money { width: 120px; text-align: right; font-weight: 500; }
-        .h-profit { width: 120px; text-align: right; font-weight: 700; }
-        .h-margin { width: 120px; text-align: right; }
-        .h-action { width: 80px; text-align: center; }
+        .h-date { width: 100px; }
+        .h-id { width: 70px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
+        .h-items { width: 50px; text-align: right; }
+        .h-money { width: 110px; text-align: right; font-weight: 500; }
+        .h-profit { width: 90px; text-align: right; font-weight: 700; }
+        .h-margin { width: 70px; text-align: right; }
+        .h-action { width: 70px; text-align: center; }
 
         .cell-input {
             width: 100%; padding: 6px; border: 1px solid #dadce0; border-radius: 4px;
@@ -139,6 +134,20 @@
             background: white;
         }
         .cell-input:focus { border: 2px solid var(--primary); box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+        
+        .qty-edit {
+            width: 100%; 
+            max-width: 80px; 
+            padding: 6px 8px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px;
+            text-align: right; 
+            font-weight: bold; 
+            color: var(--primary);
+            outline: none;
+            height: 32px; 
+        }
+        .qty-edit:focus { border-color: var(--primary); background: #f0f7ff; }
 
         .card { background: white; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; box-shadow: 0 1px 2px rgba(60,64,67,0.1); }
         .card-header {
@@ -148,10 +157,10 @@
         .card-title { font-size: 16px; font-weight: 500; }
 
         /* --- KPI & MARGIN --- */
-        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-        .kpi-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        .kpi-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; margin-bottom: 8px; }
-        .kpi-value { font-size: 24px; font-weight: 900; color: var(--text-main); letter-spacing: -0.5px; }
+        .kpi-value { font-size: 20px; font-weight: 900; color: var(--text-main); letter-spacing: -0.5px; }
         .kpi-pos { color: var(--green); } .kpi-neg { color: var(--red); }
 
         .margin-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }
@@ -159,7 +168,7 @@
             background: white; border: 1px solid var(--border); border-radius: 8px; padding: 0; 
             text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; 
             transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer; /* Indicates it's interactive */
+            cursor: pointer;
         }
         .ma-card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 5; }
 
@@ -208,8 +217,19 @@
         th.sortable { cursor: pointer; user-select: none; }
         th.sortable:hover { background-color: #f1f3f4; color: var(--primary); }
 
-        .date-picker { padding: 8px 12px; border: 1px solid #dadce0; border-radius: 4px; font-family: 'Roboto', sans-serif; color: var(--text-main); outline: none; cursor: pointer; background: white; }
-        .date-picker:focus { border-color: var(--primary); }
+        .date-badge {
+            background: #e8f0fe;
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            border: 1px solid #d2e3fc;
+            display: inline-flex;
+            align-items: center;
+            height: 32px;
+        }
+        .date-badge.hidden-badge { display: none !important; }
     </style>
 </head>
 <body>
@@ -219,16 +239,6 @@
 
 <!-- HEADER -->
 <header>
-    <!-- DOODLE ILLUSTRATIONS -->
-    <div class="doodle-container">
-        <!-- Carrot -->
-        <svg class="doodle" viewBox="0 0 24 24"><path d="M16.8,2.2c-0.8-0.8-2.1-0.8-2.9,0l-0.7,0.7C12.8,3.3,12.8,4,13.2,4.4l0.7,0.7L3.1,16c-1.3,1.3-1.6,3.4-0.6,4.9c0.2,0.3,0.5,0.6,0.9,0.9c0.3,0.2,0.6,0.4,1,0.5c0.4,0.1,0.8,0.2,1.2,0.1c1.2-0.2,2.3-0.9,3-1.6l10.8-10.8l0.7,0.7c0.4,0.4,1.1,0.4,1.5,0l0.7-0.7C23,8.3,23,7,22.2,6.2L16.8,2.2z M17,17c-1.7,0-3,1.3-3,3s1.3,3,3,3s3-1.3,3-3S18.7,17,17,17z"/></svg>
-        <!-- Apple -->
-        <svg class="doodle" viewBox="0 0 24 24"><path d="M12,2c-0.6,0-1,0.4-1,1v2.2C9.6,4.5,8,4.3,6.5,4.8C4,5.7,2.2,8.4,2.2,11.5c0,3.5,2.7,8.2,7.2,10.2c0.8,0.3,1.7,0.4,2.6,0.4s1.8-0.1,2.6-0.4c4.5-1.9,7.2-6.7,7.2-10.2c0-3.1-1.8-5.8-4.3-6.7c-1.5-0.5-3.1-0.3-4.5,0.4V3C13,2.4,12.6,2,12,2z M12,7c1.7,0,3,1.3,3,3s-1.3,3-3,3s-3-1.3-3-3S10.3,7,12,7z"/></svg>
-        <!-- Leaf -->
-        <svg class="doodle" viewBox="0 0 24 24"><path d="M17,8C8,10,5.9,16.17,3.82,21.34L5.71,22l1-2.3A4.49,4.49,0,0,0,8,20C19,20,22,3,22,3C21,5,14,5.25,9,6.25C4,7.25,2,11.5,2,13.5a6.22,6.22,0,0,0,1.75,3.75C7,13,17,8,17,8Z"/></svg>
-    </div>
-
     <div class="brand">
         <span class="material-icons" style="color:var(--primary)">cloud_queue</span>
         <span>Swiggy<strong>Ops</strong> Cloud</span>
@@ -250,7 +260,7 @@
     <div class="tabs">
         <div class="tab active" onclick="switchTab('view-master')">Price Master</div>
         <div class="tab" onclick="switchTab('view-indent')">Indent Analyzer</div>
-        <div class="tab" onclick="switchTab('view-history')">History</div>
+        <div class="tab" onclick="switchTab('view-history')">Bills / History</div>
     </div>
     <div class="search-wrapper">
         <span class="material-icons" style="font-size:20px; color:#5f6368">search</span>
@@ -315,14 +325,18 @@
         <!-- Results State -->
         <div id="indent-preview" class="hidden">
             
-            <!-- MAIN KPIs -->
+            <!-- MAIN KPIs (UPDATED LOGIC) -->
             <div class="kpi-grid">
                 <div class="kpi-card">
-                    <div class="kpi-label">Total Revenue</div>
-                    <div class="kpi-value" id="kpi-rev">₹0</div>
+                    <div class="kpi-label">Indent Amount (Potential)</div>
+                    <div class="kpi-value" id="kpi-indent">₹0</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Total Cost</div>
+                    <div class="kpi-label">Bill Amount (Actual)</div>
+                    <div class="kpi-value" id="kpi-bill">₹0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Bill Cost (Goods Value)</div>
                     <div class="kpi-value" id="kpi-cost">₹0</div>
                 </div>
                 <div class="kpi-card">
@@ -342,9 +356,10 @@
                 <div class="card-header">
                     <span class="card-title">Indent Details</span>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <input type="date" id="indent-date" class="date-picker">
+                        <span id="indent-date-display" class="date-badge hidden-badge"></span>
+                        
                         <button class="btn btn-filled" onclick="saveIndentToHistory()">
-                            <span class="material-icons">save</span> Save Indent
+                            <span class="material-icons">save</span> Save Bill
                         </button>
                         <button class="btn" onclick="applyIndentPricesToMaster()">
                             <span class="material-icons">update</span> Apply Prices
@@ -357,8 +372,8 @@
                         <tr>
                             <th class="w-code t-left sortable" onclick="sortIndent('code')">Code</th>
                             <th class="w-name t-left sortable" onclick="sortIndent('name')">Item (CSV)</th>
-                            <th class="w-num t-right sortable" onclick="sortIndent('qty')">Qty</th>
-                            <th class="w-num t-right sortable" onclick="sortIndent('poRate')">PO Rate</th>
+                            <th class="w-num t-right sortable" onclick="sortIndent('qty')">Qty (Edit)</th>
+                            <th class="w-num t-right sortable" onclick="sortIndent('poRate')">Sell Price</th>
                             <th class="w-num t-right sortable" onclick="sortIndent('myCost')">My Cost</th>
                             <th class="w-num t-right sortable" onclick="sortIndent('profit')">Profit</th>
                             <th class="w-stat t-right sortable" onclick="sortIndent('marginPct')">Margin %</th>
@@ -370,14 +385,14 @@
         </div>
     </div>
 
-    <!-- 3. INDENT HISTORY TAB -->
+    <!-- 3. INDENT HISTORY TAB (Now called BILLS) -->
     <div id="view-history" class="hidden">
         
         <!-- HISTORY LIST -->
         <div id="history-list-view">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">Indent History</span>
+                    <span class="card-title">Saved Bills</span>
                 </div>
                 <table>
                     <thead>
@@ -385,8 +400,9 @@
                             <th class="h-date t-left">Date</th>
                             <th class="h-id t-left">ID</th>
                             <th class="h-items t-right">Items</th>
-                            <th class="h-money t-right">Revenue</th>
-                            <th class="h-money t-right">Total Cost</th>
+                            <th class="h-money t-right">Indent Amt</th>
+                            <th class="h-money t-right">Bill Amt</th>
+                            <th class="h-money t-right">Bill Cost</th>
                             <th class="h-profit t-right">Profit</th>
                             <th class="h-margin t-right">Margin %</th>
                             <th class="h-action t-center">Action</th>
@@ -397,20 +413,24 @@
             </div>
         </div>
 
-        <!-- HISTORY DETAIL VIEW (Same Layout as Analyzer) -->
+        <!-- HISTORY DETAIL VIEW -->
         <div id="history-detail-view" class="hidden">
              <div style="margin-bottom:15px;">
-                <button class="btn" onclick="closeHistoryDetail()"><span class="material-icons">arrow_back</span> Back to History</button>
+                <button class="btn" onclick="closeHistoryDetail()"><span class="material-icons">arrow_back</span> Back to Bills</button>
             </div>
             
-            <!-- HIST KPI CARDS -->
+            <!-- HIST KPI CARDS (UPDATED LOGIC) -->
             <div class="kpi-grid">
                 <div class="kpi-card">
-                    <div class="kpi-label">Revenue</div>
-                    <div class="kpi-value" id="hist-kpi-rev">₹0</div>
+                    <div class="kpi-label">Indent Amount (Potential)</div>
+                    <div class="kpi-value" id="hist-kpi-indent">₹0</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Cost</div>
+                    <div class="kpi-label">Bill Amount (Actual)</div>
+                    <div class="kpi-value" id="hist-kpi-bill">₹0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Bill Cost</div>
                     <div class="kpi-value" id="hist-kpi-cost">₹0</div>
                 </div>
                 <div class="kpi-card">
@@ -428,18 +448,18 @@
 
             <div class="card">
                  <div class="card-header">
-                    <span class="card-title" id="hist-detail-title">Indent Detail</span>
+                    <span class="card-title" id="hist-detail-title">Bill Detail</span>
                 </div>
                 <table>
                     <thead>
                         <tr>
-                            <th class="w-code t-left">Code</th>
-                            <th class="w-name t-left">Item Name</th>
-                            <th class="w-num t-right">Qty</th>
-                            <th class="w-num t-right">PO Rate</th>
-                            <th class="w-num t-right">Frozen Cost</th>
-                            <th class="w-num t-right">Profit</th>
-                            <th class="w-stat t-right">Margin %</th>
+                            <th class="w-code t-left sortable" onclick="sortHistoryDetail('code')">Code</th>
+                            <th class="w-name t-left sortable" onclick="sortHistoryDetail('name')">Item Name</th>
+                            <th class="w-num t-right sortable" onclick="sortHistoryDetail('qty')">Qty</th>
+                            <th class="w-num t-right sortable" onclick="sortHistoryDetail('poRate')">Sell Price</th>
+                            <th class="w-num t-right sortable" onclick="sortHistoryDetail('frozenCost')">Frozen Cost</th>
+                            <th class="w-num t-right sortable" onclick="sortHistoryDetail('profit')">Profit</th>
+                            <th class="w-stat t-right sortable" onclick="sortHistoryDetail('marginPct')">Margin %</th>
                         </tr>
                     </thead>
                     <tbody id="hist-detail-body"></tbody>
@@ -511,10 +531,12 @@
 <script>
     let products = [];
     let indents = [];
-    let currentIndent = []; 
+    let currentIndent = [];
+    let currentIndentDate = null; 
     let isEditMode = false;
     let sortState = { key: null, direction: 1 };
-    let currentBucketsData = []; // Store bucket data for hover interaction
+    let currentBucketsData = []; 
+    let currentViewedHistory = null; 
 
     // --- DATA HANDLING ---
     window.loadProductsGlobal = async function() {
@@ -577,6 +599,11 @@
 
     function sortMaster(key) { genericSort(products, key, renderMasterTable); }
     function sortIndent(key) { genericSort(currentIndent, key, renderIndentPreview); }
+    function sortHistoryDetail(key) { 
+        if(currentViewedHistory && currentViewedHistory.items) {
+            genericSort(currentViewedHistory.items, key, renderHistoryDetailTable);
+        }
+    }
 
     // --- NAVIGATION ---
     function switchTab(tabId) {
@@ -641,12 +668,11 @@
         tt.innerHTML = html;
         tt.style.display = 'block';
         
-        // Position intelligently
         const x = e.pageX; 
         const y = e.pageY;
         
         if (x + 320 > window.innerWidth) {
-            tt.style.left = (x - 310) + 'px'; // Show to left if near edge
+            tt.style.left = (x - 310) + 'px'; 
         } else {
             tt.style.left = (x + 15) + 'px';
         }
@@ -741,15 +767,34 @@
     function parseIndent(text) {
         const lines = text.split(/\r?\n/);
         const h = parseCSVLine(lines[0]);
-        const idxCode = h.findIndex(x=>x.toUpperCase().includes('ITEM_CODE'));
-        const idxQty = h.findIndex(x=>x.toUpperCase().includes('INDENTS'));
-        const idxRate = h.findIndex(x=>x.toUpperCase().includes('COST'));
-        const idxName = h.findIndex(x=>x.toUpperCase().includes('PRODUCT_NAME'));
+        let idxCode = h.findIndex(x=>x.toUpperCase().includes('ITEM_CODE'));
+        let idxQty = h.findIndex(x=>x.toUpperCase().includes('INDENTS'));
+        let idxRate = h.findIndex(x=>x.toUpperCase().includes('COST'));
+        let idxName = h.findIndex(x=>x.toUpperCase().includes('PRODUCT_NAME'));
+        
+        let dateIdx = h.findIndex(x=>x.toUpperCase().includes('DATE'));
+        if (dateIdx === -1) dateIdx = 0; 
+
+        if (lines.length > 1) {
+            const firstRow = parseCSVLine(lines[1]);
+            const rawDate = firstRow[dateIdx];
+            if (rawDate) {
+                const normDate = rawDate.replace(/\//g, '-'); 
+                const parts = normDate.split('-');
+                if(parts.length === 3) {
+                    currentIndentDate = `${parts[2]}-${parts[1]}-${parts[0]}`; 
+                    const elDate = document.getElementById('indent-date-display');
+                    elDate.innerText = rawDate;
+                    elDate.classList.remove('hidden-badge');
+                } else {
+                    currentIndentDate = null;
+                }
+            }
+        }
 
         if(idxCode<0) { alert('Invalid CSV: Missing ITEM_CODE'); return; }
 
         currentIndent = [];
-        let tItems=0, tRev=0, tProf=0, tCost=0;
 
         for(let i=1; i<lines.length; i++) {
             if(!lines[i].trim()) continue;
@@ -758,33 +803,80 @@
             if(!code) continue;
 
             const qty = parseFloat(r[idxQty])||0;
-            const poRate = parseFloat(r[idxRate])||0;
+            const poRate = parseFloat(r[idxRate])||0; 
             const csvName = idxName > -1 ? r[idxName] : 'Unknown';
 
             const master = products.find(p => p && p.id === code);
             let myCost = 0;
             if (master) { myCost = (master.costKg || 0) * (master.conv || 0); }
 
-            const costTotal = myCost * qty;
             const profit = (poRate - myCost) * qty;
             const unitMargin = poRate - myCost;
             const marginPct = poRate > 0 ? (unitMargin / poRate) * 100 : 0;
 
-            tItems++; tRev += poRate*qty; tCost += costTotal; tProf += profit;
-
-            currentIndent.push({ code, name: csvName, qty, poRate, myCost, profit, marginPct });
+            // Store originalQty for Indent Amount calculation
+            currentIndent.push({ 
+                code, 
+                name: csvName, 
+                originalQty: qty, 
+                qty: qty, // Current/Editable Qty
+                poRate, 
+                myCost, 
+                profit, 
+                marginPct 
+            });
         }
         
-        renderKPIs(tItems, tRev, tCost, tProf);
-        renderMarginDistribution(currentIndent, 'margin-distribution');
-        renderIndentPreview();
+        recalculateCurrentIndent();
         document.getElementById('indent-upload-area').classList.add('hidden');
         document.getElementById('indent-preview').classList.remove('hidden');
     }
 
-    function renderKPIs(items, rev, cost, prof) {
-        const marginOverall = rev > 0 ? (prof / rev) * 100 : 0;
-        document.getElementById('kpi-rev').innerText = '₹' + rev.toFixed(0);
+    // Function to handle quantity edits
+    function updateIndentQty(code, newQty) {
+        // Loose equality check to handle string vs number mismatch
+        const item = currentIndent.find(i => i.code == code);
+        if(!item) return;
+
+        // Prevent negative values
+        let q = parseFloat(newQty);
+        if(isNaN(q) || q < 0) q = 0;
+        item.qty = q;
+
+        // Recalculate profit based on new quantity
+        item.profit = (item.poRate - item.myCost) * item.qty;
+        
+        recalculateCurrentIndent();
+    }
+
+    function recalculateCurrentIndent() {
+        let tItems=0, tIndentAmt=0, tBillAmt=0, tProf=0, tCost=0;
+
+        currentIndent.forEach(item => {
+            tItems++;
+            // Indent Amount = Sell Price * Original Quantity
+            tIndentAmt += item.poRate * item.originalQty;
+            
+            // Bill Amount = Sell Price * Current Quantity
+            tBillAmt += item.poRate * item.qty;
+            
+            // Cost = My Cost * Current Quantity
+            tCost += item.myCost * item.qty;
+            
+            tProf += item.profit;
+        });
+
+        renderKPIs(tItems, tIndentAmt, tBillAmt, tCost, tProf);
+        renderMarginDistribution(currentIndent, 'margin-distribution');
+        renderIndentPreview();
+    }
+
+    function renderKPIs(items, indentAmt, billAmt, cost, prof) {
+        // Updated formula: Margin % = (Profit / Bill Amount) * 100
+        const marginOverall = billAmt > 0 ? (prof / billAmt) * 100 : 0;
+        
+        document.getElementById('kpi-indent').innerText = '₹' + indentAmt.toFixed(0);
+        document.getElementById('kpi-bill').innerText = '₹' + billAmt.toFixed(0);
         document.getElementById('kpi-cost').innerText = '₹' + cost.toFixed(0);
         
         const elProf = document.getElementById('kpi-profit');
@@ -797,7 +889,6 @@
     }
 
     function renderMarginDistribution(data, elementId) {
-        // Initialize buckets with empty item arrays
         const buckets = [
             { label: 'Loss (<0%)', count: 0, val: 0, prof: 0, cls: 'bd-loss', items: [] },
             { label: '0% - 5%', count: 0, val: 0, prof: 0, cls: 'bd-low', items: [] },
@@ -826,14 +917,12 @@
             buckets[idx].items.push(item);
         });
 
-        // Store buckets globally
         currentBucketsData = buckets;
 
         const grid = document.getElementById(elementId);
         grid.innerHTML = '';
         
         buckets.forEach((b, index) => {
-            // Added mouse events for tooltip
             grid.innerHTML += `
                 <div class="ma-card ${b.cls}" onmouseenter="showMarginTooltip(event, ${index})" onmouseleave="hideMarginTooltip()">
                     <div class="ma-header">${b.label}</div>
@@ -865,7 +954,10 @@
             tr.innerHTML = `
                 <td class="w-code t-left">${item.code}</td>
                 <td class="w-name t-left">${item.name}</td>
-                <td class="w-num t-right">${item.qty}</td>
+                <td class="w-num t-right td-input">
+                    <input type="number" class="qty-edit" value="${item.qty}" 
+                    onchange="updateIndentQty(${item.code}, this.value)" min="0" />
+                </td>
                 <td class="w-num t-right">₹${item.poRate}</td>
                 <td class="w-num t-right">₹${item.myCost.toFixed(2)}</td>
                 <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
@@ -900,36 +992,40 @@
     }
 
     function saveIndentToHistory() {
-        const dateStr = document.getElementById('indent-date').value;
-        if(!dateStr) { alert("Select Date"); return; }
+        if(!currentIndentDate) { alert("Could not extract date from CSV"); return; }
+        
+        const exists = indents.some(x => x.date === currentIndentDate);
+        if(exists) {
+            alert(`Error: Bill for ${currentIndentDate} already exists! Cannot duplicate.`);
+            return;
+        }
 
-        let totalRev = 0, totalCost = 0;
-        currentIndent.forEach(i => { totalRev += i.poRate * i.qty; totalCost += i.myCost * i.qty; });
-        const profit = totalRev - totalCost;
-        const margin = totalRev > 0 ? (profit/totalRev)*100 : 0;
+        let totalIndentAmt = 0;
+        let totalBillAmt = 0;
+        let totalCost = 0;
+
+        currentIndent.forEach(i => { 
+            totalIndentAmt += i.poRate * i.originalQty;
+            totalBillAmt += i.poRate * i.qty;
+            totalCost += i.myCost * i.qty; 
+        });
+        
+        const profit = totalBillAmt - totalCost;
+        const margin = totalBillAmt > 0 ? (profit/totalBillAmt)*100 : 0;
 
         const record = {
             id: Date.now(),
-            date: dateStr,
+            date: currentIndentDate,
             itemsCount: currentIndent.length,
-            items: currentIndent, // Save full items for drill down
-            totalRev,
+            items: currentIndent, 
+            totalIndentAmt,
+            totalBillAmt,
             totalCost,
             profit,
             margin
         };
 
-        // CHECK IF DATE EXISTS
-        const existingIndex = indents.findIndex(x => x.date === dateStr);
-        if (existingIndex > -1) {
-             if(confirm("An indent already exists for this date. Overwrite it?")) {
-                 indents[existingIndex] = record;
-             } else {
-                 return;
-             }
-        } else {
-             indents.unshift(record);
-        }
+        indents.unshift(record);
 
         saveData('indents', indents);
         resetIndent();
@@ -939,6 +1035,9 @@
 
     function resetIndent() {
         currentIndent = [];
+        currentIndentDate = null;
+        document.getElementById('indent-date-display').innerText = '';
+        document.getElementById('indent-date-display').classList.add('hidden-badge');
         document.getElementById('indent-upload-area').classList.remove('hidden');
         document.getElementById('indent-preview').classList.add('hidden');
     }
@@ -958,7 +1057,8 @@
                 <td class="h-date t-left">${displayDate}</td>
                 <td class="h-id t-left">#${rec.id.toString().slice(-4)}</td>
                 <td class="h-items t-right">${rec.itemsCount || rec.items.length}</td>
-                <td class="h-money t-right">₹${rec.totalRev.toFixed(0)}</td>
+                <td class="h-money t-right" style="color:#5f6368">₹${rec.totalIndentAmt ? rec.totalIndentAmt.toFixed(0) : '0'}</td>
+                <td class="h-money t-right">₹${rec.totalBillAmt ? rec.totalBillAmt.toFixed(0) : rec.totalRev.toFixed(0)}</td>
                 <td class="h-money t-right">₹${rec.totalCost.toFixed(0)}</td>
                 <td class="h-profit t-right" style="color:${rec.profit<0?'var(--red)':'var(--green)'}">₹${rec.profit.toFixed(0)}</td>
                 <td class="h-margin t-right">${rec.margin.toFixed(1)}%</td>
@@ -979,13 +1079,18 @@
     }
 
     function viewHistoryDetail(index) {
-        const rec = indents[index];
+        currentViewedHistory = indents[index]; 
+        const rec = currentViewedHistory;
         const displayDate = formatDate(rec.date);
         
-        document.getElementById('hist-detail-title').innerText = `Indent Details: ${displayDate} (ID: #${rec.id.toString().slice(-4)})`;
+        document.getElementById('hist-detail-title').innerText = `Bill Details: ${displayDate} (ID: #${rec.id.toString().slice(-4)})`;
         
-        // Pop KPIs
-        document.getElementById('hist-kpi-rev').innerText = '₹' + rec.totalRev.toFixed(0);
+        // Handle backwards compatibility if new fields don't exist yet
+        const tBillAmt = rec.totalBillAmt || rec.totalRev || 0;
+        const tIndentAmt = rec.totalIndentAmt || 0;
+
+        document.getElementById('hist-kpi-indent').innerText = '₹' + tIndentAmt.toFixed(0);
+        document.getElementById('hist-kpi-bill').innerText = '₹' + tBillAmt.toFixed(0);
         document.getElementById('hist-kpi-cost').innerText = '₹' + rec.totalCost.toFixed(0);
         
         const elProf = document.getElementById('hist-kpi-profit');
@@ -996,38 +1101,41 @@
         elMarg.innerText = rec.margin.toFixed(1) + '%';
         elMarg.className = 'kpi-value ' + (rec.margin >= 0 ? 'kpi-pos' : 'kpi-neg');
 
-        // Pop Distribution with Preview capability
         renderMarginDistribution(rec.items, 'hist-margin-distribution');
-        
-        // Pop Table
-        const tbody = document.getElementById('hist-detail-body');
-        tbody.innerHTML = '';
-        rec.items.forEach(item => {
-             const tr = document.createElement('tr');
-             const mPct = item.marginPct || 0;
-             const colorClass = mPct >= 0 ? 'text-green' : 'text-red';
-             const cost = item.frozenCost || item.myCost; 
+        renderHistoryDetailTable();
 
-             tr.innerHTML = `
-                <td class="w-code t-left">${item.code}</td>
-                <td class="w-name t-left">${item.name}</td>
-                <td class="w-num t-right">${item.qty}</td>
-                <td class="w-num t-right">₹${item.poRate}</td>
-                <td class="w-num t-right">₹${cost.toFixed(2)}</td>
-                <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
-                <td class="w-stat t-right ${colorClass}">${mPct.toFixed(0)}%</td>
-             `;
-             tbody.appendChild(tr);
-        });
-
-        // Switch View
         document.getElementById('history-list-view').classList.add('hidden');
         document.getElementById('history-detail-view').classList.remove('hidden');
+    }
+
+    function renderHistoryDetailTable() {
+        const tbody = document.getElementById('hist-detail-body');
+        tbody.innerHTML = '';
+        if(currentViewedHistory && currentViewedHistory.items) {
+            currentViewedHistory.items.forEach(item => {
+                 const tr = document.createElement('tr');
+                 const mPct = item.marginPct || 0;
+                 const colorClass = mPct >= 0 ? 'text-green' : 'text-red';
+                 const cost = item.frozenCost || item.myCost; 
+
+                 tr.innerHTML = `
+                    <td class="w-code t-left">${item.code}</td>
+                    <td class="w-name t-left">${item.name}</td>
+                    <td class="w-num t-right">${item.qty}</td>
+                    <td class="w-num t-right">₹${item.poRate}</td>
+                    <td class="w-num t-right">₹${cost.toFixed(2)}</td>
+                    <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
+                    <td class="w-stat t-right ${colorClass}">${mPct.toFixed(0)}%</td>
+                 `;
+                 tbody.appendChild(tr);
+            });
+        }
     }
 
     function closeHistoryDetail() {
         document.getElementById('history-detail-view').classList.add('hidden');
         document.getElementById('history-list-view').classList.remove('hidden');
+        currentViewedHistory = null;
     }
 
     // --- UTILS ---
