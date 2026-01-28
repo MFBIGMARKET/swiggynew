@@ -22,6 +22,7 @@
             --green: #188038;
             --red: #d93025;
             --orange: #f57c00;
+            --purple: #9334e6;
             --header-h: 64px;
             --toolbar-h: 56px;
         }
@@ -110,6 +111,9 @@
         .t-right { text-align: right; }
         .t-center { text-align: center; }
 
+        .text-green { color: var(--green) !important; font-weight: 700; } 
+        .text-red { color: var(--red) !important; font-weight: 700; }
+
         /* Column Config */
         .w-code { width: 70px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
         .w-name { width: auto; font-weight: 500; min-width: 150px; }
@@ -119,14 +123,14 @@
         .w-stat { width: 110px; font-weight: 700; }
         .w-action { width: 60px; }
 
-        /* History Table Widths */
+        /* History Table Widths - UPDATED */
         .h-date { width: 100px; }
         .h-id { width: 70px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
         .h-items { width: 50px; text-align: right; }
-        .h-money { width: 110px; text-align: right; font-weight: 500; }
-        .h-profit { width: 90px; text-align: right; font-weight: 700; }
-        .h-margin { width: 70px; text-align: right; }
-        .h-action { width: 70px; text-align: center; }
+        .h-money { width: 100px; text-align: right; font-weight: 500; }
+        .h-profit { width: 85px; text-align: right; font-weight: 700; }
+        .h-margin { width: 90px; text-align: right; } /* INCREASED WIDTH */
+        .h-action { width: 60px; text-align: center; }
 
         .cell-input {
             width: 100%; padding: 6px; border: 1px solid #dadce0; border-radius: 4px;
@@ -157,11 +161,15 @@
         .card-title { font-size: 16px; font-weight: 500; }
 
         /* --- KPI & MARGIN --- */
-        .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
         .kpi-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; margin-bottom: 8px; }
-        .kpi-value { font-size: 20px; font-weight: 900; color: var(--text-main); letter-spacing: -0.5px; }
-        .kpi-pos { color: var(--green); } .kpi-neg { color: var(--red); }
+        .kpi-value { font-size: 20px; font-weight: 900; color: var(--text-main); letter-spacing: -0.5px; transition: color 0.3s; }
+        
+        .kpi-pos { color: var(--green); } 
+        .kpi-neg { color: var(--red); }
+        .kpi-warn { color: var(--orange); }
+        .kpi-net { color: var(--purple); }
 
         .margin-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }
         .ma-card { 
@@ -186,8 +194,6 @@
         .bd-good { border-top: 4px solid var(--primary); } .bd-good .ma-header { background-color: #e3f2fd; color: #1565c0; } .bd-good .ma-profit-val { color: var(--primary); }
         .bd-great { border-top: 4px solid var(--green); } .bd-great .ma-header { background-color: #e8f5e9; color: #2e7d32; } .bd-great .ma-profit-val { color: var(--green); }
 
-        .text-green { color: var(--green); } .text-red { color: var(--red); }
-
         /* Interactive Rows */
         .clickable-row { cursor: pointer; transition: background 0.1s; }
         .clickable-row:hover { background-color: #e3f2fd !important; }
@@ -196,23 +202,34 @@
         .upload-area:hover { border-color: var(--primary); background: #f4f8ff; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-        .modal { background: white; width: 500px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .modal { background: white; width: 600px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         .modal-body { padding: 24px; }
         .modal-footer { padding: 12px 24px; background: #f8f9fa; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; border-radius: 0 0 8px 8px; }
 
         /* TOOLTIPS */
-        .floating-tooltip { position: absolute; background: white; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-radius: 6px; z-index: 2000; display: none; font-size: 12px; }
+        .floating-tooltip { 
+            position: absolute; 
+            background: white; 
+            border: 1px solid var(--border); 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2); 
+            border-radius: 6px; 
+            z-index: 2000; 
+            display: none; 
+            font-size: 12px; 
+            pointer-events: auto; 
+        }
         
-        #price-tooltip { padding: 10px; width: 250px; }
-        #price-tooltip h4 { margin: 0 0 8px 0; font-size: 13px; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        #price-tooltip, #expense-tooltip, #indent-tooltip { padding: 10px; width: 250px; }
+        #price-tooltip h4, #expense-tooltip h4, #indent-tooltip h4 { margin: 0 0 8px 0; font-size: 13px; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; }
         
-        #margin-tooltip { width: 300px; max-height: 350px; overflow-y: auto; }
+        #margin-tooltip, #indent-tooltip { width: 300px; max-height: 350px; overflow-y: auto; }
         .mt-header { padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid var(--border); font-weight: 700; position: sticky; top: 0; }
         .mt-item { padding: 8px 15px; border-bottom: 1px solid #f1f3f4; display: flex; justify-content: space-between; }
         .mt-item:hover { background: #f8f9fa; }
 
-        .hist-row { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text-sub); }
-        .hist-row span:last-child { font-weight: 500; color: var(--text-main); }
+        .hist-row, .exp-row { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text-sub); }
+        .hist-row span:last-child, .exp-row span:last-child { font-weight: 500; color: var(--text-main); }
+        .exp-row.total { border-top: 1px dashed #ddd; padding-top: 4px; margin-top: 4px; font-weight: 700; color: var(--orange); }
 
         th.sortable { cursor: pointer; user-select: none; }
         th.sortable:hover { background-color: #f1f3f4; color: var(--primary); }
@@ -230,12 +247,30 @@
             height: 32px;
         }
         .date-badge.hidden-badge { display: none !important; }
+
+        /* EXPENSE TABLE */
+        .expense-table { width: 100%; margin-top: 10px; }
+        .expense-table th { background: #f1f3f4; font-size: 12px; padding: 8px; text-align: left; }
+        .expense-table td { padding: 8px; border-bottom: 1px solid #eee; }
+        .expense-table input { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        .exp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .exp-grid div label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 12px; color: #5f6368; }
+        .exp-grid div input { width: 100%; }
+        
+        /* Cursor pointer for clickable cards */
+        .kpi-card.hoverable { cursor: help; }
+        
+        .month-picker { padding: 6px 12px; border: 1px solid #dadce0; border-radius: 4px; font-family: 'Roboto'; outline:none; }
     </style>
 </head>
 <body>
 
-<div id="price-tooltip" class="floating-tooltip"></div>
-<div id="margin-tooltip" class="floating-tooltip"></div>
+<!-- TOOLTIPS -->
+<div id="price-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('price')" onmouseleave="hidePriceTooltip()"></div>
+<div id="margin-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('margin')" onmouseleave="hideMarginTooltip()"></div>
+<div id="expense-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('expense')" onmouseleave="hideExpenseTooltip()"></div>
+<div id="indent-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('indent')" onmouseleave="hideIndentTooltip()"></div>
 
 <!-- HEADER -->
 <header>
@@ -245,6 +280,9 @@
     </div>
     <div style="display:flex; gap:10px;">
         <button class="btn btn-icon" onclick="toggleSettings()" title="Clear Data"><span class="material-icons">delete_sweep</span></button>
+        <button class="btn" onclick="openExpenseModal()">
+            <span class="material-icons">account_balance_wallet</span> Expenses
+        </button>
         <input type="file" id="masterUpload" accept=".csv" style="display:none" onchange="handleMasterUpload(this)">
         <button class="btn" onclick="document.getElementById('masterUpload').click()">
             <span class="material-icons">upload</span> Update Prices
@@ -325,27 +363,42 @@
         <!-- Results State -->
         <div id="indent-preview" class="hidden">
             
-            <!-- MAIN KPIs (UPDATED LOGIC) -->
+            <!-- MAIN KPIs -->
             <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-label">Indent Amount (Potential)</div>
+                <!-- Row 1 -->
+                <div class="kpi-card hoverable" onmouseenter="showIndentDiffTooltip(event, 'current')" onmouseleave="hideIndentTooltip()">
+                    <div class="kpi-label">Indent Amount</div>
                     <div class="kpi-value" id="kpi-indent">₹0</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Bill Amount (Actual)</div>
+                    <div class="kpi-label">Bill Amount</div>
                     <div class="kpi-value" id="kpi-bill">₹0</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Bill Cost (Goods Value)</div>
+                    <div class="kpi-label">Bill Cost</div>
                     <div class="kpi-value" id="kpi-cost">₹0</div>
                 </div>
+                <div class="kpi-card hoverable" style="border-top: 4px solid var(--orange);" onmouseenter="showExpenseTooltip(event, 'current')" onmouseleave="hideExpenseTooltip()">
+                    <div class="kpi-label">Expenses</div>
+                    <div class="kpi-value kpi-warn" id="kpi-expenses">₹0</div>
+                </div>
+
+                <!-- Row 2 -->
                 <div class="kpi-card">
-                    <div class="kpi-label">Net Profit</div>
+                    <div class="kpi-label">Gross Profit</div>
                     <div class="kpi-value" id="kpi-profit">₹0</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Margin %</div>
-                    <div class="kpi-value" id="kpi-margin">0%</div>
+                    <div class="kpi-label">Gross Margin %</div>
+                    <div class="kpi-value" id="kpi-gross-margin">0%</div>
+                </div>
+                <div class="kpi-card" style="border-top: 4px solid var(--purple);">
+                    <div class="kpi-label">Net Profit</div>
+                    <div class="kpi-value kpi-net" id="kpi-net-profit">₹0</div>
+                </div>
+                <div class="kpi-card" style="border-top: 4px solid var(--purple);">
+                    <div class="kpi-label">Net Margin %</div>
+                    <div class="kpi-value kpi-net" id="kpi-net-margin">0%</div>
                 </div>
             </div>
 
@@ -385,7 +438,7 @@
         </div>
     </div>
 
-    <!-- 3. INDENT HISTORY TAB (Now called BILLS) -->
+    <!-- 3. INDENT HISTORY TAB (BILLS) -->
     <div id="view-history" class="hidden">
         
         <!-- HISTORY LIST -->
@@ -393,6 +446,7 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Saved Bills</span>
+                    <input type="month" id="history-month-filter" class="month-picker" onchange="renderIndentHistory()">
                 </div>
                 <table>
                     <thead>
@@ -402,9 +456,10 @@
                             <th class="h-items t-right">Items</th>
                             <th class="h-money t-right">Indent Amt</th>
                             <th class="h-money t-right">Bill Amt</th>
-                            <th class="h-money t-right">Bill Cost</th>
-                            <th class="h-profit t-right">Profit</th>
-                            <th class="h-margin t-right">Margin %</th>
+                            <th class="h-profit t-right">Gross Profit</th>
+                            <th class="h-margin t-right">Gross Mgn %</th>
+                            <th class="h-profit t-right">Net Profit</th>
+                            <th class="h-margin t-right">Net Mgn %</th>
                             <th class="h-action t-center">Action</th>
                         </tr>
                     </thead>
@@ -415,31 +470,48 @@
 
         <!-- HISTORY DETAIL VIEW -->
         <div id="history-detail-view" class="hidden">
-             <div style="margin-bottom:15px;">
-                <button class="btn" onclick="closeHistoryDetail()"><span class="material-icons">arrow_back</span> Back to Bills</button>
+             <div class="card-header" style="border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
+                <button class="btn" onclick="closeHistoryDetail()"><span class="material-icons">arrow_back</span> Back</button>
+                <div style="flex:1; margin-left:15px; font-weight:500; font-size:16px;" id="hist-detail-title">Bill Detail</div>
+                <button class="btn btn-filled" onclick="downloadHistoryPDF()"><span class="material-icons">picture_as_pdf</span> Download Report</button>
             </div>
             
-            <!-- HIST KPI CARDS (UPDATED LOGIC) -->
+            <!-- HIST KPI CARDS -->
             <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-label">Indent Amount (Potential)</div>
+                <!-- Row 1 -->
+                <div class="kpi-card hoverable" onmouseenter="showIndentDiffTooltip(event, 'history')" onmouseleave="hideIndentTooltip()">
+                    <div class="kpi-label">Indent Amount</div>
                     <div class="kpi-value" id="hist-kpi-indent">₹0</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Bill Amount (Actual)</div>
+                    <div class="kpi-label">Bill Amount</div>
                     <div class="kpi-value" id="hist-kpi-bill">₹0</div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Bill Cost</div>
                     <div class="kpi-value" id="hist-kpi-cost">₹0</div>
                 </div>
+                <div class="kpi-card hoverable" style="border-top: 4px solid var(--orange);" onmouseenter="showExpenseTooltip(event, 'history')" onmouseleave="hideExpenseTooltip()">
+                    <div class="kpi-label">Expenses</div>
+                    <div class="kpi-value kpi-warn" id="hist-kpi-expenses">₹0</div>
+                </div>
+
+                <!-- Row 2 -->
                 <div class="kpi-card">
-                    <div class="kpi-label">Profit</div>
+                    <div class="kpi-label">Gross Profit</div>
                     <div class="kpi-value" id="hist-kpi-profit">₹0</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Margin</div>
-                    <div class="kpi-value" id="hist-kpi-margin">0%</div>
+                    <div class="kpi-label">Gross Margin %</div>
+                    <div class="kpi-value" id="hist-kpi-gross-margin">0%</div>
+                </div>
+                <div class="kpi-card" style="border-top: 4px solid var(--purple);">
+                    <div class="kpi-label">Net Profit</div>
+                    <div class="kpi-value kpi-net" id="hist-kpi-net-profit">₹0</div>
+                </div>
+                <div class="kpi-card" style="border-top: 4px solid var(--purple);">
+                    <div class="kpi-label">Net Margin %</div>
+                    <div class="kpi-value kpi-net" id="hist-kpi-net-margin">0%</div>
                 </div>
             </div>
 
@@ -448,7 +520,7 @@
 
             <div class="card">
                  <div class="card-header">
-                    <span class="card-title" id="hist-detail-title">Bill Detail</span>
+                    <span class="card-title">Bill Item Detail</span>
                 </div>
                 <table>
                     <thead>
@@ -490,6 +562,48 @@
         <div class="modal-footer">
             <button class="btn" onclick="closeAddModal()">Cancel</button>
             <button class="btn btn-filled" onclick="addNewItem()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- EXPENSE SETTINGS MODAL -->
+<div id="expense-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-body">
+            <h3 style="margin-top:0">Expense Settings</h3>
+            
+            <div class="exp-grid">
+                <div>
+                    <label>Packing (per ₹1000 Bill Amt)</label>
+                    <input type="number" id="exp-packing-rate" class="cell-input" placeholder="e.g. 20">
+                </div>
+                <div>
+                    <label>Dump % (of Bill Cost)</label>
+                    <input type="number" id="exp-dump-percent" class="cell-input" placeholder="e.g. 2.5">
+                </div>
+                <div>
+                    <label>Misc % (of Bill Cost)</label>
+                    <input type="number" id="exp-misc-percent" class="cell-input" placeholder="e.g. 1.0">
+                </div>
+            </div>
+
+            <h4 style="margin-bottom:10px;">Daily Recurring Expenses</h4>
+            <table class="expense-table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Daily Wages (₹)</th>
+                        <th>Transportation (₹)</th>
+                    </tr>
+                </thead>
+                <tbody id="expense-table-body">
+                    <!-- JS will populate -->
+                </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeExpenseModal()">Cancel</button>
+            <button class="btn btn-filled" onclick="saveExpenses()">Save Settings</button>
         </div>
     </div>
 </div>
@@ -536,7 +650,27 @@
     let isEditMode = false;
     let sortState = { key: null, direction: 1 };
     let currentBucketsData = []; 
-    let currentViewedHistory = null; 
+    let currentViewedHistory = null;
+    let currentExpenseDetails = null; 
+    
+    // Expense Settings Object
+    let expenseSettings = {
+        packingRate: 0,
+        dumpPercent: 0,
+        miscPercent: 0,
+        days: [
+            { day: 'Sunday', wage: 0, transport: 0 },
+            { day: 'Monday', wage: 0, transport: 0 },
+            { day: 'Tuesday', wage: 0, transport: 0 },
+            { day: 'Wednesday', wage: 0, transport: 0 },
+            { day: 'Thursday', wage: 0, transport: 0 },
+            { day: 'Friday', wage: 0, transport: 0 },
+            { day: 'Saturday', wage: 0, transport: 0 }
+        ]
+    };
+
+    // Global timers for tooltip behavior
+    let priceTooltipTimer, marginTooltipTimer, expenseTooltipTimer, indentTooltipTimer;
 
     // --- DATA HANDLING ---
     window.loadProductsGlobal = async function() {
@@ -547,11 +681,21 @@
                 // Load Data
                 const pSnap = await window.dbGet(window.dbChild(dbRef, `products`));
                 const iSnap = await window.dbGet(window.dbChild(dbRef, `indents`));
+                const eSnap = await window.dbGet(window.dbChild(dbRef, `settings/expenses`));
 
                 products = pSnap.exists() ? pSnap.val() : [];
                 indents = iSnap.exists() ? iSnap.val() : [];
+                if(eSnap.exists()) expenseSettings = eSnap.val();
+
+                // Set Current Month Filter Default
+                const now = new Date();
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                document.getElementById('history-month-filter').value = `${y}-${m}`;
 
                 renderMasterTable();
+                renderExpenseTable();
+                renderIndentHistory(); // Initial render for history
             } catch (error) {
                 console.error("Error", error);
             }
@@ -561,6 +705,240 @@
     function saveData(key, data) {
         if (!window.db) return;
         window.dbSet(window.dbRef(window.db, key), data);
+    }
+
+    // --- EXPENSE LOGIC ---
+    function openExpenseModal() {
+        renderExpenseTable();
+        document.getElementById('expense-modal').classList.remove('hidden');
+    }
+    function closeExpenseModal() { document.getElementById('expense-modal').classList.add('hidden'); }
+
+    function renderExpenseTable() {
+        document.getElementById('exp-packing-rate').value = expenseSettings.packingRate || 0;
+        document.getElementById('exp-dump-percent').value = expenseSettings.dumpPercent || 0;
+        document.getElementById('exp-misc-percent').value = expenseSettings.miscPercent || 0;
+
+        const tbody = document.getElementById('expense-table-body');
+        tbody.innerHTML = '';
+        expenseSettings.days.forEach((d, idx) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${d.day}</td>
+                    <td><input type="number" class="wage-inp" data-idx="${idx}" value="${d.wage}"></td>
+                    <td><input type="number" class="trans-inp" data-idx="${idx}" value="${d.transport}"></td>
+                </tr>
+            `;
+        });
+    }
+
+    function saveExpenses() {
+        const wages = document.querySelectorAll('.wage-inp');
+        const trans = document.querySelectorAll('.trans-inp');
+        
+        expenseSettings.packingRate = parseFloat(document.getElementById('exp-packing-rate').value) || 0;
+        expenseSettings.dumpPercent = parseFloat(document.getElementById('exp-dump-percent').value) || 0;
+        expenseSettings.miscPercent = parseFloat(document.getElementById('exp-misc-percent').value) || 0;
+        
+        wages.forEach(inp => {
+            const idx = inp.dataset.idx;
+            expenseSettings.days[idx].wage = parseFloat(inp.value) || 0;
+        });
+        trans.forEach(inp => {
+            const idx = inp.dataset.idx;
+            expenseSettings.days[idx].transport = parseFloat(inp.value) || 0;
+        });
+
+        saveData('settings/expenses', expenseSettings);
+        closeExpenseModal();
+        
+        // Recalculate if active indent exists
+        if(currentIndent.length > 0) recalculateCurrentIndent();
+    }
+
+    function calculateTotalExpense(dateStr, billAmount, billCost) {
+        if (!dateStr) return { total:0, wage:0, transport:0, packing:0, dump:0, misc:0 };
+        const dateObj = new Date(dateStr);
+        const dayIdx = dateObj.getDay(); // 0 = Sunday
+        
+        const daySettings = expenseSettings.days[dayIdx];
+        const wage = daySettings.wage || 0;
+        const transport = daySettings.transport || 0;
+        
+        // Packing: per 1000 rupees of Bill Amount
+        const packing = (billAmount / 1000) * (expenseSettings.packingRate || 0);
+        
+        // Dump & Misc: % of Bill Cost
+        const dump = (billCost * (expenseSettings.dumpPercent || 0)) / 100;
+        const misc = (billCost * (expenseSettings.miscPercent || 0)) / 100;
+        
+        const total = wage + transport + packing + dump + misc;
+        return { total, wage, transport, packing, dump, misc };
+    }
+
+    // --- TOOLTIP POSITIONING LOGIC ---
+    function positionTooltip(e, tooltipId) {
+        const tt = document.getElementById(tooltipId);
+        tt.style.display = 'block';
+        
+        const rect = tt.getBoundingClientRect();
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+        
+        let left = e.pageX + 15;
+        let top = e.pageY + 15;
+
+        // Flip Horizontally if off screen
+        if (left + rect.width > winW) {
+            left = e.pageX - rect.width - 15;
+        }
+
+        // Flip Vertically if off screen
+        // rect.height isn't reliable if display was none, but now it is block
+        // so we can use offsetHeight
+        if (e.clientY + rect.height + 20 > winH) {
+            top = e.pageY - rect.height - 10;
+        }
+
+        tt.style.left = left + 'px';
+        tt.style.top = top + 'px';
+    }
+
+    // --- SPECIFIC TOOLTIPS ---
+    
+    function showExpenseTooltip(e, context) {
+        clearTooltipTimer('expense');
+        let details = null;
+        
+        if (context === 'current') {
+            details = currentExpenseDetails;
+        } else if (context === 'history' && currentViewedHistory) {
+            if (currentViewedHistory.expenseDetails) {
+                details = currentViewedHistory.expenseDetails;
+            } else {
+                details = calculateTotalExpense(
+                    currentViewedHistory.date, 
+                    currentViewedHistory.totalBillAmt || currentViewedHistory.totalRev,
+                    currentViewedHistory.totalCost
+                );
+            }
+        }
+
+        if(!details) return;
+
+        const tt = document.getElementById('expense-tooltip');
+        tt.innerHTML = `
+            <h4>Expense Breakdown</h4>
+            <div class="exp-row"><span>Daily Wages</span><span>₹${details.wage.toFixed(0)}</span></div>
+            <div class="exp-row"><span>Transport</span><span>₹${details.transport.toFixed(0)}</span></div>
+            <div class="exp-row"><span>Packing Charges</span><span>₹${details.packing.toFixed(0)}</span></div>
+            <div class="exp-row"><span>Dump Cost</span><span>₹${details.dump.toFixed(0)}</span></div>
+            <div class="exp-row"><span>Misc Cost</span><span>₹${details.misc.toFixed(0)}</span></div>
+            <div class="exp-row total"><span>Total</span><span>₹${details.total.toFixed(0)}</span></div>
+        `;
+        positionTooltip(e, 'expense-tooltip');
+    }
+
+    function hideExpenseTooltip() {
+        expenseTooltipTimer = setTimeout(() => {
+            document.getElementById('expense-tooltip').style.display = 'none';
+        }, 300);
+    }
+
+    function showMarginTooltip(e, index) {
+        clearTooltipTimer('margin');
+        const bucket = currentBucketsData[index];
+        if(!bucket || bucket.items.length === 0) return;
+
+        const tt = document.getElementById('margin-tooltip');
+        let html = `<div class="mt-header">${bucket.label} (${bucket.count} items)</div>`;
+        
+        bucket.items.forEach(item => {
+            const color = item.profit >= 0 ? 'text-green' : 'text-red';
+            html += `
+                <div class="mt-item">
+                    <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:10px;">${item.name}</span>
+                    <span class="${color}" style="font-weight:700;">₹${item.profit.toFixed(0)}</span>
+                </div>
+            `;
+        });
+        tt.innerHTML = html;
+        positionTooltip(e, 'margin-tooltip');
+    }
+
+    function hideMarginTooltip() {
+        marginTooltipTimer = setTimeout(() => {
+            document.getElementById('margin-tooltip').style.display = 'none';
+        }, 300);
+    }
+
+    function showHistory(e, id) {
+        clearTooltipTimer('price');
+        const p = products.find(x => x.id === id);
+        if(!p) return;
+        
+        const tt = document.getElementById('price-tooltip');
+        let html = `<h4>Price History: ${p.name}</h4>`;
+        if (!p.history || p.history.length === 0) { html += '<div class="hist-row">No history recorded.</div>'; } 
+        else {
+            const recent = p.history.slice(-5).reverse();
+            recent.forEach(h => {
+                html += `<div class="hist-row"><span>${h.date} (${h.source})</span><span>₹${h.sell}</span></div>`;
+            });
+        }
+        tt.innerHTML = html;
+        positionTooltip(e, 'price-tooltip');
+    }
+
+    function hidePriceTooltip() {
+        priceTooltipTimer = setTimeout(() => {
+            document.getElementById('price-tooltip').style.display = 'none';
+        }, 300);
+    }
+
+    function showIndentDiffTooltip(e, context) {
+        clearTooltipTimer('indent');
+        let items = [];
+        if (context === 'current') {
+            items = currentIndent;
+        } else if (context === 'history' && currentViewedHistory) {
+            items = currentViewedHistory.items;
+        }
+
+        // Filter items where reduced
+        const reducedItems = items.filter(i => (i.originalQty || 0) > i.qty);
+        
+        if (reducedItems.length === 0) return;
+
+        const tt = document.getElementById('indent-tooltip');
+        let html = `<h4>Items Removed from Indent</h4>`;
+        
+        reducedItems.forEach(i => {
+            const diff = (i.originalQty || 0) - i.qty;
+            const loss = diff * i.poRate;
+            html += `
+                <div class="mt-item">
+                    <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:10px;">${i.name}</span>
+                    <span style="color:var(--red); font-weight:500; width:40px;">-${diff}</span>
+                    <span style="color:var(--text-sub); font-weight:700; text-align:right;">₹${loss.toFixed(0)}</span>
+                </div>
+            `;
+        });
+        tt.innerHTML = html;
+        positionTooltip(e, 'indent-tooltip');
+    }
+
+    function hideIndentTooltip() {
+        indentTooltipTimer = setTimeout(() => {
+            document.getElementById('indent-tooltip').style.display = 'none';
+        }, 300);
+    }
+
+    window.clearTooltipTimer = function(type) {
+        if(type === 'price') clearTimeout(priceTooltipTimer);
+        if(type === 'margin') clearTimeout(marginTooltipTimer);
+        if(type === 'expense') clearTimeout(expenseTooltipTimer);
+        if(type === 'indent') clearTimeout(indentTooltipTimer);
     }
 
     // --- SORTING ---
@@ -619,70 +997,6 @@
         }
     }
 
-    // --- TOOLTIP LOGIC ---
-    const tooltip = document.getElementById('price-tooltip');
-    
-    function showHistory(e, id) {
-        const p = products.find(x => x.id === id);
-        if(!p) return;
-        let html = `<h4>Price History: ${p.name}</h4>`;
-        if (!p.history || p.history.length === 0) { html += '<div class="hist-row">No history recorded.</div>'; } 
-        else {
-            const recent = p.history.slice(-5).reverse();
-            recent.forEach(h => {
-                html += `<div class="hist-row"><span>${h.date} (${h.source})</span><span>₹${h.sell}</span></div>`;
-            });
-        }
-        tooltip.innerHTML = html;
-        tooltip.style.display = 'block';
-        tooltip.style.left = (e.pageX - 260) + 'px'; 
-        tooltip.style.top = (e.pageY + 15) + 'px';
-    }
-    function hideHistory() { tooltip.style.display = 'none'; }
-    
-    function addToHistory(product, source, cost, sell) {
-        if (!product.history) product.history = [];
-        const today = new Date().toISOString().split('T')[0];
-        product.history.push({ date: today, source: source, cost: cost, sell: sell });
-        if(product.history.length > 10) product.history.shift();
-    }
-
-    // --- MARGIN TOOLTIP LOGIC ---
-    function showMarginTooltip(e, index) {
-        const bucket = currentBucketsData[index];
-        if(!bucket || bucket.items.length === 0) return;
-
-        const tt = document.getElementById('margin-tooltip');
-        let html = `<div class="mt-header">${bucket.label} (${bucket.count} items)</div>`;
-        
-        bucket.items.forEach(item => {
-            const color = item.profit >= 0 ? 'text-green' : 'text-red';
-            html += `
-                <div class="mt-item">
-                    <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:10px;">${item.name}</span>
-                    <span class="${color}" style="font-weight:700;">₹${item.profit.toFixed(0)}</span>
-                </div>
-            `;
-        });
-        
-        tt.innerHTML = html;
-        tt.style.display = 'block';
-        
-        const x = e.pageX; 
-        const y = e.pageY;
-        
-        if (x + 320 > window.innerWidth) {
-            tt.style.left = (x - 310) + 'px'; 
-        } else {
-            tt.style.left = (x + 15) + 'px';
-        }
-        tt.style.top = (y + 15) + 'px';
-    }
-
-    function hideMarginTooltip() {
-        document.getElementById('margin-tooltip').style.display = 'none';
-    }
-
     // --- 1. PRICE MASTER LOGIC ---
     function renderMasterTable() {
         const tbody = document.getElementById('master-body');
@@ -704,7 +1018,7 @@
             const colorClass = marginPct >= 0 ? 'text-green' : 'text-red';
 
             const tr = document.createElement('tr');
-            const hoverEvents = `onmouseenter="showHistory(event, ${p.id})" onmouseleave="hideHistory()"`;
+            const hoverEvents = `onmouseenter="showHistory(event, ${p.id})" onmouseleave="hidePriceTooltip()"`;
 
             if (isEditMode) {
                 tr.innerHTML = `
@@ -814,12 +1128,11 @@
             const unitMargin = poRate - myCost;
             const marginPct = poRate > 0 ? (unitMargin / poRate) * 100 : 0;
 
-            // Store originalQty for Indent Amount calculation
             currentIndent.push({ 
                 code, 
                 name: csvName, 
                 originalQty: qty, 
-                qty: qty, // Current/Editable Qty
+                qty: qty, 
                 poRate, 
                 myCost, 
                 profit, 
@@ -832,18 +1145,14 @@
         document.getElementById('indent-preview').classList.remove('hidden');
     }
 
-    // Function to handle quantity edits
     function updateIndentQty(code, newQty) {
-        // Loose equality check to handle string vs number mismatch
         const item = currentIndent.find(i => i.code == code);
         if(!item) return;
 
-        // Prevent negative values
         let q = parseFloat(newQty);
         if(isNaN(q) || q < 0) q = 0;
         item.qty = q;
 
-        // Recalculate profit based on new quantity
         item.profit = (item.poRate - item.myCost) * item.qty;
         
         recalculateCurrentIndent();
@@ -854,38 +1163,48 @@
 
         currentIndent.forEach(item => {
             tItems++;
-            // Indent Amount = Sell Price * Original Quantity
-            tIndentAmt += item.poRate * item.originalQty;
-            
-            // Bill Amount = Sell Price * Current Quantity
+            tIndentAmt += item.poRate * (item.originalQty || item.qty);
             tBillAmt += item.poRate * item.qty;
-            
-            // Cost = My Cost * Current Quantity
             tCost += item.myCost * item.qty;
-            
             tProf += item.profit;
         });
 
-        renderKPIs(tItems, tIndentAmt, tBillAmt, tCost, tProf);
+        // Calculate Expense & Net Profit (New Logic for Dump/Misc included)
+        const expenseObj = calculateTotalExpense(currentIndentDate, tBillAmt, tCost);
+        currentExpenseDetails = expenseObj; // Update Global for Tooltip
+        const netProfit = tProf - expenseObj.total;
+
+        renderKPIs(tItems, tIndentAmt, tBillAmt, tCost, tProf, expenseObj.total, netProfit);
         renderMarginDistribution(currentIndent, 'margin-distribution');
         renderIndentPreview();
     }
 
-    function renderKPIs(items, indentAmt, billAmt, cost, prof) {
-        // Updated formula: Margin % = (Profit / Bill Amount) * 100
-        const marginOverall = billAmt > 0 ? (prof / billAmt) * 100 : 0;
+    function renderKPIs(items, indentAmt, billAmt, cost, prof, expense, netProfit) {
+        const grossMargin = billAmt > 0 ? (prof / billAmt) * 100 : 0;
+        const netMargin = billAmt > 0 ? (netProfit / billAmt) * 100 : 0;
         
         document.getElementById('kpi-indent').innerText = '₹' + indentAmt.toFixed(0);
         document.getElementById('kpi-bill').innerText = '₹' + billAmt.toFixed(0);
         document.getElementById('kpi-cost').innerText = '₹' + cost.toFixed(0);
+        document.getElementById('kpi-expenses').innerText = '₹' + expense.toFixed(0);
         
+        // Gross
         const elProf = document.getElementById('kpi-profit');
         elProf.innerText = '₹' + prof.toFixed(0);
         elProf.className = 'kpi-value ' + (prof >= 0 ? 'kpi-pos' : 'kpi-neg');
 
-        const elMarg = document.getElementById('kpi-margin');
-        elMarg.innerText = marginOverall.toFixed(1) + '%';
-        elMarg.className = 'kpi-value ' + (marginOverall >= 0 ? 'kpi-pos' : 'kpi-neg');
+        const elGrossMarg = document.getElementById('kpi-gross-margin');
+        elGrossMarg.innerText = grossMargin.toFixed(1) + '%';
+        elGrossMarg.className = 'kpi-value ' + (grossMargin >= 0 ? 'kpi-pos' : 'kpi-neg');
+
+        // Net
+        const elNet = document.getElementById('kpi-net-profit');
+        elNet.innerText = '₹' + netProfit.toFixed(0);
+        elNet.className = 'kpi-value ' + (netProfit >= 0 ? 'kpi-net' : 'kpi-neg');
+
+        const elNetMarg = document.getElementById('kpi-net-margin');
+        elNetMarg.innerText = netMargin.toFixed(1) + '%';
+        elNetMarg.className = 'kpi-value ' + (netMargin >= 0 ? 'kpi-net' : 'kpi-neg');
     }
 
     function renderMarginDistribution(data, elementId) {
@@ -1005,13 +1324,17 @@
         let totalCost = 0;
 
         currentIndent.forEach(i => { 
-            totalIndentAmt += i.poRate * i.originalQty;
+            totalIndentAmt += i.poRate * (i.originalQty || i.qty);
             totalBillAmt += i.poRate * i.qty;
             totalCost += i.myCost * i.qty; 
         });
         
         const profit = totalBillAmt - totalCost;
         const margin = totalBillAmt > 0 ? (profit/totalBillAmt)*100 : 0;
+        
+        // Calculate final expenses for history record
+        const expenseObj = calculateTotalExpense(currentIndentDate, totalBillAmt, totalCost);
+        const netProfit = profit - expenseObj.total;
 
         const record = {
             id: Date.now(),
@@ -1022,7 +1345,10 @@
             totalBillAmt,
             totalCost,
             profit,
-            margin
+            margin,
+            totalExpenses: expenseObj.total,
+            expenseDetails: expenseObj, // Save full breakdown
+            netProfit
         };
 
         indents.unshift(record);
@@ -1044,24 +1370,42 @@
 
     // --- 3. INDENT HISTORY ---
     function renderIndentHistory() {
+        const filterVal = document.getElementById('history-month-filter').value; // YYYY-MM
         const tbody = document.getElementById('history-body');
         tbody.innerHTML = '';
+
         indents.forEach((rec, index) => {
+            // Filter Logic
+            if(filterVal) {
+                // rec.date is YYYY-MM-DD
+                const recMonth = rec.date.substring(0, 7);
+                if (recMonth !== filterVal) return;
+            }
+
             const tr = document.createElement('tr');
             tr.className = 'clickable-row';
             tr.onclick = function() { viewHistoryDetail(index); };
             
             const displayDate = formatDate(rec.date);
+            const netP = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - (rec.totalExpenses||0));
+            const tBill = rec.totalBillAmt || rec.totalRev || 0;
+            const grossM = tBill > 0 ? (rec.profit / tBill) * 100 : 0;
+            const netM = tBill > 0 ? (netP / tBill) * 100 : 0;
             
+            // Color Classes
+            const grossClass = grossM >= 0 ? 'text-green' : 'text-red';
+            const netClass = netM >= 0 ? 'text-green' : 'text-red';
+
             tr.innerHTML = `
                 <td class="h-date t-left">${displayDate}</td>
                 <td class="h-id t-left">#${rec.id.toString().slice(-4)}</td>
                 <td class="h-items t-right">${rec.itemsCount || rec.items.length}</td>
                 <td class="h-money t-right" style="color:#5f6368">₹${rec.totalIndentAmt ? rec.totalIndentAmt.toFixed(0) : '0'}</td>
-                <td class="h-money t-right">₹${rec.totalBillAmt ? rec.totalBillAmt.toFixed(0) : rec.totalRev.toFixed(0)}</td>
-                <td class="h-money t-right">₹${rec.totalCost.toFixed(0)}</td>
+                <td class="h-money t-right">₹${tBill.toFixed(0)}</td>
                 <td class="h-profit t-right" style="color:${rec.profit<0?'var(--red)':'var(--green)'}">₹${rec.profit.toFixed(0)}</td>
-                <td class="h-margin t-right">${rec.margin.toFixed(1)}%</td>
+                <td class="h-margin t-right ${grossClass}">${grossM.toFixed(1)}%</td>
+                <td class="h-profit t-right" style="color:${netP<0?'var(--red)':'var(--purple)'}">₹${netP.toFixed(0)}</td>
+                <td class="h-margin t-right ${netClass}">${netM.toFixed(1)}%</td>
                 <td class="w-action t-center" onclick="event.stopPropagation()">
                     <button class="btn-icon" style="color:var(--red)" onclick="deleteIndent(${rec.id})"><span class="material-icons">delete</span></button>
                 </td>
@@ -1083,23 +1427,38 @@
         const rec = currentViewedHistory;
         const displayDate = formatDate(rec.date);
         
-        document.getElementById('hist-detail-title').innerText = `Bill Details: ${displayDate} (ID: #${rec.id.toString().slice(-4)})`;
+        document.getElementById('hist-detail-title').innerText = `Bill Detail: ${displayDate}`;
         
-        // Handle backwards compatibility if new fields don't exist yet
+        // Handle backwards compatibility
         const tBillAmt = rec.totalBillAmt || rec.totalRev || 0;
         const tIndentAmt = rec.totalIndentAmt || 0;
+        const tExp = rec.totalExpenses || 0;
+        const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
+        const grossMargin = tBillAmt > 0 ? (rec.profit / tBillAmt) * 100 : 0;
+        const netMargin = tBillAmt > 0 ? (tNet / tBillAmt) * 100 : 0;
 
         document.getElementById('hist-kpi-indent').innerText = '₹' + tIndentAmt.toFixed(0);
         document.getElementById('hist-kpi-bill').innerText = '₹' + tBillAmt.toFixed(0);
         document.getElementById('hist-kpi-cost').innerText = '₹' + rec.totalCost.toFixed(0);
+        document.getElementById('hist-kpi-expenses').innerText = '₹' + tExp.toFixed(0);
         
+        // Gross
         const elProf = document.getElementById('hist-kpi-profit');
         elProf.innerText = '₹' + rec.profit.toFixed(0);
         elProf.className = 'kpi-value ' + (rec.profit >= 0 ? 'kpi-pos' : 'kpi-neg');
 
-        const elMarg = document.getElementById('hist-kpi-margin');
-        elMarg.innerText = rec.margin.toFixed(1) + '%';
-        elMarg.className = 'kpi-value ' + (rec.margin >= 0 ? 'kpi-pos' : 'kpi-neg');
+        const elGrossMarg = document.getElementById('hist-kpi-gross-margin');
+        elGrossMarg.innerText = grossMargin.toFixed(1) + '%';
+        elGrossMarg.className = 'kpi-value ' + (grossMargin >= 0 ? 'kpi-pos' : 'kpi-neg');
+
+        // Net
+        const elNet = document.getElementById('hist-kpi-net-profit');
+        elNet.innerText = '₹' + tNet.toFixed(0);
+        elNet.className = 'kpi-value ' + (tNet >= 0 ? 'kpi-net' : 'kpi-neg');
+
+        const elNetMarg = document.getElementById('hist-kpi-net-margin');
+        elNetMarg.innerText = netMargin.toFixed(1) + '%';
+        elNetMarg.className = 'kpi-value ' + (netMargin >= 0 ? 'kpi-net' : 'kpi-neg');
 
         renderMarginDistribution(rec.items, 'hist-margin-distribution');
         renderHistoryDetailTable();
@@ -1136,6 +1495,120 @@
         document.getElementById('history-detail-view').classList.add('hidden');
         document.getElementById('history-list-view').classList.remove('hidden');
         currentViewedHistory = null;
+    }
+
+    function downloadHistoryPDF() {
+        if (!currentViewedHistory) return;
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const rec = currentViewedHistory;
+        const displayDate = formatDate(rec.date);
+        
+        // 1. HEADER & BRANDING
+        doc.setFillColor(26, 115, 232); // Blue
+        doc.rect(0, 0, 210, 26, 'F');
+        
+        doc.setFontSize(20);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont(undefined, 'bold');
+        doc.text("SWIGGY REPORT", 14, 17);
+        
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Date: ${displayDate}`, 170, 17, { align: 'right' });
+
+        // 2. FINANCIAL SNAPSHOT (Modern Cards)
+        const startY = 40;
+        const cardW = 42;
+        const cardH = 22;
+        const gap = 6;
+        const startX = 14;
+
+        // Data Prep
+        const tBill = rec.totalBillAmt || rec.totalRev || 0;
+        const tCost = rec.totalCost || 0;
+        const tGross = rec.profit || 0;
+        const tExp = rec.totalExpenses || 0;
+        const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
+        const grossM = tBill > 0 ? (rec.profit/tBill)*100 : 0;
+        const netM = tBill > 0 ? (tNet/tBill)*100 : 0;
+
+        const kpis = [
+            { label: 'INDENT AMOUNT', val: 'Rs ' + (rec.totalIndentAmt||0).toFixed(0), bg: [241, 243, 244], txt: [32, 33, 36] }, // Grey
+            { label: 'BILL AMOUNT', val: 'Rs ' + tBill.toFixed(0), bg: [232, 240, 254], txt: [26, 115, 232] }, // Light Blue
+            { label: 'GROSS PROFIT', val: 'Rs ' + tGross.toFixed(0), bg: [230, 244, 234], txt: [24, 128, 56] }, // Light Green
+            { label: 'NET PROFIT', val: 'Rs ' + tNet.toFixed(0), bg: [243, 229, 245], txt: [147, 52, 230] }  // Light Purple
+        ];
+
+        // Draw 4 Main KPI Cards
+        for(let i=0; i<4; i++) {
+            const x = startX + (i * (cardW + gap));
+            doc.setFillColor(...kpis[i].bg);
+            doc.setDrawColor(220, 220, 220);
+            doc.roundedRect(x, startY, cardW, cardH, 2, 2, 'FD'); // Filled & Stroked with rounded corners
+            
+            doc.setFontSize(8); doc.setTextColor(100); doc.setFont(undefined, 'bold');
+            doc.text(kpis[i].label, x + 3, startY + 6);
+            
+            doc.setFontSize(14); doc.setTextColor(...kpis[i].txt); doc.setFont(undefined, 'bold');
+            doc.text(kpis[i].val, x + 3, startY + 16);
+        }
+
+        // 3. PROFITABILITY BREAKDOWN
+        doc.setFontSize(11); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        doc.text("Profitability Breakdown", 14, startY + cardH + 15);
+
+        // Custom "Table" using rectangles for visual clarity
+        const profitY = startY + cardH + 20;
+        doc.autoTable({
+            startY: profitY,
+            head: [['Metric', 'Amount', '% of Bill']],
+            body: [
+                ['Bill Amount (Revenue)', tBill.toFixed(0), '100%'],
+                ['Cost of Goods', `(${tCost.toFixed(0)})`, ((tCost/tBill)*100).toFixed(1) + '%'],
+                ['Gross Profit', tGross.toFixed(0), grossM.toFixed(1) + '%'],
+                ['Total Expenses', `(${tExp.toFixed(0)})`, ((tExp/tBill)*100).toFixed(1) + '%'],
+                ['Net Profit', tNet.toFixed(0), netM.toFixed(1) + '%']
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [50, 50, 50], fontSize: 10 },
+            columnStyles: { 0: { fontStyle: 'bold' }, 2: { halign: 'right' } },
+            footStyles: { fillColor: [240, 240, 240], textColor: [0,0,0] }
+        });
+
+        // 4. EXPENSE DETAILS
+        let expD = rec.expenseDetails;
+        if (!expD) {
+            expD = calculateTotalExpense(rec.date, tBill, tCost);
+        }
+
+        const expY = doc.lastAutoTable.finalY + 12;
+        doc.text("Expense Details", 14, expY);
+
+        doc.autoTable({
+            startY: expY + 5,
+            head: [['Category', 'Amount']],
+            body: [
+                ['Daily Wages', expD.wage.toFixed(0)],
+                ['Transportation', expD.transport.toFixed(0)],
+                ['Packing Charges', expD.packing.toFixed(0)],
+                ['Dump Cost', expD.dump.toFixed(0)],
+                ['Misc Cost', expD.misc.toFixed(0)],
+                ['TOTAL EXPENSES', expD.total.toFixed(0)]
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: [245, 124, 0] }, // Orange
+            bodyStyles: { fontSize: 9 },
+            columnStyles: { 0: { cellWidth: 80 }, 1: { fontStyle: 'bold' } }
+        });
+
+        // 5. FOOTER
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setFontSize(8); doc.setTextColor(150);
+        doc.text("Generated by Swiggy Ops Cloud", 105, pageHeight - 10, { align: 'center' });
+
+        doc.save(`Swiggy_Report_${rec.date}.pdf`);
     }
 
     // --- UTILS ---
