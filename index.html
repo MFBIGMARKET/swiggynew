@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- AutoTable removed as we are drawing custom design now -->
+    <!-- Removed autotable as we are custom drawing the dashboard -->
 
     <style>
         :root {
@@ -123,7 +123,7 @@
         .w-stat { width: 110px; font-weight: 700; }
         .w-action { width: 60px; }
 
-        /* History Table Widths */
+        /* History Table Widths - UPDATED */
         .h-date { width: 90px; }
         .h-id { width: 70px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
         .h-items { width: 50px; text-align: right; }
@@ -1498,25 +1498,19 @@
         if (!currentViewedHistory) return;
         
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-            orientation: 'p',
-            unit: 'mm',
-            format: 'a4'
-        });
-        
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
         const rec = currentViewedHistory;
         const displayDate = formatDate(rec.date);
         
         // --- COLORS ---
-        const colorBlue = [26, 115, 232];
-        const colorLightBlue = [232, 240, 254];
-        const colorGrey = [241, 243, 244];
-        const colorDark = [32, 33, 36];
-        const colorGreen = [24, 128, 56];
-        const colorRed = [217, 48, 37];
-        const colorOrange = [245, 124, 0];
+        const cBlue = [26, 115, 232];
+        const cDark = [32, 33, 36];
+        const cGreen = [24, 128, 56];
+        const cRed = [217, 48, 37];
+        const cOrange = [245, 124, 0];
+        const cGrey = [241, 243, 244];
         
-        // --- DATA CALCULATION ---
+        // --- DATA PREP ---
         const tBill = rec.totalBillAmt || rec.totalRev || 0;
         const tCost = rec.totalCost || 0;
         const tGross = rec.profit || 0;
@@ -1528,185 +1522,152 @@
         let expD = rec.expenseDetails;
         if (!expD) expD = calculateTotalExpense(rec.date, tBill, tCost);
 
-        // Performance Badge Logic
-        let perfText = "AVERAGE";
-        let perfColor = [100, 100, 100]; // Grey
-        if (netM > 20) { perfText = "EXCELLENT"; perfColor = colorGreen; }
-        else if (netM > 10) { perfText = "GOOD"; perfColor = colorBlue; }
-        else if (netM < 5) { perfText = "POOR"; perfColor = colorRed; }
-
-        // ================= HEADER =================
-        // Clean minimal header
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, 210, 30, 'F'); // White bg
+        // 1. HEADER (Dark Blue Bar)
+        doc.setFillColor(32, 33, 36); 
+        doc.rect(0, 0, 210, 24, 'F');
         
-        // Date Badge
-        doc.setFillColor(240, 240, 240);
-        doc.roundedRect(150, 10, 45, 10, 5, 5, 'F');
-        doc.setFontSize(10);
-        doc.setTextColor(80, 80, 80);
-        doc.text(displayDate, 172.5, 16.5, { align: 'center' });
+        doc.setFontSize(16); doc.setTextColor(255, 255, 255); doc.setFont(undefined, 'bold');
+        doc.text("EXECUTIVE SUMMARY", 14, 15);
+        
+        // Date Pill
+        doc.setFillColor(60, 64, 67);
+        doc.roundedRect(165, 8, 35, 8, 4, 4, 'F');
+        doc.setFontSize(9); doc.setFont(undefined, 'normal');
+        doc.text(displayDate, 182.5, 13, { align: 'center' });
 
-        // Title
-        doc.setFontSize(18);
-        doc.setTextColor(20, 20, 20);
-        doc.setFont(undefined, 'bold');
-        doc.text("Daily Performance Report", 15, 18);
+        let y = 35;
 
-        // ================= SCORECARDS (Power BI Style) =================
-        const startY = 35;
-        const cardW = 42;
-        const cardH = 28;
-        const gap = 6;
+        // 2. SCORECARDS (Big Numbers)
         const cards = [
-            { label: 'REVENUE', val: 'Rs ' + tBill.toFixed(0), color: colorBlue },
-            { label: 'COGS', val: 'Rs ' + tCost.toFixed(0), color: [100, 100, 100] },
-            { label: 'EXPENSES', val: 'Rs ' + tExp.toFixed(0), color: colorOrange },
-            { label: 'NET PROFIT', val: 'Rs ' + tNet.toFixed(0), color: tNet >= 0 ? colorGreen : colorRed }
+            { l: 'REVENUE', v: tBill, c: cBlue },
+            { l: 'COGS', v: tCost, c: [100,100,100] },
+            { l: 'EXPENSES', v: tExp, c: cOrange },
+            { l: 'NET PROFIT', v: tNet, c: tNet>=0 ? cGreen : cRed }
         ];
-
+        
+        const cw = 44; const ch = 24; const gap = 6;
         cards.forEach((c, i) => {
-            let x = 15 + (i * (cardW + gap));
-            // Card BG
-            doc.setFillColor(252, 252, 252);
-            doc.setDrawColor(220, 220, 220);
-            doc.roundedRect(x, startY, cardW, cardH, 2, 2, 'FD');
+            const x = 12 + (i * (cw + gap));
+            doc.setFillColor(250, 250, 250);
+            doc.setDrawColor(230, 230, 230);
+            doc.roundedRect(x, y, cw, ch, 2, 2, 'FD');
             
-            // Accent Line Top
-            doc.setFillColor(...c.color);
-            doc.rect(x, startY, cardW, 2, 'F');
+            // Left Accent Bar
+            doc.setFillColor(...c.c);
+            doc.rect(x, y+2, 1.5, ch-4, 'F');
 
-            // Label
-            doc.setFontSize(8);
-            doc.setTextColor(120, 120, 120);
-            doc.setFont(undefined, 'normal');
-            doc.text(c.label, x + (cardW/2), startY + 10, { align: 'center' });
-
-            // Value
-            doc.setFontSize(14);
-            doc.setTextColor(40, 40, 40);
-            doc.setFont(undefined, 'bold');
-            doc.text(c.val, x + (cardW/2), startY + 20, { align: 'center' });
+            doc.setFontSize(8); doc.setTextColor(100); doc.setFont(undefined, 'bold');
+            doc.text(c.l, x+5, y+8);
+            
+            doc.setFontSize(14); doc.setTextColor(40);
+            doc.text('Rs ' + c.v.toLocaleString('en-IN', { maximumFractionDigits: 0 }), x+5, y+18);
         });
 
-        // ================= INCOME STATEMENT =================
-        let y = startY + cardH + 15;
-        
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        doc.text("Income Statement", 15, y);
-        y += 5;
+        y += 35;
 
-        // Custom drawn table row function
-        const drawRow = (label, val, pct, isBold = false, indent = 0) => {
-            const h = 8;
-            if(isBold) {
-                doc.setFillColor(245, 247, 250);
-                doc.rect(15, y, 180, h, 'F');
+        // 3. FINANCIAL FLOW (Waterfall Logic Visualized)
+        doc.setFontSize(11); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        doc.text("Financial Breakdown", 14, y);
+        y += 8;
+
+        const drawFlowRow = (label, val, pct, isTotal, color) => {
+            if(isTotal) {
+                doc.setFillColor(248, 249, 250);
+                doc.rect(14, y-1, 182, 10, 'F');
                 doc.setFont(undefined, 'bold');
             } else {
                 doc.setFont(undefined, 'normal');
             }
             
-            doc.setFontSize(10);
-            doc.setTextColor(50, 50, 50);
-            doc.text(label, 20 + indent, y + 5.5);
+            doc.setFontSize(10); doc.setTextColor(60);
+            doc.text(label, 18, y+6);
             
-            doc.text(val, 150, y + 5.5, { align: 'right' });
+            doc.setTextColor(...(color || [60,60,60]));
+            doc.text('Rs ' + val.toLocaleString(), 150, y+6, { align: 'right' });
             
-            // Percentage Badge
+            // Pct Pill
             if(pct) {
-                doc.setFillColor(230, 230, 230);
-                doc.roundedRect(160, y+2, 25, 4, 1, 1, 'F');
-                doc.setFontSize(8);
-                doc.text(pct, 172.5, y + 5, { align: 'center' });
+                doc.setFillColor(235, 235, 235);
+                doc.roundedRect(160, y+2, 25, 6, 2, 2, 'F');
+                doc.setFontSize(8); doc.setTextColor(80);
+                doc.text(pct, 172.5, y+6, { align: 'center' });
             }
-            
-            y += h;
+            y += 12;
         };
 
-        drawRow('Total Revenue', 'Rs ' + tBill.toFixed(0), '100%', true);
-        drawRow('Cost of Goods Sold', '(Rs ' + tCost.toFixed(0) + ')', ((tCost/tBill)*100).toFixed(1) + '%');
-        drawRow('Gross Profit', 'Rs ' + tGross.toFixed(0), grossM.toFixed(1) + '%', true);
+        drawFlowRow('Total Revenue', tBill, '100%');
+        drawFlowRow('(-) Cost of Goods', tCost, ((tCost/tBill)*100).toFixed(1)+'%');
+        drawFlowRow('GROSS PROFIT', tGross, grossM.toFixed(1)+'%', true, cBlue);
         
-        y += 2; // Spacer
-        
-        drawRow('Operating Expenses', '(Rs ' + tExp.toFixed(0) + ')', ((tExp/tBill)*100).toFixed(1) + '%');
-        
-        // Net Profit Highlight
         y += 2;
-        doc.setFillColor(...(tNet >= 0 ? [230, 244, 234] : [252, 232, 230])); // Light Green or Red
-        doc.rect(15, y, 180, 10, 'F');
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        doc.setFont(undefined, 'bold');
-        doc.text("Net Profit", 20, y + 6.5);
-        doc.text('Rs ' + tNet.toFixed(0), 150, y + 6.5, { align: 'right' });
+        drawFlowRow('(-) Operating Expenses', tExp, ((tExp/tBill)*100).toFixed(1)+'%');
         
-        // Net Margin Pill
-        doc.setFillColor(...(tNet >= 0 ? colorGreen : colorRed));
-        doc.roundedRect(160, y+2.5, 25, 5, 2, 2, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
-        doc.text(netM.toFixed(1) + '%', 172.5, y + 6, { align: 'center' });
+        // Net Profit Highlight Box
+        doc.setFillColor(tNet>=0 ? 230:255, tNet>=0 ? 244:235, tNet>=0 ? 234:238); // Light Green or Red
+        doc.roundedRect(14, y-1, 182, 14, 2, 2, 'F');
+        doc.setFontSize(12); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        doc.text("NET PROFIT", 18, y+8);
+        doc.setTextColor(tNet>=0 ? 24:217, tNet>=0 ? 128:48, tNet>=0 ? 56:37);
+        doc.text('Rs ' + tNet.toLocaleString(), 150, y+8, { align: 'right' });
+        
+        // Net Margin Box
+        doc.setFillColor(tNet>=0 ? 24:217, tNet>=0 ? 128:48, tNet>=0 ? 56:37);
+        doc.roundedRect(160, y+3, 25, 7, 2, 2, 'F');
+        doc.setTextColor(255); doc.setFontSize(9);
+        doc.text(netM.toFixed(1)+'%', 172.5, y+7.5, { align: 'center' });
 
-        y += 20;
+        y += 25;
 
-        // ================= VISUAL BREAKDOWNS =================
-        const splitY = y;
+        // 4. EXPENSE COMPOSITION (Visual Bar)
+        doc.setFontSize(11); doc.setTextColor(0); doc.text("Expense Analysis", 14, y);
+        y += 10;
+
+        // Draw Stacked Bar
+        const barW = 180; const barH = 12;
+        let cx = 14;
+        const totalExp = expD.total || 1; // Avoid div by zero
         
-        // --- 1. Expense Breakdown (Clean List) ---
-        doc.setFontSize(11);
-        doc.setTextColor(0);
-        doc.text("Expense Composition", 15, y);
-        y += 8;
-        
-        const drawExpItem = (label, amount) => {
-            doc.setFillColor(240, 240, 240);
-            doc.rect(15, y, 85, 8, 'F');
-            doc.setFontSize(9);
-            doc.setTextColor(60, 60, 60);
-            doc.text(label, 20, y+5.5);
+        // Segments
+        const segs = [
+            { l: 'Wages', v: expD.wage, c: [66, 133, 244] }, // Blue
+            { l: 'Transport', v: expD.transport, c: [251, 188, 4] }, // Yellow
+            { l: 'Packing', v: expD.packing, c: [52, 168, 83] }, // Green
+            { l: 'Dump/Misc', v: expD.dump + expD.misc, c: [234, 67, 53] } // Red
+        ];
+
+        // Draw Bar
+        segs.forEach(s => {
+            const w = (s.v / totalExp) * barW;
+            if (w > 0) {
+                doc.setFillColor(...s.c);
+                doc.rect(cx, y, w, barH, 'F');
+                cx += w;
+            }
+        });
+        // Rounded Border Frame
+        doc.setDrawColor(200); doc.roundedRect(14, y, barW, barH, 2, 2, 'S');
+
+        y += 18;
+
+        // Legend Grid
+        segs.forEach((s, i) => {
+            const lx = 14 + (i * 45);
+            doc.setFillColor(...s.c);
+            doc.circle(lx+2, y-1, 2, 'F');
+            doc.setFontSize(8); doc.setTextColor(80);
+            doc.text(s.l, lx+6, y);
             doc.setFont(undefined, 'bold');
-            doc.text('Rs ' + amount.toFixed(0), 95, y+5.5, { align: 'right' });
-            doc.setFont(undefined, 'normal');
-            y += 9;
-        };
-
-        drawExpItem('Daily Wages', expD.wage);
-        drawExpItem('Transportation', expD.transport);
-        drawExpItem('Packing Charges', expD.packing);
-        drawExpItem('Dump / Wastage', expD.dump);
-        drawExpItem('Miscellaneous', expD.misc);
-
-        // --- 2. Performance Badge (Right Side) ---
-        // Draw a big circle badge
-        const badgeX = 150;
-        const badgeY = splitY + 25;
-        
-        doc.setDrawColor(...perfColor);
-        doc.setLineWidth(1.5);
-        doc.circle(badgeX, badgeY, 18, 'S');
-        
-        doc.setFontSize(8);
-        doc.setTextColor(100, 100, 100);
-        doc.text("PERFORMANCE", badgeX, badgeY - 5, { align: 'center' });
-        
-        doc.setFontSize(12);
-        doc.setTextColor(...perfColor);
-        doc.setFont(undefined, 'bold');
-        doc.text(perfText, badgeX, badgeY + 2, { align: 'center' });
+            doc.text('Rs '+s.v.toFixed(0), lx+6, y+4);
+        });
 
         // ================= FOOTER =================
         const pageHeight = doc.internal.pageSize.height;
-        doc.setDrawColor(230, 230, 230);
-        doc.line(15, pageHeight - 15, 195, pageHeight - 15);
-        
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text("Generated by Swiggy Ops Cloud | Internal Use Only", 105, pageHeight - 8, { align: 'center' });
+        doc.setDrawColor(230);
+        doc.line(14, pageHeight-15, 196, pageHeight-15);
+        doc.setFontSize(8); doc.setTextColor(150); doc.setFont(undefined, 'normal');
+        doc.text("Generated by Swiggy Ops Cloud | Confidential", 105, pageHeight-8, { align: 'center' });
 
-        doc.save(`Executive_Report_${rec.date}.pdf`);
+        doc.save(`Swiggy_Executive_Report_${rec.date}.pdf`);
     }
 
     // --- UTILS ---
