@@ -1504,12 +1504,13 @@
         
         // --- COLORS ---
         const cBlue = [26, 115, 232];
-        const cDark = [32, 33, 36];
         const cGreen = [24, 128, 56];
         const cRed = [217, 48, 37];
         const cOrange = [245, 124, 0];
-        const cGrey = [241, 243, 244];
-        
+        const cText = [60, 64, 67];
+        const cLightNode = [248, 249, 250];
+        const cBorder = [230, 230, 230];
+
         // --- DATA PREP ---
         const tBill = rec.totalBillAmt || rec.totalRev || 0;
         const tCost = rec.totalCost || 0;
@@ -1522,152 +1523,228 @@
         let expD = rec.expenseDetails;
         if (!expD) expD = calculateTotalExpense(rec.date, tBill, tCost);
 
-        // 1. HEADER (Dark Blue Bar)
-        doc.setFillColor(32, 33, 36); 
-        doc.rect(0, 0, 210, 24, 'F');
+        // --- PAGE CONFIG ---
+        const margin = 10;
+        const pageW = 210;
+        const contentW = pageW - (margin * 2);
         
-        doc.setFontSize(16); doc.setTextColor(255, 255, 255); doc.setFont(undefined, 'bold');
-        doc.text("EXECUTIVE SUMMARY", 14, 15);
+        // ================= 1. HEADER (Minimal & Centered) =================
+        let y = 15;
+        doc.setFontSize(14);
+        doc.setTextColor(20, 20, 20);
+        doc.setFont(undefined, 'bold');
+        doc.text("SWIGGY OPS REPORT", 105, y, { align: 'center' });
         
-        // Date Pill
-        doc.setFillColor(60, 64, 67);
-        doc.roundedRect(165, 8, 35, 8, 4, 4, 'F');
-        doc.setFontSize(9); doc.setFont(undefined, 'normal');
-        doc.text(displayDate, 182.5, 13, { align: 'center' });
+        y += 6;
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont(undefined, 'normal');
+        doc.text(displayDate, 105, y, { align: 'center' });
 
-        let y = 35;
+        y += 10;
 
-        // 2. SCORECARDS (Big Numbers)
-        const cards = [
+        // ================= 2. SCORECARDS (High Level) =================
+        const cardGap = 4;
+        const cardW = (contentW - (cardGap * 3)) / 4;
+        const cardH = 24;
+
+        const kpis = [
             { l: 'REVENUE', v: tBill, c: cBlue },
-            { l: 'COGS', v: tCost, c: [100,100,100] },
+            { l: 'COGS', v: tCost, c: [100, 100, 100] },
             { l: 'EXPENSES', v: tExp, c: cOrange },
-            { l: 'NET PROFIT', v: tNet, c: tNet>=0 ? cGreen : cRed }
+            { l: 'NET PROFIT', v: tNet, c: tNet >= 0 ? cGreen : cRed }
         ];
-        
-        const cw = 44; const ch = 24; const gap = 6;
-        cards.forEach((c, i) => {
-            const x = 12 + (i * (cw + gap));
-            doc.setFillColor(250, 250, 250);
-            doc.setDrawColor(230, 230, 230);
-            doc.roundedRect(x, y, cw, ch, 2, 2, 'FD');
-            
-            // Left Accent Bar
-            doc.setFillColor(...c.c);
-            doc.rect(x, y+2, 1.5, ch-4, 'F');
 
-            doc.setFontSize(8); doc.setTextColor(100); doc.setFont(undefined, 'bold');
-            doc.text(c.l, x+5, y+8);
+        kpis.forEach((k, i) => {
+            let x = margin + (i * (cardW + cardGap));
             
-            doc.setFontSize(14); doc.setTextColor(40);
-            doc.text('Rs ' + c.v.toLocaleString('en-IN', { maximumFractionDigits: 0 }), x+5, y+18);
+            doc.setDrawColor(...cBorder);
+            doc.setFillColor(255, 255, 255);
+            doc.roundedRect(x, y, cardW, cardH, 4, 4, 'FD');
+
+            doc.setFontSize(7);
+            doc.setTextColor(120, 120, 120);
+            doc.setFont(undefined, 'bold');
+            doc.text(k.l, x + (cardW/2), y + 8, { align: 'center' });
+
+            doc.setFontSize(12);
+            doc.setTextColor(...k.c);
+            doc.text('Rs ' + k.v.toLocaleString('en-IN', {maximumFractionDigits:0}), x + (cardW/2), y + 17, { align: 'center' });
         });
 
-        y += 35;
+        y += cardH + 8;
 
-        // 3. FINANCIAL FLOW (Waterfall Logic Visualized)
-        doc.setFontSize(11); doc.setTextColor(0); doc.setFont(undefined, 'bold');
-        doc.text("Financial Breakdown", 14, y);
-        y += 8;
+        // ================= 3. FINANCIAL & MARGIN BREAKDOWN (Split View) =================
+        const splitH = 85; // Reduced height for tighter look
+        const halfW = (contentW - 6) / 2;
 
-        const drawFlowRow = (label, val, pct, isTotal, color) => {
+        // --- LEFT PANEL: FINANCIAL FLOW ---
+        doc.setDrawColor(...cBorder);
+        doc.roundedRect(margin, y, halfW, splitH, 5, 5, 'S');
+
+        // Centered Header
+        doc.setFontSize(10); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        doc.text("Profitability Waterfall", margin + (halfW/2), y + 10, { align: 'center' });
+        
+        let fy = y + 20;
+
+        const drawRow = (label, val, pct, isTotal) => {
             if(isTotal) {
-                doc.setFillColor(248, 249, 250);
-                doc.rect(14, y-1, 182, 10, 'F');
+                doc.setFillColor(...cLightNode);
+                doc.roundedRect(margin + 3, fy - 3.5, halfW - 6, 9, 2, 2, 'F');
                 doc.setFont(undefined, 'bold');
             } else {
                 doc.setFont(undefined, 'normal');
             }
-            
-            doc.setFontSize(10); doc.setTextColor(60);
-            doc.text(label, 18, y+6);
-            
-            doc.setTextColor(...(color || [60,60,60]));
-            doc.text('Rs ' + val.toLocaleString(), 150, y+6, { align: 'right' });
-            
-            // Pct Pill
+
+            doc.setFontSize(9); doc.setTextColor(...cText);
+            doc.text(label, margin + 8, fy + 2);
+
+            doc.text('Rs ' + val.toLocaleString('en-IN'), margin + halfW - 22, fy + 2, {align:'right'});
+
             if(pct) {
-                doc.setFillColor(235, 235, 235);
-                doc.roundedRect(160, y+2, 25, 6, 2, 2, 'F');
-                doc.setFontSize(8); doc.setTextColor(80);
-                doc.text(pct, 172.5, y+6, { align: 'center' });
+                doc.setFontSize(7); doc.setTextColor(100);
+                doc.text(pct, margin + halfW - 8, fy + 2, {align:'right'});
             }
-            y += 12;
+            fy += 10; // Tighter row spacing (was 14)
         };
 
-        drawFlowRow('Total Revenue', tBill, '100%');
-        drawFlowRow('(-) Cost of Goods', tCost, ((tCost/tBill)*100).toFixed(1)+'%');
-        drawFlowRow('GROSS PROFIT', tGross, grossM.toFixed(1)+'%', true, cBlue);
+        drawRow("Bill Revenue", tBill, "100%");
+        drawRow("(-) Cost of Goods", tCost, ((tCost/tBill)*100).toFixed(0)+"%");
+        drawRow("= Gross Profit", tGross, grossM.toFixed(0)+"%", true);
         
-        y += 2;
-        drawFlowRow('(-) Operating Expenses', tExp, ((tExp/tBill)*100).toFixed(1)+'%');
+        fy += 3; // Small Spacer
         
-        // Net Profit Highlight Box
-        doc.setFillColor(tNet>=0 ? 230:255, tNet>=0 ? 244:235, tNet>=0 ? 234:238); // Light Green or Red
-        doc.roundedRect(14, y-1, 182, 14, 2, 2, 'F');
-        doc.setFontSize(12); doc.setTextColor(0); doc.setFont(undefined, 'bold');
-        doc.text("NET PROFIT", 18, y+8);
+        drawRow("(-) Total Expenses", tExp, ((tExp/tBill)*100).toFixed(0)+"%");
+        
+        // Net Profit Final Box
+        fy += 5;
+        doc.setFillColor(tNet>=0 ? 237:255, tNet>=0 ? 247:235, tNet>=0 ? 237:238);
+        doc.setDrawColor(tNet>=0 ? 24:217, tNet>=0 ? 128:48, tNet>=0 ? 56:37);
+        doc.roundedRect(margin + 5, fy - 4, halfW - 10, 14, 3, 3, 'FD');
+        
+        doc.setFontSize(11); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        doc.text("NET PROFIT", margin + 12, fy + 4);
         doc.setTextColor(tNet>=0 ? 24:217, tNet>=0 ? 128:48, tNet>=0 ? 56:37);
-        doc.text('Rs ' + tNet.toLocaleString(), 150, y+8, { align: 'right' });
+        doc.text('Rs ' + tNet.toLocaleString('en-IN'), margin + halfW - 30, fy + 4, {align:'right'});
         
-        // Net Margin Box
         doc.setFillColor(tNet>=0 ? 24:217, tNet>=0 ? 128:48, tNet>=0 ? 56:37);
-        doc.roundedRect(160, y+3, 25, 7, 2, 2, 'F');
-        doc.setTextColor(255); doc.setFontSize(9);
-        doc.text(netM.toFixed(1)+'%', 172.5, y+7.5, { align: 'center' });
+        doc.roundedRect(margin + halfW - 25, fy, 16, 5, 1.5, 1.5, 'F'); // Smaller Pill
+        doc.setTextColor(255); doc.setFontSize(7);
+        doc.text(netM.toFixed(1)+'%', margin + halfW - 17, fy + 3.5, {align:'center'});
 
-        y += 25;
+        // --- RIGHT PANEL: MARGIN ANALYSIS ---
+        const rx = margin + halfW + 6;
+        doc.setDrawColor(...cBorder);
+        doc.roundedRect(rx, y, halfW, splitH, 5, 5, 'S');
 
-        // 4. EXPENSE COMPOSITION (Visual Bar)
-        doc.setFontSize(11); doc.setTextColor(0); doc.text("Expense Analysis", 14, y);
-        y += 10;
+        // Centered Header
+        doc.setFontSize(10); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        doc.text("Margin Distribution", rx + (halfW/2), y + 10, { align: 'center' });
 
-        // Draw Stacked Bar
-        const barW = 180; const barH = 12;
-        let cx = 14;
-        const totalExp = expD.total || 1; // Avoid div by zero
+        let my = y + 20;
         
-        // Segments
+        // Header Row for Right Panel
+        doc.setFillColor(...cLightNode);
+        doc.rect(rx + 2, my - 5, halfW - 4, 8, 'F');
+        doc.setFontSize(7); doc.setTextColor(100);
+        doc.text("CATEGORY", rx + 6, my);
+        doc.text("COUNT", rx + 50, my, {align:'right'});
+        doc.text("SALES", rx + halfW - 8, my, {align:'right'});
+        my += 10;
+
+        const buckets = [
+            { l: 'Loss (<0%)', c: 0, v: 0, col: cRed },
+            { l: 'Low (0-10%)', c: 0, v: 0, col: cOrange },
+            { l: 'Mid (10-20%)', c: 0, v: 0, col: [251, 188, 4] },
+            { l: 'Good (20-50%)', c: 0, v: 0, col: cBlue },
+            { l: 'High (>50%)', c: 0, v: 0, col: cGreen }
+        ];
+
+        rec.items.forEach(i => {
+            const m = i.marginPct;
+            const s = i.poRate * i.qty;
+            if (m < 0) { buckets[0].c++; buckets[0].v += s; }
+            else if (m < 10) { buckets[1].c++; buckets[1].v += s; }
+            else if (m < 20) { buckets[2].c++; buckets[2].v += s; }
+            else if (m < 50) { buckets[3].c++; buckets[3].v += s; }
+            else { buckets[4].c++; buckets[4].v += s; }
+        });
+
+        buckets.forEach(b => {
+            // Pill
+            doc.setFillColor(...b.col);
+            doc.roundedRect(rx + 6, my - 3.5, 26, 6, 2, 2, 'F');
+            doc.setTextColor(255); doc.setFontSize(7); doc.setFont(undefined, 'bold');
+            doc.text(b.l, rx + 19, my + 0.5, {align:'center'});
+
+            // Data
+            doc.setTextColor(60); doc.setFontSize(9); doc.setFont(undefined, 'normal');
+            doc.text(b.c.toString(), rx + 50, my + 0.5, {align:'right'});
+            doc.text('Rs ' + b.v.toFixed(0), rx + halfW - 8, my + 0.5, {align:'right'});
+
+            my += 9.5; // Slightly tighter spacing
+        });
+
+        y += splitH + 8;
+
+        // ================= 4. EXPENSE BREAKDOWN =================
+        const expH = 45;
+        doc.setDrawColor(...cBorder);
+        doc.roundedRect(margin, y, contentW, expH, 5, 5, 'S');
+
+        doc.setFontSize(10); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        doc.text("Expense Composition", margin + 6, y + 10);
+
+        let by = y + 18;
+        const totalExp = expD.total || 1;
+        
         const segs = [
-            { l: 'Wages', v: expD.wage, c: [66, 133, 244] }, // Blue
-            { l: 'Transport', v: expD.transport, c: [251, 188, 4] }, // Yellow
-            { l: 'Packing', v: expD.packing, c: [52, 168, 83] }, // Green
-            { l: 'Dump/Misc', v: expD.dump + expD.misc, c: [234, 67, 53] } // Red
+            { l: 'Wages', v: expD.wage, c: [66, 133, 244] }, 
+            { l: 'Transport', v: expD.transport, c: [251, 188, 4] },
+            { l: 'Packing', v: expD.packing, c: [52, 168, 83] }, 
+            { l: 'Dump/Misc', v: expD.dump + expD.misc, c: [234, 67, 53] } 
         ];
 
         // Draw Bar
+        let bx = margin + 10;
+        const barW = contentW - 20;
+        const barH = 10;
+
         segs.forEach(s => {
             const w = (s.v / totalExp) * barW;
             if (w > 0) {
                 doc.setFillColor(...s.c);
-                doc.rect(cx, y, w, barH, 'F');
-                cx += w;
+                doc.rect(bx, by, w, barH, 'F');
+                if(w > 12) {
+                    doc.setTextColor(255); doc.setFontSize(7);
+                    doc.text(s.v.toFixed(0), bx + (w/2), by + 6.5, {align:'center'});
+                }
+                bx += w;
             }
         });
-        // Rounded Border Frame
-        doc.setDrawColor(200); doc.roundedRect(14, y, barW, barH, 2, 2, 'S');
+        
+        doc.setDrawColor(200); doc.roundedRect(margin + 10, by, barW, barH, 2, 2, 'S');
 
-        y += 18;
-
-        // Legend Grid
-        segs.forEach((s, i) => {
-            const lx = 14 + (i * 45);
+        // Legend
+        let lx = margin + 10;
+        let ly = by + 18;
+        segs.forEach(s => {
             doc.setFillColor(...s.c);
-            doc.circle(lx+2, y-1, 2, 'F');
-            doc.setFontSize(8); doc.setTextColor(80);
-            doc.text(s.l, lx+6, y);
-            doc.setFont(undefined, 'bold');
-            doc.text('Rs '+s.v.toFixed(0), lx+6, y+4);
+            doc.circle(lx, ly, 2, 'F');
+            doc.setTextColor(80); doc.setFontSize(8);
+            doc.text(`${s.l}`, lx + 4, ly + 1);
+            lx += 45;
         });
 
         // ================= FOOTER =================
         const pageHeight = doc.internal.pageSize.height;
-        doc.setDrawColor(230);
-        doc.line(14, pageHeight-15, 196, pageHeight-15);
-        doc.setFontSize(8); doc.setTextColor(150); doc.setFont(undefined, 'normal');
-        doc.text("Generated by Swiggy Ops Cloud | Confidential", 105, pageHeight-8, { align: 'center' });
+        doc.setDrawColor(240);
+        doc.line(margin, pageHeight - 12, pageW - margin, pageHeight - 12);
+        doc.setFontSize(7); doc.setTextColor(180);
+        doc.text("Generated by Swiggy Ops Cloud | Internal Use Only", 105, pageHeight - 7, { align: 'center' });
 
-        doc.save(`Swiggy_Executive_Report_${rec.date}.pdf`);
+        doc.save(`Swiggy_Report_${rec.date}.pdf`);
     }
 
     // --- UTILS ---
