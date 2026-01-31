@@ -1503,13 +1503,18 @@
         const displayDate = formatDate(rec.date);
         
         // --- COLORS ---
-        const cBlue = [26, 115, 232];
-        const cGreen = [24, 128, 56];
-        const cRed = [217, 48, 37];
-        const cOrange = [245, 124, 0];
-        const cText = [60, 64, 67];
-        const cLightNode = [248, 249, 250];
-        const cBorder = [230, 230, 230];
+        const c = {
+            blue: [26, 115, 232],
+            green: [24, 128, 56],
+            red: [217, 48, 37],
+            orange: [230, 81, 0],
+            yellow: [249, 171, 0],
+            textMain: [32, 33, 36],
+            textLight: [95, 99, 104],
+            bgLight: [248, 250, 252],
+            border: [218, 220, 224],
+            white: [255, 255, 255]
+        };
 
         // --- DATA PREP ---
         const tBill = rec.totalBillAmt || rec.totalRev || 0;
@@ -1523,182 +1528,170 @@
         let expD = rec.expenseDetails;
         if (!expD) expD = calculateTotalExpense(rec.date, tBill, tCost);
 
-        // --- PAGE CONFIG ---
-        const margin = 10;
+        // --- HELPERS ---
+        const fmt = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+        const margin = 12;
         const pageW = 210;
         const contentW = pageW - (margin * 2);
+
+        // ================= 1. HEADER =================
+        let y = 18;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(...c.textMain);
+        doc.text("SWIGGY REPORT", 105, y, { align: 'center' });
         
-        // ================= 1. HEADER (Minimal & Centered) =================
-        let y = 15;
-        doc.setFontSize(14);
-        doc.setTextColor(20, 20, 20);
-        doc.setFont(undefined, 'bold');
-        doc.text("SWIGGY OPS REPORT", 105, y, { align: 'center' });
-        
-        y += 6;
-        doc.setFontSize(9);
-        doc.setTextColor(100, 100, 100);
-        doc.setFont(undefined, 'normal');
+        y += 7;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(...c.textLight);
         doc.text(displayDate, 105, y, { align: 'center' });
+        y += 15;
 
-        y += 10;
-
-        // ================= 2. SCORECARDS (High Level) =================
-        const cardGap = 4;
+        // ================= 2. KPI SCORECARDS =================
+        const cardGap = 5;
         const cardW = (contentW - (cardGap * 3)) / 4;
-        const cardH = 24;
-
+        const cardH = 28;
         const kpis = [
-            { l: 'REVENUE', v: tBill, c: cBlue },
-            { l: 'COGS', v: tCost, c: [100, 100, 100] },
-            { l: 'EXPENSES', v: tExp, c: cOrange },
-            { l: 'NET PROFIT', v: tNet, c: tNet >= 0 ? cGreen : cRed }
+            { l: 'REVENUE', v: tBill, c: c.blue },
+            { l: 'COGS', v: tCost, c: [100,100,100] },
+            { l: 'EXPENSES', v: tExp, c: c.orange },
+            { l: 'NET PROFIT', v: tNet, c: tNet >= 0 ? c.green : c.red }
         ];
 
         kpis.forEach((k, i) => {
             let x = margin + (i * (cardW + cardGap));
-            
-            doc.setDrawColor(...cBorder);
-            doc.setFillColor(255, 255, 255);
-            doc.roundedRect(x, y, cardW, cardH, 4, 4, 'FD');
-
-            doc.setFontSize(7);
-            doc.setTextColor(120, 120, 120);
-            doc.setFont(undefined, 'bold');
-            doc.text(k.l, x + (cardW/2), y + 8, { align: 'center' });
-
-            doc.setFontSize(12);
-            doc.setTextColor(...k.c);
-            doc.text('Rs ' + k.v.toLocaleString('en-IN', {maximumFractionDigits:0}), x + (cardW/2), y + 17, { align: 'center' });
+            doc.setFillColor(240, 240, 240);
+            doc.roundedRect(x+1, y+1, cardW, cardH, 3, 3, 'F');
+            doc.setFillColor(...c.white);
+            doc.setDrawColor(...c.border);
+            doc.setLineWidth(0.1);
+            doc.roundedRect(x, y, cardW, cardH, 3, 3, 'FD');
+            doc.setFillColor(...k.c);
+            doc.rect(x+2, y+2, cardW-4, 1.5, 'F');
+            doc.setFontSize(8); doc.setTextColor(...c.textLight); doc.setFont("helvetica", "bold");
+            doc.text(k.l, x + (cardW/2), y + 10, { align: 'center' });
+            doc.setFontSize(14); doc.setTextColor(...c.textMain);
+            doc.text('Rs ' + fmt(k.v), x + (cardW/2), y + 20, { align: 'center' });
         });
+        y += cardH + 12;
 
-        y += cardH + 8;
-
-        // ================= 3. FINANCIAL & MARGIN BREAKDOWN (Split View) =================
-        const splitH = 85; // Reduced height for tighter look
+        // ================= 3. SPLIT SECTION =================
+        const splitH = 80;
         const halfW = (contentW - 6) / 2;
 
-        // --- LEFT PANEL: FINANCIAL FLOW ---
-        doc.setDrawColor(...cBorder);
-        doc.roundedRect(margin, y, halfW, splitH, 5, 5, 'S');
-
-        // Centered Header
-        doc.setFontSize(10); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        // --- LEFT: WATERFALL ---
+        doc.setDrawColor(...c.border);
+        doc.roundedRect(margin, y, halfW, splitH, 4, 4, 'S');
+        doc.setFontSize(11); doc.setTextColor(0); 
         doc.text("Profitability Waterfall", margin + (halfW/2), y + 10, { align: 'center' });
         
         let fy = y + 20;
-
-        const drawRow = (label, val, pct, isTotal) => {
-            if(isTotal) {
-                doc.setFillColor(...cLightNode);
+        const drawFlow = (label, val, pct, type) => {
+            if(type === 'main') {
+                doc.setFillColor(...c.bgLight);
                 doc.roundedRect(margin + 3, fy - 3.5, halfW - 6, 9, 2, 2, 'F');
-                doc.setFont(undefined, 'bold');
+                doc.setFont("helvetica", "bold");
             } else {
-                doc.setFont(undefined, 'normal');
+                doc.setFont("helvetica", "normal");
             }
-
-            doc.setFontSize(9); doc.setTextColor(...cText);
+            doc.setFontSize(9); doc.setTextColor(...c.textMain);
             doc.text(label, margin + 8, fy + 2);
-
-            doc.text('Rs ' + val.toLocaleString('en-IN'), margin + halfW - 22, fy + 2, {align:'right'});
-
+            doc.text('Rs ' + fmt(val), margin + halfW - 22, fy + 2, {align:'right'});
             if(pct) {
-                doc.setFontSize(7); doc.setTextColor(100);
+                doc.setFontSize(7); doc.setTextColor(...c.textLight);
                 doc.text(pct, margin + halfW - 8, fy + 2, {align:'right'});
             }
-            fy += 10; // Tighter row spacing (was 14)
+            fy += 10;
         };
 
-        drawRow("Bill Revenue", tBill, "100%");
-        drawRow("(-) Cost of Goods", tCost, ((tCost/tBill)*100).toFixed(0)+"%");
-        drawRow("= Gross Profit", tGross, grossM.toFixed(0)+"%", true);
+        drawFlow("Revenue", tBill, "100%");
+        drawFlow("(-) Cost", tCost, ((tCost/tBill)*100).toFixed(0)+"%");
+        drawFlow("= Gross Profit", tGross, grossM.toFixed(0)+"%", 'main');
+        fy += 4;
+        drawFlow("(-) Expenses", tExp, ((tExp/tBill)*100).toFixed(0)+"%");
         
-        fy += 3; // Small Spacer
-        
-        drawRow("(-) Total Expenses", tExp, ((tExp/tBill)*100).toFixed(0)+"%");
-        
-        // Net Profit Final Box
-        fy += 5;
-        doc.setFillColor(tNet>=0 ? 237:255, tNet>=0 ? 247:235, tNet>=0 ? 237:238);
-        doc.setDrawColor(tNet>=0 ? 24:217, tNet>=0 ? 128:48, tNet>=0 ? 56:37);
-        doc.roundedRect(margin + 5, fy - 4, halfW - 10, 14, 3, 3, 'FD');
-        
-        doc.setFontSize(11); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        // Net Profit Box
+        fy += 4;
+        const netCol = tNet>=0 ? c.green : c.red;
+        const netBg = tNet>=0 ? [230, 244, 234] : [252, 232, 230];
+        doc.setFillColor(...netBg);
+        doc.setDrawColor(...netCol);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(margin + 5, fy - 4, halfW - 10, 12, 2, 2, 'FD');
+        doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(0);
         doc.text("NET PROFIT", margin + 12, fy + 4);
-        doc.setTextColor(tNet>=0 ? 24:217, tNet>=0 ? 128:48, tNet>=0 ? 56:37);
-        doc.text('Rs ' + tNet.toLocaleString('en-IN'), margin + halfW - 30, fy + 4, {align:'right'});
-        
-        doc.setFillColor(tNet>=0 ? 24:217, tNet>=0 ? 128:48, tNet>=0 ? 56:37);
-        doc.roundedRect(margin + halfW - 25, fy, 16, 5, 1.5, 1.5, 'F'); // Smaller Pill
+        doc.setTextColor(...netCol);
+        doc.text('Rs ' + fmt(tNet), margin + halfW - 32, fy + 4, {align:'right'});
+        doc.setFillColor(...netCol);
+        doc.roundedRect(margin + halfW - 27, fy, 16, 5, 1.5, 1.5, 'F');
         doc.setTextColor(255); doc.setFontSize(7);
-        doc.text(netM.toFixed(1)+'%', margin + halfW - 17, fy + 3.5, {align:'center'});
+        doc.text(netM.toFixed(1)+'%', margin + halfW - 19, fy + 3.5, {align:'center'});
 
-        // --- RIGHT PANEL: MARGIN ANALYSIS ---
+        // --- RIGHT: MARGIN DISTRIBUTION ---
         const rx = margin + halfW + 6;
-        doc.setDrawColor(...cBorder);
-        doc.roundedRect(rx, y, halfW, splitH, 5, 5, 'S');
-
-        // Centered Header
-        doc.setFontSize(10); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        doc.setDrawColor(...c.border);
+        doc.roundedRect(rx, y, halfW, splitH, 4, 4, 'S');
+        doc.setFontSize(11); doc.setTextColor(0); doc.setFont("helvetica", "bold");
         doc.text("Margin Distribution", rx + (halfW/2), y + 10, { align: 'center' });
 
         let my = y + 20;
-        
-        // Header Row for Right Panel
-        doc.setFillColor(...cLightNode);
+        doc.setFillColor(...c.bgLight);
         doc.rect(rx + 2, my - 5, halfW - 4, 8, 'F');
-        doc.setFontSize(7); doc.setTextColor(100);
+        doc.setFontSize(7); doc.setTextColor(...c.textLight); doc.setFont("helvetica", "bold");
         doc.text("CATEGORY", rx + 6, my);
-        doc.text("COUNT", rx + 50, my, {align:'right'});
-        doc.text("SALES", rx + halfW - 8, my, {align:'right'});
+        doc.text("#", rx + 42, my, {align:'right'}); // Adjusted X
+        doc.text("SALES", rx + 62, my, {align:'right'}); // Adjusted X
+        doc.text("PROFIT", rx + halfW - 6, my, {align:'right'});
         my += 10;
 
         const buckets = [
-            { l: 'Loss (<0%)', c: 0, v: 0, col: cRed },
-            { l: 'Low (0-10%)', c: 0, v: 0, col: cOrange },
-            { l: 'Mid (10-20%)', c: 0, v: 0, col: [251, 188, 4] },
-            { l: 'Good (20-50%)', c: 0, v: 0, col: cBlue },
-            { l: 'High (>50%)', c: 0, v: 0, col: cGreen }
+            { l: 'Loss (<0%)', c: 0, s: 0, p: 0, col: c.red },
+            { l: 'Low (0-10%)', c: 0, s: 0, p: 0, col: c.orange },
+            { l: 'Mid (10-20%)', c: 0, s: 0, p: 0, col: c.yellow },
+            { l: 'Good (20-50%)', c: 0, s: 0, p: 0, col: c.blue },
+            { l: 'High (>50%)', c: 0, s: 0, p: 0, col: c.green }
         ];
 
         rec.items.forEach(i => {
             const m = i.marginPct;
             const s = i.poRate * i.qty;
-            if (m < 0) { buckets[0].c++; buckets[0].v += s; }
-            else if (m < 10) { buckets[1].c++; buckets[1].v += s; }
-            else if (m < 20) { buckets[2].c++; buckets[2].v += s; }
-            else if (m < 50) { buckets[3].c++; buckets[3].v += s; }
-            else { buckets[4].c++; buckets[4].v += s; }
+            const p = i.profit;
+            let idx = 4;
+            if (m < 0) idx = 0; else if (m < 10) idx = 1; else if (m < 20) idx = 2; else if (m < 50) idx = 3;
+            buckets[idx].c++; buckets[idx].s += s; buckets[idx].p += p;
         });
 
         buckets.forEach(b => {
-            // Pill
+            // Pill with full label including %
             doc.setFillColor(...b.col);
-            doc.roundedRect(rx + 6, my - 3.5, 26, 6, 2, 2, 'F');
-            doc.setTextColor(255); doc.setFontSize(7); doc.setFont(undefined, 'bold');
+            doc.roundedRect(rx + 6, my - 3, 26, 5, 1.5, 1.5, 'F');
+            doc.setTextColor(255); doc.setFontSize(6); doc.setFont("helvetica", "bold");
+            // Show first word + range (e.g. "Low 0-10%")
+            let label = b.l.replace("(", "\n("); // Optional splitting if needed, but fitting is better
+            // Just use the label directly, adjusting font size if long
+            if(b.l.length > 12) doc.setFontSize(5); 
             doc.text(b.l, rx + 19, my + 0.5, {align:'center'});
 
             // Data
-            doc.setTextColor(60); doc.setFontSize(9); doc.setFont(undefined, 'normal');
-            doc.text(b.c.toString(), rx + 50, my + 0.5, {align:'right'});
-            doc.text('Rs ' + b.v.toFixed(0), rx + halfW - 8, my + 0.5, {align:'right'});
-
-            my += 9.5; // Slightly tighter spacing
+            doc.setTextColor(...c.textMain); doc.setFontSize(8); doc.setFont("helvetica", "normal");
+            doc.text(b.c.toString(), rx + 42, my + 0.5, {align:'right'});
+            doc.text(fmt(b.s), rx + 62, my + 0.5, {align:'right'});
+            if(b.p < 0) doc.setTextColor(...c.red); else doc.setTextColor(...c.green);
+            doc.text(fmt(b.p), rx + halfW - 6, my + 0.5, {align:'right'});
+            my += 9;
         });
 
         y += splitH + 8;
 
-        // ================= 4. EXPENSE BREAKDOWN =================
-        const expH = 45;
-        doc.setDrawColor(...cBorder);
-        doc.roundedRect(margin, y, contentW, expH, 5, 5, 'S');
+        // ================= 4. EXPENSE BAR =================
+        const expH = 36;
+        doc.setDrawColor(...c.border);
+        doc.roundedRect(margin, y, contentW, expH, 4, 4, 'S');
+        doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "bold");
+        doc.text("Expense Composition", margin + 6, y + 8);
 
-        doc.setFontSize(10); doc.setTextColor(0); doc.setFont(undefined, 'bold');
-        doc.text("Expense Composition", margin + 6, y + 10);
-
-        let by = y + 18;
-        const totalExp = expD.total || 1;
-        
+        const totalExpReal = expD.total || 1;
         const segs = [
             { l: 'Wages', v: expD.wage, c: [66, 133, 244] }, 
             { l: 'Transport', v: expD.transport, c: [251, 188, 4] },
@@ -1706,46 +1699,103 @@
             { l: 'Dump/Misc', v: expD.dump + expD.misc, c: [234, 67, 53] } 
         ];
 
-        // Draw Bar
         let bx = margin + 10;
+        let by = y + 14;
         const barW = contentW - 20;
-        const barH = 10;
 
         segs.forEach(s => {
-            const w = (s.v / totalExp) * barW;
+            const w = (s.v / totalExpReal) * barW;
             if (w > 0) {
                 doc.setFillColor(...s.c);
-                doc.rect(bx, by, w, barH, 'F');
+                doc.rect(bx, by, w, 8, 'F');
                 if(w > 12) {
                     doc.setTextColor(255); doc.setFontSize(7);
-                    doc.text(s.v.toFixed(0), bx + (w/2), by + 6.5, {align:'center'});
+                    doc.text(fmt(s.v).replace('Rs ', ''), bx + (w/2), by + 5.5, {align:'center'});
                 }
                 bx += w;
             }
         });
         
-        doc.setDrawColor(200); doc.roundedRect(margin + 10, by, barW, barH, 2, 2, 'S');
+        doc.setDrawColor(200); doc.rect(margin + 10, by, barW, 8, 'S');
 
-        // Legend
         let lx = margin + 10;
-        let ly = by + 18;
+        let ly = by + 16;
         segs.forEach(s => {
-            doc.setFillColor(...s.c);
-            doc.circle(lx, ly, 2, 'F');
-            doc.setTextColor(80); doc.setFontSize(8);
-            doc.text(`${s.l}`, lx + 4, ly + 1);
-            lx += 45;
+            if(s.v > 0) {
+                doc.setFillColor(...s.c);
+                doc.circle(lx, ly-1, 2, 'F');
+                doc.setFontSize(8); doc.setTextColor(...c.textLight);
+                doc.text(`${s.l}`, lx + 4, ly);
+                lx += 35;
+            }
         });
 
+        y += expH + 10;
+
+        // ================= 5. ITEM LISTS =================
+        const footerH = 15;
+        const remainingH = 297 - y - footerH - margin; 
+        
+        const lossItems = rec.items.filter(i => i.marginPct < 0).sort((a,b) => a.profit - b.profit); 
+        const lowItems = rec.items.filter(i => i.marginPct >= 0 && i.marginPct < 10).sort((a,b) => a.marginPct - b.marginPct);
+        const midItems = rec.items.filter(i => i.marginPct >= 10 && i.marginPct < 20).sort((a,b) => a.marginPct - b.marginPct);
+
+        const colGap = 5;
+        const colWidth = (contentW - (colGap*2)) / 3;
+
+        const drawList = (title, items, x, color) => {
+            doc.setFillColor(...color);
+            doc.roundedRect(x, y, colWidth, 8, 2, 2, 'F');
+            doc.setTextColor(255); doc.setFontSize(9); doc.setFont("helvetica", "bold");
+            doc.text(title, x + (colWidth/2), y + 5.5, {align:'center'});
+            
+            doc.setDrawColor(...c.border);
+            doc.rect(x, y+8, colWidth, remainingH);
+
+            let ly = y + 14;
+            const rowH = 6;
+            const maxItems = Math.floor((remainingH - 8) / rowH);
+            
+            items.slice(0, maxItems).forEach((item, idx) => {
+                if(idx % 2 === 0) {
+                    doc.setFillColor(...c.bgLight);
+                    doc.rect(x+0.5, ly-4, colWidth-1, 6, 'F');
+                }
+                doc.setTextColor(...c.textMain); doc.setFontSize(8); doc.setFont("helvetica", "normal");
+                let name = item.name;
+                if(name.length > 15) name = name.substring(0, 13) + '..';
+                doc.text(name, x + 3, ly);
+                
+                doc.setFont("helvetica", "bold");
+                if(title.includes("LOSS")) doc.setTextColor(...c.red);
+                else doc.setTextColor(0, 100, 0);
+                
+                doc.text('Rs ' + fmt(item.profit).replace('Rs ',''), x + colWidth - 3, ly, {align:'right'});
+                ly += rowH;
+            });
+            
+            if(items.length === 0) {
+                doc.setTextColor(...c.textLight); doc.setFontSize(8); doc.setFont("helvetica", "italic");
+                doc.text("No items", x + (colWidth/2), y + 20, {align:'center'});
+            }
+        };
+
+        drawList("TOP LOSS MAKERS", lossItems, margin, c.red);
+        drawList("LOW MARGIN (0-10%)", lowItems, margin + colWidth + colGap, c.orange);
+        drawList("MID MARGIN (10-20%)", midItems, margin + (colWidth*2) + (colGap*2), c.yellow);
+
         // ================= FOOTER =================
-        const pageHeight = doc.internal.pageSize.height;
-        doc.setDrawColor(240);
-        doc.line(margin, pageHeight - 12, pageW - margin, pageHeight - 12);
-        doc.setFontSize(7); doc.setTextColor(180);
-        doc.text("Generated by Swiggy Ops Cloud | Internal Use Only", 105, pageHeight - 7, { align: 'center' });
+        const footerY = 297 - footerH;
+        doc.setFillColor(...c.footerBg);
+        doc.rect(0, footerY, pageW, footerH, 'F');
+        doc.setDrawColor(200);
+        doc.line(0, footerY, pageW, footerY);
+        doc.setFontSize(8); doc.setTextColor(150); doc.setFont("helvetica", "normal");
+        doc.text("Generated by Swiggy Ops Cloud | Internal Use Only", 105, footerY + 9, { align: 'center' });
 
         doc.save(`Swiggy_Report_${rec.date}.pdf`);
     }
+
 
     // --- UTILS ---
     function formatDate(dateString) {
