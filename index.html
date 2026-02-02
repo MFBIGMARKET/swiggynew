@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swiggy Ops Suite</title>
+    <title>Swiggy Reports</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -276,7 +276,7 @@
 <header>
     <div class="brand">
         <span class="material-icons" style="color:var(--primary)">cloud_queue</span>
-        <span>Swiggy<strong>Ops</strong> Cloud</span>
+        <span>Swiggy<strong> Reports</strong></span>
     </div>
     <div style="display:flex; gap:10px;">
         <button class="btn btn-icon" onclick="toggleSettings()" title="Clear Data"><span class="material-icons">delete_sweep</span></button>
@@ -1513,7 +1513,9 @@
             textLight: [95, 99, 104],
             bgLight: [248, 250, 252],
             border: [218, 220, 224],
-            white: [255, 255, 255]
+            white: [255, 255, 255],
+            footerBg: [241, 243, 244],
+            borderDark: [0, 0, 0]
         };
 
         // --- DATA PREP ---
@@ -1524,6 +1526,7 @@
         const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
         const grossM = tBill > 0 ? (rec.profit/tBill)*100 : 0;
         const netM = tBill > 0 ? (tNet/tBill)*100 : 0;
+        const tIndent = rec.totalIndentAmt || 0;
         
         let expD = rec.expenseDetails;
         if (!expD) expD = calculateTotalExpense(rec.date, tBill, tCost);
@@ -1532,6 +1535,7 @@
         const fmt = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
         const margin = 12;
         const pageW = 210;
+        const pageH = 297;
         const contentW = pageW - (margin * 2);
 
         // ================= 1. HEADER =================
@@ -1549,58 +1553,68 @@
         y += 15;
 
         // ================= 2. KPI SCORECARDS =================
-        const cardGap = 5;
-        const cardW = (contentW - (cardGap * 3)) / 4;
+        const cardGap = 3;
+        const cardW = (contentW - (cardGap * 4)) / 5;
         const cardH = 28;
+
         const kpis = [
+            { l: 'INDENT AMT', v: tIndent, c: [100, 100, 100] },
             { l: 'REVENUE', v: tBill, c: c.blue },
-            { l: 'COGS', v: tCost, c: [100,100,100] },
+            { l: 'COGS', v: tCost, c: [60, 60, 60] },
             { l: 'EXPENSES', v: tExp, c: c.orange },
             { l: 'NET PROFIT', v: tNet, c: tNet >= 0 ? c.green : c.red }
         ];
 
         kpis.forEach((k, i) => {
             let x = margin + (i * (cardW + cardGap));
-            doc.setFillColor(240, 240, 240);
-            doc.roundedRect(x+1, y+1, cardW, cardH, 3, 3, 'F');
+            // Shadow
+            doc.setFillColor(230, 230, 230);
+            doc.roundedRect(x+1, y+1, cardW, cardH, 2, 2, 'F');
+            // Card
+            doc.setDrawColor(...c.borderDark);
+            doc.setLineWidth(0.3);
             doc.setFillColor(...c.white);
-            doc.setDrawColor(...c.border);
-            doc.setLineWidth(0.1);
-            doc.roundedRect(x, y, cardW, cardH, 3, 3, 'FD');
+            doc.roundedRect(x, y, cardW, cardH, 2, 2, 'FD');
+            // Accent
             doc.setFillColor(...k.c);
             doc.rect(x+2, y+2, cardW-4, 1.5, 'F');
-            doc.setFontSize(8); doc.setTextColor(...c.textLight); doc.setFont("helvetica", "bold");
+            // Text
+            doc.setFontSize(7); doc.setTextColor(...c.textLight); doc.setFont("helvetica", "bold");
             doc.text(k.l, x + (cardW/2), y + 10, { align: 'center' });
-            doc.setFontSize(14); doc.setTextColor(...c.textMain);
+            doc.setFontSize(13); doc.setTextColor(...c.textMain);
             doc.text('Rs ' + fmt(k.v), x + (cardW/2), y + 20, { align: 'center' });
         });
         y += cardH + 12;
 
         // ================= 3. SPLIT SECTION =================
         const splitH = 80;
-        const halfW = (contentW - 6) / 2;
+        // REDUCED WATERFALL WIDTH slightly to give Margin Distribution more space
+        const leftW = (contentW * 0.45); 
+        const rightW = (contentW * 0.53); 
+        const gap = contentW - leftW - rightW;
 
         // --- LEFT: WATERFALL ---
-        doc.setDrawColor(...c.border);
-        doc.roundedRect(margin, y, halfW, splitH, 4, 4, 'S');
+        doc.setDrawColor(...c.borderDark);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(margin, y, leftW, splitH, 4, 4, 'S');
         doc.setFontSize(11); doc.setTextColor(0); 
-        doc.text("Profitability Waterfall", margin + (halfW/2), y + 10, { align: 'center' });
+        doc.text("Profitability Waterfall", margin + (leftW/2), y + 10, { align: 'center' });
         
         let fy = y + 20;
         const drawFlow = (label, val, pct, type) => {
             if(type === 'main') {
                 doc.setFillColor(...c.bgLight);
-                doc.roundedRect(margin + 3, fy - 3.5, halfW - 6, 9, 2, 2, 'F');
+                doc.roundedRect(margin + 3, fy - 3.5, leftW - 6, 9, 2, 2, 'F');
                 doc.setFont("helvetica", "bold");
             } else {
                 doc.setFont("helvetica", "normal");
             }
             doc.setFontSize(9); doc.setTextColor(...c.textMain);
-            doc.text(label, margin + 8, fy + 2);
-            doc.text('Rs ' + fmt(val), margin + halfW - 22, fy + 2, {align:'right'});
+            doc.text(label, margin + 6, fy + 2);
+            doc.text('Rs ' + fmt(val), margin + leftW - 20, fy + 2, {align:'right'});
             if(pct) {
                 doc.setFontSize(7); doc.setTextColor(...c.textLight);
-                doc.text(pct, margin + halfW - 8, fy + 2, {align:'right'});
+                doc.text(pct, margin + leftW - 8, fy + 2, {align:'right'});
             }
             fy += 10;
         };
@@ -1611,38 +1625,42 @@
         fy += 4;
         drawFlow("(-) Expenses", tExp, ((tExp/tBill)*100).toFixed(0)+"%");
         
-        // Net Profit Box
         fy += 4;
         const netCol = tNet>=0 ? c.green : c.red;
         const netBg = tNet>=0 ? [230, 244, 234] : [252, 232, 230];
         doc.setFillColor(...netBg);
         doc.setDrawColor(...netCol);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(margin + 5, fy - 4, halfW - 10, 12, 2, 2, 'FD');
-        doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(0);
-        doc.text("NET PROFIT", margin + 12, fy + 4);
+        doc.setLineWidth(0.4);
+        doc.roundedRect(margin + 5, fy - 4, leftW - 10, 12, 2, 2, 'FD');
+        doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0);
+        doc.text("NET PROFIT", margin + 10, fy + 4);
         doc.setTextColor(...netCol);
-        doc.text('Rs ' + fmt(tNet), margin + halfW - 32, fy + 4, {align:'right'});
+        doc.text('Rs ' + fmt(tNet), margin + leftW - 28, fy + 4, {align:'right'});
         doc.setFillColor(...netCol);
-        doc.roundedRect(margin + halfW - 27, fy, 16, 5, 1.5, 1.5, 'F');
+        doc.roundedRect(margin + leftW - 24, fy, 14, 5, 1.5, 1.5, 'F');
         doc.setTextColor(255); doc.setFontSize(7);
-        doc.text(netM.toFixed(1)+'%', margin + halfW - 19, fy + 3.5, {align:'center'});
+        doc.text(netM.toFixed(1)+'%', margin + leftW - 17, fy + 3.5, {align:'center'});
 
         // --- RIGHT: MARGIN DISTRIBUTION ---
-        const rx = margin + halfW + 6;
-        doc.setDrawColor(...c.border);
-        doc.roundedRect(rx, y, halfW, splitH, 4, 4, 'S');
+        const rx = margin + leftW + gap;
+        doc.setDrawColor(...c.borderDark);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(rx, y, rightW, splitH, 4, 4, 'S');
         doc.setFontSize(11); doc.setTextColor(0); doc.setFont("helvetica", "bold");
-        doc.text("Margin Distribution", rx + (halfW/2), y + 10, { align: 'center' });
+        doc.text("Margin Distribution", rx + (rightW/2), y + 10, { align: 'center' });
 
         let my = y + 20;
+        // Header Row
         doc.setFillColor(...c.bgLight);
-        doc.rect(rx + 2, my - 5, halfW - 4, 8, 'F');
+        doc.rect(rx + 2, my - 5, rightW - 4, 8, 'F');
         doc.setFontSize(7); doc.setTextColor(...c.textLight); doc.setFont("helvetica", "bold");
+        
+        // FIXED COLUMN ALIGNMENT
         doc.text("CATEGORY", rx + 6, my);
-        doc.text("#", rx + 42, my, {align:'right'}); // Adjusted X
-        doc.text("SALES", rx + 62, my, {align:'right'}); // Adjusted X
-        doc.text("PROFIT", rx + halfW - 6, my, {align:'right'});
+        doc.text("#", rx + 35, my, {align:'right'}); 
+        doc.text("SALES", rx + 55, my, {align:'right'});
+        doc.text("PROFIT", rx + 78, my, {align:'right'}); 
+        doc.text("MGN%", rx + rightW - 6, my, {align:'right'});
         my += 10;
 
         const buckets = [
@@ -1663,30 +1681,38 @@
         });
 
         buckets.forEach(b => {
-            // Pill with full label including %
+            const bMargin = b.s > 0 ? (b.p / b.s) * 100 : 0;
+            
+            // WIDER PILL FOR FULL LABEL
             doc.setFillColor(...b.col);
-            doc.roundedRect(rx + 6, my - 3, 26, 5, 1.5, 1.5, 'F');
-            doc.setTextColor(255); doc.setFontSize(6); doc.setFont("helvetica", "bold");
-            // Show first word + range (e.g. "Low 0-10%")
-            let label = b.l.replace("(", "\n("); // Optional splitting if needed, but fitting is better
-            // Just use the label directly, adjusting font size if long
-            if(b.l.length > 12) doc.setFontSize(5); 
-            doc.text(b.l, rx + 19, my + 0.5, {align:'center'});
+            doc.roundedRect(rx + 4, my - 3, 26, 5, 1.5, 1.5, 'F');
+            doc.setTextColor(255); doc.setFontSize(5.5); doc.setFont("helvetica", "bold");
+            doc.text(b.l, rx + 17, my + 0.5, {align:'center'}); // Full Label
 
-            // Data
             doc.setTextColor(...c.textMain); doc.setFontSize(8); doc.setFont("helvetica", "normal");
-            doc.text(b.c.toString(), rx + 42, my + 0.5, {align:'right'});
-            doc.text(fmt(b.s), rx + 62, my + 0.5, {align:'right'});
+            
+            // Count
+            doc.text(b.c.toString(), rx + 35, my + 0.5, {align:'right'});
+            
+            // Sales
+            doc.text(fmt(b.s).replace('Rs ',''), rx + 55, my + 0.5, {align:'right'});
+            
+            // Profit
             if(b.p < 0) doc.setTextColor(...c.red); else doc.setTextColor(...c.green);
-            doc.text(fmt(b.p), rx + halfW - 6, my + 0.5, {align:'right'});
+            doc.text(fmt(b.p).replace('Rs ',''), rx + 78, my + 0.5, {align:'right'});
+            
+            // Margin
+            doc.text(bMargin.toFixed(0) + '%', rx + rightW - 6, my + 0.5, {align:'right'});
+
             my += 9;
         });
 
         y += splitH + 8;
 
         // ================= 4. EXPENSE BAR =================
-        const expH = 36;
-        doc.setDrawColor(...c.border);
+        const expH = 30;
+        doc.setDrawColor(...c.borderDark);
+        doc.setLineWidth(0.2);
         doc.roundedRect(margin, y, contentW, expH, 4, 4, 'S');
         doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "bold");
         doc.text("Expense Composition", margin + 6, y + 8);
@@ -1702,39 +1728,36 @@
         let bx = margin + 10;
         let by = y + 14;
         const barW = contentW - 20;
+        const barHeight = 8; 
 
         segs.forEach(s => {
             const w = (s.v / totalExpReal) * barW;
             if (w > 0) {
                 doc.setFillColor(...s.c);
-                doc.rect(bx, by, w, 8, 'F');
-                if(w > 12) {
-                    doc.setTextColor(255); doc.setFontSize(7);
-                    doc.text(fmt(s.v).replace('Rs ', ''), bx + (w/2), by + 5.5, {align:'center'});
-                }
+                doc.rect(bx, by, w, barHeight, 'F');
+                if(w > 12) { doc.setTextColor(255); doc.setFontSize(7); doc.text(s.v.toFixed(0), bx+(w/2), by+5, {align:'center'}); }
                 bx += w;
             }
         });
         
-        doc.setDrawColor(200); doc.rect(margin + 10, by, barW, 8, 'S');
+        doc.setDrawColor(200); doc.rect(margin + 10, by, barW, barHeight, 'S');
 
         let lx = margin + 10;
-        let ly = by + 16;
+        let ly = by + 14; 
         segs.forEach(s => {
             if(s.v > 0) {
                 doc.setFillColor(...s.c);
                 doc.circle(lx, ly-1, 2, 'F');
                 doc.setFontSize(8); doc.setTextColor(...c.textLight);
                 doc.text(`${s.l}`, lx + 4, ly);
-                lx += 35;
+                lx += 38;
             }
         });
 
         y += expH + 10;
 
         // ================= 5. ITEM LISTS =================
-        const footerH = 15;
-        const remainingH = 297 - y - footerH - margin; 
+        const remainingH = pageH - y - margin; 
         
         const lossItems = rec.items.filter(i => i.marginPct < 0).sort((a,b) => a.profit - b.profit); 
         const lowItems = rec.items.filter(i => i.marginPct >= 0 && i.marginPct < 10).sort((a,b) => a.marginPct - b.marginPct);
@@ -1749,9 +1772,6 @@
             doc.setTextColor(255); doc.setFontSize(9); doc.setFont("helvetica", "bold");
             doc.text(title, x + (colWidth/2), y + 5.5, {align:'center'});
             
-            doc.setDrawColor(...c.border);
-            doc.rect(x, y+8, colWidth, remainingH);
-
             let ly = y + 14;
             const rowH = 6;
             const maxItems = Math.floor((remainingH - 8) / rowH);
@@ -1761,16 +1781,21 @@
                     doc.setFillColor(...c.bgLight);
                     doc.rect(x+0.5, ly-4, colWidth-1, 6, 'F');
                 }
+
                 doc.setTextColor(...c.textMain); doc.setFontSize(8); doc.setFont("helvetica", "normal");
+                
                 let name = item.name;
                 if(name.length > 15) name = name.substring(0, 13) + '..';
                 doc.text(name, x + 3, ly);
                 
+                doc.setTextColor(...c.textLight);
+                doc.text('x' + item.qty, x + colWidth - 28, ly, {align:'right'});
+
                 doc.setFont("helvetica", "bold");
                 if(title.includes("LOSS")) doc.setTextColor(...c.red);
                 else doc.setTextColor(0, 100, 0);
-                
                 doc.text('Rs ' + fmt(item.profit).replace('Rs ',''), x + colWidth - 3, ly, {align:'right'});
+
                 ly += rowH;
             });
             
@@ -1783,15 +1808,6 @@
         drawList("TOP LOSS MAKERS", lossItems, margin, c.red);
         drawList("LOW MARGIN (0-10%)", lowItems, margin + colWidth + colGap, c.orange);
         drawList("MID MARGIN (10-20%)", midItems, margin + (colWidth*2) + (colGap*2), c.yellow);
-
-        // ================= FOOTER =================
-        const footerY = 297 - footerH;
-        doc.setFillColor(...c.footerBg);
-        doc.rect(0, footerY, pageW, footerH, 'F');
-        doc.setDrawColor(200);
-        doc.line(0, footerY, pageW, footerY);
-        doc.setFontSize(8); doc.setTextColor(150); doc.setFont("helvetica", "normal");
-        doc.text("Generated by Swiggy Ops Cloud | Internal Use Only", 105, footerY + 9, { align: 'center' });
 
         doc.save(`Swiggy_Report_${rec.date}.pdf`);
     }
