@@ -132,6 +132,22 @@
         .h-margin { width: 90px; text-align: right; } 
         .h-action { width: 60px; text-align: center; }
 
+        /* Add this inside your <style> tag */
+.review-input {
+    width: 70px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--primary);
+}
+.review-input:focus {
+    border-color: var(--primary);
+    background-color: #f0f7ff;
+    outline: none;
+}
+
         .cell-input {
             width: 100%; padding: 6px; border: 1px solid #dadce0; border-radius: 4px;
             text-align: right; outline: none; transition: 0.2s; font-family: inherit; font-size: 13px;
@@ -298,6 +314,7 @@
     <div class="tabs">
         <div class="tab active" onclick="switchTab('view-master')">Price Master</div>
         <div class="tab" onclick="switchTab('view-indent')">Indent Analyzer</div>
+        <div class="tab" onclick="switchTab('view-review')">Packing Review</div>
         <div class="tab" onclick="switchTab('view-history')">Bills / History</div>
     </div>
     <div class="search-wrapper">
@@ -411,9 +428,9 @@
                     <div style="display:flex; align-items:center; gap:10px;">
                         <span id="indent-date-display" class="date-badge hidden-badge"></span>
                         
-                        <button class="btn btn-filled" onclick="saveIndentToHistory()">
-                            <span class="material-icons">save</span> Save Bill
-                        </button>
+                        <button class="btn btn-filled" onclick="sendIndentToPacking()">
+    <span class="material-icons">send</span> Send to Packing
+</button>
                         <button class="btn" onclick="applyIndentPricesToMaster()">
                             <span class="material-icons">update</span> Apply Prices
                         </button>
@@ -433,6 +450,53 @@
                         </tr>
                     </thead>
                     <tbody id="indent-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. PACKING REVIEW TAB -->
+    <div id="view-review" class="hidden">
+        <div id="review-empty" class="upload-area hidden" style="border-style:solid; background:white; cursor:default;">
+            <span class="material-icons" style="font-size:48px; color:#dadce0">inventory</span>
+            <h3 style="color:#5f6368">No Pending Packing Data</h3>
+            <button class="btn" onclick="checkReviewData()">Refresh</button>
+        </div>
+
+        <div id="review-content" class="hidden">
+            <div class="card">
+                <div class="card-header" style="background:#e8f0fe;">
+                    <div>
+                        <span class="card-title" style="color:var(--primary)">Review Packing: </span>
+                        <strong id="review-date"></strong>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn" onclick="rejectPacking()">
+                            <span class="material-icons">close</span> Reject
+                        </button>
+                        <button class="btn btn-filled" onclick="finalizeBill()">
+                            <span class="material-icons">done_all</span> Finalize Bill
+                        </button>
+                    </div>
+                </div>
+                <!-- KPI Summary for Review -->
+                <div style="display:flex; gap:15px; padding:15px; background:#fff; border-bottom:1px solid #eee;">
+                    <div><strong>Bill Amt:</strong> <span id="rev-bill">0</span></div>
+                    <div><strong>Total Cost:</strong> <span id="rev-cost">0</span></div>
+                    <div><strong>Profit:</strong> <span id="rev-prof" style="font-weight:bold">0</span></div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="t-left">Item</th>
+                            <th class="t-right">Ordered</th>
+                            <th class="t-right">Packed</th>
+                            <th class="t-right" style="background:#fff8e1">Actual Kg</th>
+                            <th class="t-right">Cost (Calc)</th>
+                            <th class="t-right">Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="review-body"></tbody>
                 </table>
             </div>
         </div>
@@ -480,9 +544,9 @@
             <div class="kpi-grid">
                 <!-- Row 1 -->
                 <div class="kpi-card hoverable" onmouseenter="showIndentDiffTooltip(event, 'history')" onmouseleave="hideIndentTooltip()">
-                    <div class="kpi-label">Indent Amount</div>
-                    <div class="kpi-value" id="hist-kpi-indent">₹0</div>
-                </div>
+    <div class="kpi-label">Indent Amount</div>
+    <div class="kpi-value" id="hist-kpi-indent">₹0</div>
+</div>
                 <div class="kpi-card">
                     <div class="kpi-label">Bill Amount</div>
                     <div class="kpi-value" id="hist-kpi-bill">₹0</div>
@@ -652,6 +716,7 @@
     let currentBucketsData = []; 
     let currentViewedHistory = null;
     let currentExpenseDetails = null; 
+    let pendingReviewData = null;
     
     // Expense Settings Object
     let expenseSettings = {
@@ -897,27 +962,37 @@
     function showIndentDiffTooltip(e, context) {
         clearTooltipTimer('indent');
         let items = [];
+        
+        // 1. Determine which data source to use
         if (context === 'current') {
             items = currentIndent;
         } else if (context === 'history' && currentViewedHistory) {
             items = currentViewedHistory.items;
         }
 
-        const reducedItems = items.filter(i => (i.originalQty || 0) > i.qty);
+        // 2. Find items where Ordered > Packed
+        // We check 'originalQty' (standard) or 'poQty' (from packing app)
+        const reducedItems = items.filter(i => {
+            const ordered = i.originalQty !== undefined ? i.originalQty : (i.poQty || 0);
+            return ordered > i.qty;
+        });
         
         if (reducedItems.length === 0) return;
 
         const tt = document.getElementById('indent-tooltip');
-        let html = `<h4>Items Removed from Indent</h4>`;
+        let html = `<div class="mt-header">Items Removed / Short Packed</div>`;
         
         reducedItems.forEach(i => {
-            const diff = (i.originalQty || 0) - i.qty;
-            const loss = diff * i.poRate;
+            const ordered = i.originalQty !== undefined ? i.originalQty : (i.poQty || 0);
+            const diff = ordered - i.qty;
+            const loss = diff * i.poRate; // Value of items not sold
+            
             html += `
                 <div class="mt-item">
                     <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:10px;">${i.name}</span>
-                    <span style="color:var(--red); font-weight:500; width:40px;">-${diff}</span>
-                    <span style="color:var(--text-sub); font-weight:700; text-align:right;">₹${loss.toFixed(0)}</span>
+                    <span style="color:var(--text-sub); font-size:11px; margin-right:5px;">(${ordered}→${i.qty})</span>
+                    <span style="color:var(--red); font-weight:700; width:30px; text-align:right;">-${diff}</span>
+                    <span style="color:var(--text-main); font-weight:500; width:60px; text-align:right;">₹${loss.toFixed(0)}</span>
                 </div>
             `;
         });
@@ -991,6 +1066,10 @@
         if (tabId === 'view-history') {
             closeHistoryDetail(); 
             renderIndentHistory();
+        }
+        // ADD THIS LINE:
+        if (tabId === 'view-review') {
+            checkReviewData();
         }
     }
 
@@ -1307,53 +1386,225 @@
         }
     }
 
-    function saveIndentToHistory() {
-        if(!currentIndentDate) { alert("Could not extract date from CSV"); return; }
-        
-        const exists = indents.some(x => x.date === currentIndentDate);
-        if(exists) {
-            alert(`Error: Bill for ${currentIndentDate} already exists! Cannot duplicate.`);
-            return;
-        }
+    // --- 4. PACKING REVIEW LOGIC (UPDATED WITH EDITING) ---
+    
+    // Switch to tab and load data
+    function checkReviewData() {
+        if (!window.db) return;
+        window.dbGet(window.dbChild(window.dbRef(window.db), 'completed_packing')).then(snap => {
+            if(snap.exists()) {
+                pendingReviewData = snap.val();
+                renderReviewTable();
+                document.getElementById('review-empty').classList.add('hidden');
+                document.getElementById('review-content').classList.remove('hidden');
+            } else {
+                document.getElementById('review-empty').classList.remove('hidden');
+                document.getElementById('review-content').classList.add('hidden');
+            }
+        });
+    }
 
-        let totalIndentAmt = 0;
+    function renderReviewTable() {
+        if(!pendingReviewData) return;
+        document.getElementById('review-date').innerText = pendingReviewData.date;
+        const tbody = document.getElementById('review-body');
+        tbody.innerHTML = '';
+
+        // Generate Rows
+        pendingReviewData.items.forEach((item, index) => {
+            // Get Master Cost
+            const master = products.find(p => p.id === item.code);
+            const costPerKg = master ? (master.costKg || 0) : 0;
+            
+            // Initial Calculation for display
+            const lineCost = (item.actualKg || 0) * costPerKg;
+            const lineRev = (item.qty || 0) * item.poRate;
+            const lineProf = lineRev - lineCost;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="t-left">
+                    ${item.name} <br>
+                    <span style="font-size:11px; color:#888">Rate: ₹${item.poRate} | Cost: ₹${costPerKg}/kg</span>
+                </td>
+                <td class="t-right" style="color:#888">${item.poQty}</td>
+                
+                <!-- EDITABLE PACKED QTY -->
+                <td class="t-right">
+                    <input type="number" class="review-input" 
+                        value="${item.qty}" 
+                        onchange="updateReviewItem(${index}, 'qty', this.value)">
+                </td>
+                
+                <!-- EDITABLE ACTUAL KG -->
+                <td class="t-right" style="background:#fff8e1;">
+                    <input type="number" class="review-input" 
+                        value="${item.actualKg}" 
+                        onchange="updateReviewItem(${index}, 'actualKg', this.value)">
+                </td>
+                
+                <!-- Live Calc Fields -->
+                <td class="t-right" id="rev-cost-${index}">₹${lineCost.toFixed(0)}</td>
+                <td class="t-right" id="rev-prof-${index}" style="font-weight:bold; color:${lineProf<0?'var(--red)':'var(--green)'}">
+                    ₹${lineProf.toFixed(0)}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        recalculateReviewTotals();
+    }
+
+    // Called when you edit an input box
+    window.updateReviewItem = function(index, field, value) {
+        if(!pendingReviewData || !pendingReviewData.items[index]) return;
+
+        // 1. Update Data Object
+        let val = parseFloat(value);
+        if(isNaN(val)) val = 0;
+        pendingReviewData.items[index][field] = val;
+
+        // 2. Recalculate Row Math
+        const item = pendingReviewData.items[index];
+        const master = products.find(p => p.id === item.code);
+        const costPerKg = master ? (master.costKg || 0) : 0;
+
+        const lineCost = item.actualKg * costPerKg;
+        const lineRev = item.qty * item.poRate;
+        const lineProf = lineRev - lineCost;
+
+        // 3. Update Row DOM (Visuals)
+        document.getElementById(`rev-cost-${index}`).innerText = '₹' + lineCost.toFixed(0);
+        const profEl = document.getElementById(`rev-prof-${index}`);
+        profEl.innerText = '₹' + lineProf.toFixed(0);
+        profEl.style.color = lineProf < 0 ? 'var(--red)' : 'var(--green)';
+
+        // 4. Update Header Totals
+        recalculateReviewTotals();
+    }
+
+    function recalculateReviewTotals() {
+        let tBill=0, tCost=0, tProf=0;
+
+        pendingReviewData.items.forEach(item => {
+            const master = products.find(p => p.id === item.code);
+            const costPerKg = master ? (master.costKg || 0) : 0;
+            const lineCost = item.actualKg * costPerKg;
+            const lineRev = item.qty * item.poRate;
+            
+            tBill += lineRev;
+            tCost += lineCost;
+            tProf += (lineRev - lineCost);
+        });
+
+        document.getElementById('rev-bill').innerText = '₹' + tBill.toFixed(0);
+        document.getElementById('rev-cost').innerText = '₹' + tCost.toFixed(0);
+        document.getElementById('rev-prof').innerText = '₹' + tProf.toFixed(0);
+        document.getElementById('rev-prof').style.color = tProf >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+
+    function finalizeBill() {
+        if(!pendingReviewData) return;
+        if(!confirm("Confirm and Save to History? This cannot be undone.")) return;
+
         let totalBillAmt = 0;
         let totalCost = 0;
+        let totalIndentAmt = 0; // NEW: Track Indent Amount
+        
+        pendingReviewData.items.forEach(i => {
+            // Re-fetch master cost
+            const master = products.find(p => p.id === i.code);
+            const costPerKg = master ? (master.costKg || 0) : 0;
+            
+            const lineCost = i.actualKg * costPerKg;
+            const lineRev = i.qty * i.poRate;
+            const lineProf = lineRev - lineCost;
+            
+            // NEW: Calculate Indent Total based on PO Qty
+            const lineIndent = (i.poQty || 0) * i.poRate;
+            totalIndentAmt += lineIndent;
 
-        currentIndent.forEach(i => { 
-            totalIndentAmt += i.poRate * (i.originalQty || i.qty);
-            totalBillAmt += i.poRate * i.qty;
-            totalCost += i.myCost * i.qty; 
+            // Attach values for history
+            i.frozenCost = lineCost;
+            i.profit = lineProf;
+            i.myCost = i.qty > 0 ? (lineCost / i.qty) : 0;
+            i.marginPct = lineRev > 0 ? (lineProf/lineRev)*100 : 0;
+            
+            // IMPORTANT: Set originalQty so the Tooltip knows what was removed
+            i.originalQty = i.poQty; 
+
+            totalBillAmt += lineRev;
+            totalCost += lineCost;
         });
         
-        const profit = totalBillAmt - totalCost;
-        const margin = totalBillAmt > 0 ? (profit/totalBillAmt)*100 : 0;
+        const grossProfit = totalBillAmt - totalCost;
+        const grossMargin = totalBillAmt > 0 ? (grossProfit/totalBillAmt)*100 : 0;
         
-        // Calculate final expenses for history record
-        const expenseObj = calculateTotalExpense(currentIndentDate, totalBillAmt, totalCost);
-        const netProfit = profit - expenseObj.total;
+        const expenseObj = calculateTotalExpense(pendingReviewData.date, totalBillAmt, totalCost);
+        const netProfit = grossProfit - expenseObj.total;
 
-        const record = {
+        const historyRecord = {
             id: Date.now(),
-            date: currentIndentDate,
-            itemsCount: currentIndent.length,
-            items: currentIndent, 
-            totalIndentAmt,
-            totalBillAmt,
-            totalCost,
-            profit,
-            margin,
+            date: pendingReviewData.date,
+            itemsCount: pendingReviewData.items.length,
+            items: pendingReviewData.items,
+            totalIndentAmt: totalIndentAmt, // NEW: Save the calculated indent amount
+            totalBillAmt: totalBillAmt,
+            totalCost: totalCost,
+            profit: grossProfit,
+            margin: grossMargin,
             totalExpenses: expenseObj.total,
-            expenseDetails: expenseObj, // Save full breakdown
-            netProfit
+            expenseDetails: expenseObj,
+            netProfit: netProfit
         };
 
-        indents.unshift(record);
-
+        // 1. Add to History
+        indents.unshift(historyRecord);
         saveData('indents', indents);
-        resetIndent();
-        renderIndentHistory();
+
+        // 2. Delete the pending review node
+        window.dbSet(window.dbRef(window.db, 'completed_packing'), null);
+
+        alert("Bill Finalized!");
+        pendingReviewData = null;
         switchTab('view-history');
+    }
+
+    function rejectPacking() {
+        if(confirm("Reject this packing data? It will be deleted and Packing App will need to start over.")) {
+             window.dbSet(window.dbRef(window.db, 'completed_packing'), null);
+             checkReviewData();
+        }
+    }
+
+    function sendIndentToPacking() {
+        if(!currentIndentDate) { alert("Could not extract date from CSV"); return; }
+        
+        // Calculate basic Indent Total for reference
+        let totalIndentAmt = 0;
+        currentIndent.forEach(i => { 
+            totalIndentAmt += i.poRate * (i.originalQty || i.qty);
+        });
+
+        // Create the staging object
+        const stagingData = {
+            date: currentIndentDate,
+            totalIndentAmt: totalIndentAmt,
+            items: currentIndent.map(i => ({
+                code: i.code,
+                name: i.name,
+                poQty: i.originalQty || i.qty, // This is the Indent Qty
+                poRate: i.poRate
+            }))
+        };
+
+        // Save to 'active_indent' node
+        window.dbSet(window.dbRef(window.db, 'active_indent'), stagingData)
+            .then(() => {
+                alert("Sent to Packing App! Please open packing.html to enter weights.");
+                resetIndent(); // Clear screen
+            })
+            .catch(err => alert("Error: " + err.message));
     }
 
     function resetIndent() {
@@ -1472,14 +1723,24 @@
                  const tr = document.createElement('tr');
                  const mPct = item.marginPct || 0;
                  const colorClass = mPct >= 0 ? 'text-green' : 'text-red';
-                 const cost = item.frozenCost || item.myCost; 
+                 
+                 // Logic to handle both old bills (calculated) and new bills (actuals)
+                 // If 'actualKg' exists, show that in a tooltip or column.
+                 // For now, let's append it to the name for visibility
+                 let nameDisplay = item.name;
+                 if(item.actualKg !== undefined) {
+                     nameDisplay += ` <span style="font-size:11px; color:var(--primary); background:#e8f0fe; padding:2px 4px; border-radius:4px;">${item.actualKg}kg</span>`;
+                 }
+
+                 // Use frozenCost (actual calculated cost) if available, else fallback
+                 const totalLineCost = item.frozenCost || (item.myCost * item.qty);
 
                  tr.innerHTML = `
                     <td class="w-code t-left">${item.code}</td>
-                    <td class="w-name t-left">${item.name}</td>
-                    <td class="w-num t-right">${item.qty}</td>
+                    <td class="w-name t-left">${nameDisplay}</td>
+                    <td class="w-num t-right">${item.qty} <span style="font-size:10px; color:#888">Pkts</span></td>
                     <td class="w-num t-right">₹${item.poRate}</td>
-                    <td class="w-num t-right">₹${cost.toFixed(2)}</td>
+                    <td class="w-num t-right">₹${totalLineCost.toFixed(2)}</td>
                     <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
                     <td class="w-stat t-right ${colorClass}">${mPct.toFixed(0)}%</td>
                  `;

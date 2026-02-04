@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swiggy Packing App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        :root { --primary: #1a73e8; --bg: #f0f2f5; --border: #dadce0; --green: #188038; }
+        body { font-family: 'Roboto', sans-serif; background: var(--bg); margin: 0; padding: 0; color: #202124; }
+        
+        /* HEADER */
+        .header { 
+            background: #fff; padding: 15px 20px; 
+            border-bottom: 1px solid var(--border); 
+            position: sticky; top: 0; z-index: 100; 
+            display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+        }
+        .header h2 { margin: 0; font-size: 18px; color: var(--primary); }
+        
+        /* CONTAINER */
+        .container { max-width: 600px; margin: 0 auto; padding: 15px; padding-bottom: 100px; }
+        
+        /* CARDS */
+        .card { 
+            background: white; border-radius: 8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            overflow: hidden; margin-bottom: 10px; 
+            display: flex; align-items: center; padding: 10px; 
+        }
+        
+        .item-info { flex: 1; }
+        .item-name { font-weight: 500; font-size: 15px; display: block; margin-bottom: 4px; }
+        .item-code { font-size: 12px; color: #888; background: #f1f3f4; padding: 2px 6px; border-radius: 4px; }
+        
+        .input-group { display: flex; flex-direction: column; align-items: center; margin-left: 10px; width: 70px; }
+        .input-label { font-size: 10px; color: #5f6368; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; }
+        
+        /* INPUTS */
+        input { 
+            width: 100%; padding: 8px 4px; 
+            border: 1px solid #ddd; border-radius: 6px; 
+            font-size: 16px; text-align: center; font-weight: bold;
+            background: #f8f9fa; transition: 0.2s;
+        }
+        input:focus { border-color: var(--primary); background: #fff; outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
+        input.filled { background: #e6f4ea; border-color: #34a853; color: #137333; }
+        
+        .po-qty { font-size: 14px; font-weight: bold; color: #5f6368; background: #eee; padding: 8px 12px; border-radius: 6px; min-width: 40px; text-align: center; }
+
+        /* FOOTER */
+        .footer { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: white; padding: 15px; border-top: 1px solid var(--border);
+            display: flex; justify-content: center; gap: 10px; z-index: 200;
+        }
+        .btn { 
+            border: none; padding: 14px 20px; border-radius: 8px; 
+            font-size: 15px; font-weight: 500; cursor: pointer; 
+            flex: 1; max-width: 200px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            transition: 0.2s; text-align: center;
+        }
+        .btn:active { transform: scale(0.98); }
+        
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: white; color: var(--primary); border: 1px solid var(--primary); }
+        
+        .status-msg { text-align: center; margin-top: 50px; color: #666; }
+        
+        /* Save Overlay */
+        #save-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 300;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #save-overlay.show { opacity: 1; pointer-events: auto; }
+        .save-box { background: white; padding: 20px; border-radius: 12px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h2>Packing List</h2>
+        <span id="date-display" style="font-size:12px; color:#666;">Checking...</span>
+    </div>
+    <span class="material-icons" onclick="location.reload()" style="cursor:pointer; color:#5f6368">refresh</span>
+</div>
+
+<div class="container" id="list-container">
+    <div class="status-msg">Loading data...</div>
+</div>
+
+<div class="footer" id="footer-area" style="display:none">
+    <button class="btn btn-secondary" onclick="saveDraft()">
+        <span class="material-icons" style="font-size:16px; vertical-align:text-bottom;">save</span> 
+        Save Progress
+    </button>
+    <button class="btn btn-primary" onclick="submitToReview()">Complete Packing</button>
+</div>
+
+<!-- Saving Animation Overlay -->
+<div id="save-overlay">
+    <div class="save-box">
+        <span class="material-icons" style="font-size:48px; color:var(--green)">check_circle</span>
+        <h3 style="margin:10px 0 0 0; color:#333">Saved!</h3>
+        <p style="margin:5px 0 0 0; font-size:12px; color:#666">You can close and come back later.</p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // --- ⚠️ PASTE YOUR FIREBASE CONFIG HERE ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6OFRosamp5U5lKnAxl0wptGt5-eHL6ZQ",
+        authDomain: "swiggymargin.firebaseapp.com",
+        projectId: "swiggymargin",
+        storageBucket: "swiggymargin.firebasestorage.app",
+        messagingSenderId: "531917441854",
+        appId: "1:531917441854:web:c48880dfe0638ad901fa6f",
+        databaseURL: "https://swiggymargin-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let activeIndent = null;
+    let localData = {};
+
+    // Initialize: Check for active tasks
+    async function init() {
+        try {
+            const snapshot = await get(child(ref(db), 'active_indent'));
+            
+            if (snapshot.exists()) {
+                activeIndent = snapshot.val();
+                document.getElementById('date-display').innerText = activeIndent.date;
+                
+                // 1. Check Server-Side Saved Data (Drafts)
+                // If 'savedQty' exists in items, the user saved progress on server.
+                // 2. Fallback to LocalStorage for offline resilience
+                const localStr = localStorage.getItem('swiggy_packing_data');
+                const localObj = localStr ? JSON.parse(localStr) : {};
+                
+                // Merge Data: Server Data takes priority if just loaded, 
+                // but local data takes priority if editing.
+                // For init, we check local first, then server properties.
+                
+                renderList(localObj);
+            } else {
+                // No Task Found
+                document.getElementById('list-container').innerHTML = `
+                    <div class="status-msg">
+                        <span class="material-icons" style="font-size:48px; color:#ccc">check_circle</span>
+                        <p>No active packing tasks.</p>
+                        <p style="font-size:12px">Waiting for Office to send data...</p>
+                    </div>`;
+                document.getElementById('date-display').innerText = "";
+                document.getElementById('footer-area').style.display = 'none';
+            }
+        } catch (error) {
+            document.getElementById('list-container').innerHTML = `<p class="status-msg" style="color:red">Error loading data: ${error.message}</p>`;
+        }
+    }
+
+    // Render the items
+    function renderList(localCache) {
+        const container = document.getElementById('list-container');
+        container.innerHTML = '';
+        document.getElementById('footer-area').style.display = 'flex';
+        localData = localCache || {};
+
+        activeIndent.items.forEach((item, index) => {
+            // Priority for Value: 
+            // 1. Current Local Input (localData)
+            // 2. Saved Draft from Server (item.savedQty)
+            // 3. Default (item.poQty)
+            
+            let valQty, valKg;
+
+            // Check Qty
+            if (localData[item.code] && localData[item.code].qty !== undefined) {
+                valQty = localData[item.code].qty;
+            } else if (item.savedQty !== undefined) {
+                valQty = item.savedQty;
+                // Sync to local
+                if(!localData[item.code]) localData[item.code] = {};
+                localData[item.code].qty = valQty;
+            } else {
+                valQty = item.poQty;
+            }
+
+            // Check Kg
+            if (localData[item.code] && localData[item.code].kg !== undefined) {
+                valKg = localData[item.code].kg;
+            } else if (item.savedKg !== undefined) {
+                valKg = item.savedKg;
+                // Sync to local
+                if(!localData[item.code]) localData[item.code] = {};
+                localData[item.code].kg = valKg;
+            } else {
+                valKg = '';
+            }
+
+            const isFilled = (localData[item.code] && (localData[item.code].qty || localData[item.code].kg));
+
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <div class="item-info">
+                    <span class="item-name">${item.name}</span>
+                    <span class="item-code">#${item.code}</span>
+                </div>
+                
+                <div class="input-group">
+                    <span class="input-label">ORDER</span>
+                    <div class="po-qty">${item.poQty}</div>
+                </div>
+
+                <div class="input-group">
+                    <span class="input-label">PACKED</span>
+                    <input type="number" inputmode="numeric" id="qty-${item.code}" 
+                        value="${valQty}" 
+                        class="${(valQty && valQty!=item.poQty)?'filled':''}"
+                        oninput="updateLocal(${item.code}, 'qty', this.value)"
+                        onfocus="this.select()">
+                </div>
+
+                <div class="input-group">
+                    <span class="input-label">KG</span>
+                    <input type="number" inputmode="decimal" id="kg-${item.code}" 
+                        placeholder="0.0" 
+                        value="${valKg}" 
+                        class="${valKg ? 'filled' : ''}"
+                        oninput="updateLocal(${item.code}, 'kg', this.value)"
+                        onfocus="this.select()">
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // Update Local Memory only (Fast)
+    window.updateLocal = function(code, field, value) {
+        if (!localData[code]) localData[code] = {};
+        localData[code][field] = value;
+        
+        // Visual feedback
+        const el = document.getElementById(`${field}-${code}`);
+        if(value && value !== "") el.classList.add('filled');
+        else el.classList.remove('filled');
+
+        localStorage.setItem('swiggy_packing_data', JSON.stringify(localData));
+    }
+
+    // --- SAVE DRAFT FUNCTION ---
+    window.saveDraft = async function() {
+        // Overlay
+        const overlay = document.getElementById('save-overlay');
+        
+        // 1. Merge current inputs into activeIndent object
+        const updatedItems = activeIndent.items.map(item => {
+            const saved = localData[item.code] || {};
+            // Determine what to save
+            // If user input exists, save it as 'savedQty'. 
+            // If not, keep existing 'savedQty' or don't set it.
+            
+            const currentQty = saved.qty !== undefined ? parseFloat(saved.qty) : (item.savedQty || item.poQty);
+            const currentKg = saved.kg !== undefined ? parseFloat(saved.kg) : (item.savedKg || 0);
+
+            return {
+                ...item,
+                savedQty: currentQty, // New Property: Draft Qty
+                savedKg: currentKg    // New Property: Draft Kg
+            };
+        });
+
+        const updatedIndent = {
+            ...activeIndent,
+            items: updatedItems
+        };
+
+        // 2. Save back to 'active_indent' in Firebase
+        try {
+            await set(ref(db, 'active_indent'), updatedIndent);
+            
+            // Show Success Animation
+            overlay.classList.add('show');
+            setTimeout(() => {
+                overlay.classList.remove('show');
+            }, 1500);
+
+        } catch (e) {
+            alert("Error saving draft: " + e.message);
+        }
+    }
+
+    // --- COMPLETE FUNCTION ---
+    window.submitToReview = async function() {
+        if(!confirm("Finish packing and send to Office for review?")) return;
+
+        const btn = document.querySelector('.btn-primary');
+        btn.innerText = "Sending...";
+        btn.disabled = true;
+
+        try {
+            // 1. Prepare data for Review Stage
+            const reviewItems = activeIndent.items.map(item => {
+                const saved = localData[item.code] || {};
+                
+                // Logic: Priority to Input, then Draft, then Default
+                let finalQty = item.poQty;
+                if(saved.qty !== undefined) finalQty = parseFloat(saved.qty);
+                else if(item.savedQty !== undefined) finalQty = parseFloat(item.savedQty);
+
+                let finalKg = 0;
+                if(saved.kg !== undefined) finalKg = parseFloat(saved.kg);
+                else if(item.savedKg !== undefined) finalKg = parseFloat(item.savedKg);
+                
+                return {
+                    ...item,
+                    qty: finalQty,      // Actual Packed Count
+                    actualKg: finalKg,  // Actual Weight Used
+                    poQty: item.poQty   // Keep original ordered amount
+                };
+            });
+
+            const reviewData = {
+                date: activeIndent.date,
+                items: reviewItems,
+                timestamp: Date.now()
+            };
+
+            // 2. Save to 'completed_packing' (The Review Queue)
+            await set(ref(db, 'completed_packing'), reviewData);
+
+            // 3. Clear the Active Task
+            await remove(ref(db, 'active_indent'));
+            
+            // 4. Clean up local memory
+            localStorage.removeItem('swiggy_packing_data');
+            
+            alert("Sent to Office Review Tab successfully!");
+            location.reload();
+
+        } catch (e) {
+            alert("Error sending data: " + e.message);
+            btn.innerText = "Complete Packing";
+            btn.disabled = false;
+        }
+    }
+
+    // Start App
+    init();
+</script>
+</body>
+</html>
