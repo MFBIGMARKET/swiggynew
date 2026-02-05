@@ -7,6 +7,12 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Image Viewer Modal -->
+<div id="img-modal" onclick="this.style.display='none'">
+  <span class="close-img">&times;</span>
+  <img id="img-content">
+</div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Removed autotable as we are custom drawing the dashboard -->
@@ -249,6 +255,12 @@
 
         th.sortable { cursor: pointer; user-select: none; }
         th.sortable:hover { background-color: #f1f3f4; color: var(--primary); }
+        /* Image Viewer Modal */
+#img-modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); }
+#img-content { margin: auto; display: block; max-width: 90%; max-height: 90vh; margin-top: 5vh; border-radius: 5px; }
+.close-img { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
+.btn-view-img { border:none; background:none; cursor:pointer; color:var(--primary); font-weight:bold; font-size:11px; }
+.btn-view-img:hover { text-decoration:underline; }
 
         .date-badge {
             background: #e8f0fe;
@@ -1162,6 +1174,30 @@
         input.value = '';
     }
 
+    window.openImgModal = function(idx1, type, idx2) {
+        let imgSrc = null;
+        
+        if(type === 'review') {
+            if(pendingReviewData && pendingReviewData.items[idx1]) {
+                imgSrc = pendingReviewData.items[idx1].img;
+            }
+        } else if (type === 'history') {
+            const histRec = indents[idx1];
+            if(histRec && histRec.items[idx2]) {
+                imgSrc = histRec.items[idx2].img;
+            }
+        }
+
+        if(imgSrc) {
+            const modal = document.getElementById('img-modal');
+            const modalImg = document.getElementById('img-content');
+            modal.style.display = "block";
+            modalImg.src = imgSrc;
+        } else {
+            alert("No image data found.");
+        }
+    }
+
     function parseIndent(text) {
         const lines = text.split(/\r?\n/);
         const h = parseCSVLine(lines[0]);
@@ -1434,17 +1470,24 @@
             const profit = revenue - standardCost; // Profit based on Standard
 
             // 4. Dump Calculation (Excess Usage)
-            // If Actual > Standard, the difference is Dump Expense.
             const excessKg = Math.max(0, actualKg - standardKg);
             const dumpCost = excessKg * costPerKg;
+
+            // 5. Image Button Logic
+            let imgBtn = '';
+            if (item.img) {
+                // Pass index and type to the modal opener
+                imgBtn = `<div style="margin-top:4px;"><button class="btn-view-img" onclick="openImgModal('${index}', 'review')">📷 View Photo</button></div>`;
+            }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="t-left">
-                    ${item.name} <br>
-                    <span style="font-size:10px; color:#888">
+                    <span style="font-weight:500">${item.name}</span>
+                    ${imgBtn}
+                    <div style="font-size:10px; color:#888; margin-top:4px;">
                         Std: ${conv}kg | Cost: ₹${costPerKg}/kg
-                    </span>
+                    </div>
                 </td>
                 <td class="t-right" style="color:#888">${item.poQty}</td>
                 
@@ -1460,7 +1503,7 @@
                     <input type="number" class="review-input" 
                         value="${item.actualKg}" 
                         onchange="updateReviewItem(${index}, 'actualKg', this.value)">
-                     <div style="font-size:9px; color:${excessKg>0?'red':'green'}">
+                     <div style="font-size:9px; color:${excessKg>0?'red':'green'}; margin-top:2px;">
                         ${excessKg>0 ? '+' + excessKg.toFixed(2) + ' Dump' : 'OK'}
                      </div>
                 </td>
@@ -1820,27 +1863,42 @@
     function renderHistoryDetailTable() {
         const tbody = document.getElementById('hist-detail-body');
         tbody.innerHTML = '';
+        
         if(currentViewedHistory && currentViewedHistory.items) {
-            currentViewedHistory.items.forEach(item => {
+            // Find global index for the modal to reference
+            const historyIndex = indents.indexOf(currentViewedHistory);
+
+            currentViewedHistory.items.forEach((item, itemIndex) => {
                  const tr = document.createElement('tr');
                  const mPct = item.marginPct || 0;
                  const colorClass = mPct >= 0 ? 'text-green' : 'text-red';
                  
-                 // Logic to handle both old bills (calculated) and new bills (actuals)
-                 // If 'actualKg' exists, show that in a tooltip or column.
-                 // For now, let's append it to the name for visibility
-                 let nameDisplay = item.name;
-                 if(item.actualKg !== undefined) {
-                     nameDisplay += ` <span style="font-size:11px; color:var(--primary); background:#e8f0fe; padding:2px 4px; border-radius:4px;">${item.actualKg}kg</span>`;
+                 // Name Display with Badges
+                 let nameDisplay = `<div>${item.name}</div>`;
+                 
+                 let badges = '';
+                 
+                 // Actual Kg Badge
+                 if(item.actualKg !== undefined && item.actualKg > 0) {
+                     badges += ` <span style="font-size:10px; color:#1a73e8; background:#e8f0fe; padding:2px 5px; border-radius:4px; margin-right:5px;">${item.actualKg}kg</span>`;
                  }
 
-                 // Use frozenCost (actual calculated cost) if available, else fallback
+                 // Image Button (Camera Icon)
+                 if(item.img) {
+                     badges += `<span style="cursor:pointer; font-size:14px;" onclick="openImgModal('${historyIndex}', 'history', '${itemIndex}')">📷</span>`;
+                 }
+
+                 if(badges) {
+                     nameDisplay += `<div style="margin-top:2px;">${badges}</div>`;
+                 }
+
+                 // Use frozenCost (Standard Cost) if available, else fallback
                  const totalLineCost = item.frozenCost || (item.myCost * item.qty);
 
                  tr.innerHTML = `
                     <td class="w-code t-left">${item.code}</td>
                     <td class="w-name t-left">${nameDisplay}</td>
-                    <td class="w-num t-right">${item.qty} <span style="font-size:10px; color:#888">Pkts</span></td>
+                    <td class="w-num t-right">${item.qty}</td>
                     <td class="w-num t-right">₹${item.poRate}</td>
                     <td class="w-num t-right">₹${totalLineCost.toFixed(2)}</td>
                     <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
