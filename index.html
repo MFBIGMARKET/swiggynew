@@ -182,6 +182,166 @@
         }
         .card-title { font-size: 16px; font-weight: 500; }
 
+            @media (max-width: 768px) {
+        :root {
+            --header-h: 56px;
+            --toolbar-h: 48px;
+        }
+
+        header { padding: 0 12px; }
+        .brand span { font-size: 16px; }
+        .btn { padding: 0 8px; font-size: 12px; height: 32px; }
+        .btn span { font-size: 18px; }
+
+        .toolbar { 
+            padding: 0 12px; 
+            overflow-x: auto; 
+            justify-content: flex-start; 
+            gap: 15px; 
+        }
+        .tabs { gap: 15px; flex-shrink: 0; }
+        .search-wrapper { display: none; } /* Hide search in toolbar on mobile to save space */
+        
+        /* Mobile KPI Grid */
+        .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .kpi-card { padding: 10px; }
+        .kpi-value { font-size: 16px; }
+
+        .margin-grid { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 10px; 
+            padding-bottom: 10px;
+            scroll-snap-type: x mandatory;
+        }
+        .ma-card { 
+            min-width: 140px; 
+            flex-shrink: 0; 
+            scroll-snap-align: start; 
+        }
+
+        /* --- TABLE TO CARD TRANSFORMATION --- */
+        /* This makes the master list and indent list look like the packing app on mobile */
+        table, thead, tbody, th, td, tr { display: block; }
+        thead tr { position: absolute; top: -9999px; left: -9999px; }
+        
+        tr { 
+            border: 1px solid var(--border); 
+            margin-bottom: 10px; 
+            border-radius: 8px; 
+            background: white !important;
+            padding: 10px;
+        }
+
+        td { 
+            border: none; 
+            position: relative; 
+            padding-left: 45% !important; 
+            text-align: right !important;
+            white-space: normal;
+            height: auto;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        td:before { 
+            position: absolute; 
+            left: 10px; 
+            width: 40%; 
+            padding-right: 10px; 
+            white-space: nowrap; 
+            text-align: left;
+            font-weight: bold;
+            color: var(--text-sub);
+            content: attr(data-label); 
+        }
+
+        /* Specific column width overrides for mobile */
+        .w-code, .w-name, .w-uom, .w-num, .w-calc, .w-stat, .w-action,
+        .h-date, .h-id, .h-items, .h-money, .h-profit, .h-margin, .h-action {
+            width: 100% !important;
+        }
+
+        .qty-edit, .cell-input {
+            width: 120px;
+            height: 36px;
+        }
+
+        /* Modals on mobile */
+        .modal { width: 95%; margin: 10px; }
+        .exp-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+    /* 1. Make the top tabs swipeable horizontally */
+    .toolbar { 
+        padding: 0 10px; 
+        justify-content: flex-start; 
+        overflow-x: auto; 
+    }
+    .tabs { 
+        gap: 15px; 
+        display: flex; 
+        flex-wrap: nowrap; 
+    }
+    .tab { font-size: 12px; white-space: nowrap; }
+
+    /* 2. Adjust Main Content Padding */
+    .main { padding: 10px; }
+
+    /* 3. Margin Distribution Grid to Carousel */
+    .margin-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        padding-bottom: 15px;
+        scroll-snap-type: x mandatory;
+    }
+    .ma-card {
+        min-width: 160px;
+        scroll-snap-align: start;
+        flex-shrink: 0;
+    }
+
+    /* 4. Table to Card Logic */
+    table, thead, tbody, th, td, tr { display: block; }
+    thead tr { display: none; } /* Hide headers */
+    tr { 
+        margin-bottom: 15px; 
+        border: 1px solid var(--border); 
+        border-radius: 8px; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    td {
+        text-align: right !important;
+        padding-left: 50% !important;
+        position: relative;
+        border-bottom: 1px solid #f1f1f1;
+        height: auto;
+        min-height: 35px;
+    }
+    td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 12px;
+        width: 45%;
+        text-align: left;
+        font-weight: 700;
+        color: var(--text-sub);
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+    td:last-child { border-bottom: none; }
+    
+    /* 5. Inputs on Mobile */
+    .qty-edit, .cell-input {
+        max-width: 100px;
+        height: 30px;
+        font-size: 14px;
+    }
+}
+
         /* --- KPI & MARGIN --- */
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
         .kpi-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border); }
@@ -861,31 +1021,32 @@
         return { total, wage, transport, packing, dump, misc };
     }
 
-    // --- TOOLTIP POSITIONING LOGIC ---
     function positionTooltip(e, tooltipId) {
-        const tt = document.getElementById(tooltipId);
-        tt.style.display = 'block';
-        
-        const rect = tt.getBoundingClientRect();
-        const winW = window.innerWidth;
-        const winH = window.innerHeight;
-        
-        let left = e.pageX + 15;
-        let top = e.pageY + 15;
-
-        // Flip Horizontally if off screen
-        if (left + rect.width > winW) {
-            left = e.pageX - rect.width - 15;
-        }
-
-        // Flip Vertically if off screen
-        if (e.clientY + rect.height + 20 > winH) {
-            top = e.pageY - rect.height - 10;
-        }
-
-        tt.style.left = left + 'px';
-        tt.style.top = top + 'px';
+    const tt = document.getElementById(tooltipId);
+    tt.style.display = 'block';
+    
+    const rect = tt.getBoundingClientRect();
+    const winW = window.innerWidth;
+    
+    // Adjust width for mobile screens
+    if(winW < 500) {
+        tt.style.width = (winW - 40) + "px";
     }
+
+    let left = e.pageX + 10;
+    let top = e.pageY + 10;
+
+    // Boundary check for right side
+    if (left + rect.width > winW) {
+        left = winW - rect.width - 20;
+    }
+    
+    // Boundary check for left side
+    if (left < 10) left = 10;
+
+    tt.style.left = left + 'px';
+    tt.style.top = top + 'px';
+}
 
     // --- SPECIFIC TOOLTIPS ---
     
@@ -1093,55 +1254,50 @@
         }
     }
 
-    // --- 1. PRICE MASTER LOGIC ---
-    function renderMasterTable() {
-        const tbody = document.getElementById('master-body');
-        const search = document.getElementById('search').value.toLowerCase();
-        tbody.innerHTML = '';
+    // --- Update Master Table with data-labels ---
+function renderMasterTable() {
+    const tbody = document.getElementById('master-body');
+    const search = document.getElementById('search').value.toLowerCase();
+    tbody.innerHTML = '';
+    
+    products.forEach(p => {
+        if (!p || (p.name && !p.name.toLowerCase().includes(search) && !p.id.toString().includes(search))) return;
+
+        const costPc = (p.costKg || 0) * (p.conv || 0);
+        const profit = (p.spPiece || 0) - costPc;
+        const marginPct = (p.spPiece > 0) ? (profit / p.spPiece) * 100 : 0;
+        const colorClass = marginPct >= 0 ? 'text-green' : 'text-red';
+        const tr = document.createElement('tr');
         
-        if (!products || products.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">No Data. Upload CSV or Add Item.</td></tr>';
-            return;
+        // Added 'onclick' for mobile tooltip access
+        const ttEvents = `onclick="showHistory(event, ${p.id})" onmouseenter="showHistory(event, ${p.id})" onmouseleave="hidePriceTooltip()"`;
+
+        if (isEditMode) {
+            tr.innerHTML = `
+                <td data-label="Code">${p.id}</td>
+                <td data-label="Product">${p.name}</td>
+                <td data-label="UOM"><input class="cell-input" value="${p.uom}" data-id="${p.id}" data-field="uom"></td>
+                <td data-label="Conv"><input class="cell-input" type="number" value="${p.conv}" data-id="${p.id}" data-field="conv"></td>
+                <td data-label="Buy Cost"><input class="cell-input" type="number" value="${p.costKg}" data-id="${p.id}" data-field="costKg"></td>
+                <td data-label="Cost/Pc">₹${costPc.toFixed(2)}</td>
+                <td data-label="Sell Price"><input class="cell-input" type="number" value="${p.spPiece}" data-id="${p.id}" data-field="spPiece"></td>
+                <td data-label="Margin">${marginPct.toFixed(0)}%</td>
+            `;
+        } else {
+            tr.innerHTML = `
+                <td data-label="Code">${p.id}</td>
+                <td data-label="Product" style="font-weight:bold; color:var(--primary)">${p.name}</td>
+                <td data-label="UOM">${p.uom}</td>
+                <td data-label="Conv">${p.conv}</td>
+                <td data-label="Buy Cost">₹${p.costKg}</td>
+                <td data-label="Cost/Pc">₹${costPc.toFixed(2)}</td>
+                <td data-label="Sell Price" ${ttEvents}><strong>₹${p.spPiece}</strong></td>
+                <td data-label="Margin" class="${colorClass}">${marginPct.toFixed(0)}%</td>
+            `;
         }
-
-        products.forEach(p => {
-            if (!p) return; 
-            if (p.name && !p.name.toLowerCase().includes(search) && !p.id.toString().includes(search)) return;
-
-            const costPc = (p.costKg || 0) * (p.conv || 0);
-            const profit = (p.spPiece || 0) - costPc;
-            const marginPct = (p.spPiece > 0) ? (profit / p.spPiece) * 100 : 0;
-            const colorClass = marginPct >= 0 ? 'text-green' : 'text-red';
-
-            const tr = document.createElement('tr');
-            const hoverEvents = `onmouseenter="showHistory(event, ${p.id})" onmouseleave="hidePriceTooltip()"`;
-
-            if (isEditMode) {
-                tr.innerHTML = `
-                    <td class="w-code t-left">${p.id}</td>
-                    <td class="w-name t-left">${p.name}</td>
-                    <td class="w-uom t-left"><input class="cell-input t-left" value="${p.uom}" data-id="${p.id}" data-field="uom"></td>
-                    <td class="w-num t-right"><input class="cell-input" type="number" value="${p.conv}" data-id="${p.id}" data-field="conv"></td>
-                    <td class="w-num t-right"><input class="cell-input" type="number" value="${p.costKg}" data-id="${p.id}" data-field="costKg"></td>
-                    <td class="w-calc t-right">₹${costPc.toFixed(2)}</td>
-                    <td class="w-num t-right"><input class="cell-input" type="number" value="${p.spPiece}" data-id="${p.id}" data-field="spPiece"></td>
-                    <td class="w-stat t-right" style="color:#aaa">${marginPct.toFixed(0)}%</td>
-                `;
-            } else {
-                tr.innerHTML = `
-                    <td class="w-code t-left">${p.id}</td>
-                    <td class="w-name t-left">${p.name}</td>
-                    <td class="w-uom t-left" style="color:#5f6368">${p.uom}</td>
-                    <td class="w-num t-right">${p.conv}</td>
-                    <td class="w-num t-right">₹${p.costKg}</td>
-                    <td class="w-calc t-right cell-hover" ${hoverEvents}>₹${costPc.toFixed(2)}</td>
-                    <td class="w-num t-right cell-hover" ${hoverEvents}><b>₹${p.spPiece}</b></td>
-                    <td class="w-stat t-right ${colorClass}">${marginPct.toFixed(0)}%</td>
-                `;
-            }
-            tbody.appendChild(tr);
-        });
-    }
+        tbody.appendChild(tr);
+    });
+}
 
     function toggleEditMode() {
         isEditMode = !isEditMode;
@@ -1383,28 +1539,45 @@
             `;
         });
     }
+// --- Update Indent Preview with data-labels ---
+function renderIndentPreview() {
+    const tbody = document.getElementById('indent-body');
+    tbody.innerHTML = '';
+    currentIndent.forEach(item => {
+        const tr = document.createElement('tr');
+        const colorClass = item.marginPct >= 0 ? 'text-green' : 'text-red';
+        tr.innerHTML = `
+            <td data-label="Code">${item.code}</td>
+            <td data-label="Item" style="font-weight:bold; white-space:normal">${item.name}</td>
+            <td data-label="Qty"><input type="number" class="qty-edit" value="${item.qty}" onchange="updateIndentQty(${item.code}, this.value)"></td>
+            <td data-label="Sell">₹${item.poRate}</td>
+            <td data-label="Cost">₹${item.myCost.toFixed(2)}</td>
+            <td data-label="Profit" class="${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
+            <td data-label="Margin %" class="${colorClass}">${item.marginPct.toFixed(0)}%</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+// Function to track price changes over time
+function addToHistory(product, source, buy, sell) {
+    if (!product.history) product.history = [];
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Don't add if the last entry is identical to this one
+    const lastEntry = product.history[product.history.length - 1];
+    if (lastEntry && lastEntry.sell === sell && lastEntry.date === today) return;
 
-    function renderIndentPreview() {
-        const tbody = document.getElementById('indent-body');
-        tbody.innerHTML = '';
-        currentIndent.forEach(item => {
-            const tr = document.createElement('tr');
-            const colorClass = item.marginPct >= 0 ? 'text-green' : 'text-red';
-            tr.innerHTML = `
-                <td class="w-code t-left">${item.code}</td>
-                <td class="w-name t-left">${item.name}</td>
-                <td class="w-num t-right td-input">
-                    <input type="number" class="qty-edit" value="${item.qty}" 
-                    onchange="updateIndentQty(${item.code}, this.value)" min="0" />
-                </td>
-                <td class="w-num t-right">₹${item.poRate}</td>
-                <td class="w-num t-right">₹${item.myCost.toFixed(2)}</td>
-                <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
-                <td class="w-stat t-right ${colorClass}">${item.marginPct.toFixed(0)}%</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
+    product.history.push({
+        date: today,
+        source: source,
+        buy: buy,
+        sell: sell
+    });
+
+    // Keep only the last 10 changes to save database space
+    if (product.history.length > 10) product.history.shift();
+}
 
     function applyIndentPricesToMaster() {
         let updateCount = 0;
@@ -1646,6 +1819,7 @@
     function finalizeBill() {
         if(!pendingReviewData) return;
         if(!confirm("Confirm and Save to History? This cannot be undone.")) return;
+        const originalPackingSnapshot = JSON.parse(JSON.stringify(pendingReviewData.items));
 
         let totalBillAmt = 0;
         let totalStandardCost = 0;

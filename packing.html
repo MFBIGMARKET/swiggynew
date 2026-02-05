@@ -354,7 +354,7 @@
                             onfocus="this.select()">
                     </div>
                     <div class="input-group">
-                        <span class="input-label">KG</span>
+                        <span class="input-label">KG/NOS</span>
                         <input type="number" inputmode="decimal" id="kg-${item.code}" 
                             placeholder="0.0" 
                             value="${valKg}" 
@@ -481,41 +481,44 @@
     }
 
     window.openHistoryDetail = function(idx) {
-        const rec = historyData[idx];
-        const container = document.getElementById('history-detail-content');
-        container.innerHTML = '';
+    const rec = historyData[idx];
+    const container = document.getElementById('history-detail-content');
+    container.innerHTML = '';
 
-        if(rec.items) {
-            rec.items.forEach(item => {
-                const hasImg = item.img ? true : false;
-                const el = document.createElement('div');
-                el.className = 'card';
-                el.style.background = "#f9f9f9"; 
-                el.innerHTML = `
-                    <div class="card-header">
-                        <span class="item-name">${item.name}</span>
-                        ${hasImg ? `<span class="material-icons" style="color:var(--primary); cursor:pointer" onclick="openModal('${item.img}')">image</span>` : ''}
+    // Prioritize the raw packing data, fallback to items if snapshot doesn't exist
+    const displayItems = rec.packingSnapshot || rec.items;
+
+    if(displayItems) {
+        displayItems.forEach(item => {
+            const hasImg = item.img ? true : false;
+            const el = document.createElement('div');
+            el.className = 'card';
+            el.style.background = "#f9f9f9"; 
+            el.innerHTML = `
+                <div class="card-header">
+                    <span class="item-name">${item.name}</span>
+                    ${hasImg ? `<span class="material-icons" style="color:var(--primary); cursor:pointer" onclick="openModal('${item.img}')">image</span>` : ''}
+                </div>
+                <div class="card-body" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="input-group">
+                        <span class="input-label">Ordered</span>
+                        <div class="val-box" style="background:#fff; color:#666; border-color:#eee">${item.originalQty || item.poQty || '-'}</div>
                     </div>
-                    <div class="card-body" style="grid-template-columns: 1fr 1fr 1fr;">
-                        <div class="input-group">
-                            <span class="input-label">Ordered</span>
-                            <div class="val-box" style="background:#fff; color:#666; border-color:#eee">${item.originalQty || item.poQty || '-'}</div>
-                        </div>
-                        <div class="input-group">
-                            <span class="input-label">Packed</span>
-                            <div class="val-box" style="background:#fff; color:#333; border-color:#ccc">${item.qty}</div>
-                        </div>
-                        <div class="input-group">
-                            <span class="input-label">Actual Kg</span>
-                            <div class="val-box" style="background:${item.actualKg > 0 ? '#e8f0fe' : '#fff'}; color:#333; border-color:#ccc">${item.actualKg || '-'}</div>
-                        </div>
+                    <div class="input-group">
+                        <span class="input-label">Packed</span>
+                        <div class="val-box" style="background:#fff; color:#333; border-color:#ccc">${item.qty}</div>
                     </div>
-                `;
-                container.appendChild(el);
-            });
-        }
-        document.getElementById('page-history-detail').classList.add('active');
+                    <div class="input-group">
+                        <span class="input-label">KG/NOS</span> <!-- UPDATED LABEL -->
+                        <div class="val-box" style="background:${item.actualKg > 0 ? '#e8f0fe' : '#fff'}; color:#333; border-color:#ccc">${item.actualKg || '-'}</div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(el);
+        });
     }
+    document.getElementById('page-history-detail').classList.add('active');
+}
 
     // --- IMAGES ---
     window.handleImage = function(input, code) {
