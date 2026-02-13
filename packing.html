@@ -253,16 +253,47 @@
                     localData = JSON.parse(localStorage.getItem('swiggy_packing_data') || '{}');
                 }
 
-                // Render Card
+                // --- PROGRESS CALCULATION ---
                 const itemCount = activeIndent.items ? activeIndent.items.length : 0;
+                let packedCount = 0;
+                
+                if (activeIndent.items) {
+                    activeIndent.items.forEach(item => {
+                        // Check if item has data locally or from server draft
+                        const local = localData[item.code];
+                        const hasLocalData = local && (local.qty !== undefined || local.kg !== undefined);
+                        const hasServerData = item.savedQty !== undefined || item.savedKg !== undefined;
+                        
+                        // We consider it "Started/Packed" if data exists
+                        if (hasLocalData || hasServerData) {
+                            packedCount++;
+                        }
+                    });
+                }
+
+                const progressPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
+                let progressColor = 'var(--primary)';
+                if(progressPct === 100) progressColor = 'var(--green)';
+
+                // --- RENDER CARD ---
                 container.innerHTML = `
                     <div class="task-card" onclick="openPacking()">
-                        <div class="task-info">
-                            <h3>Order Date: ${activeIndent.date}</h3>
-                            <p>${itemCount} Items to pack</p>
-                            <p style="color:var(--primary); font-size:12px; margin-top:5px; font-weight:500;">Tap to start packing</p>
+                        <div class="task-info" style="width:100%">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h3>Order Date: ${activeIndent.date}</h3>
+                                <span style="font-size:12px; font-weight:bold; color:${progressColor}">${packedCount}/${itemCount} Done</span>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div style="width:100%; height:6px; background:#eee; border-radius:3px; margin:8px 0; overflow:hidden;">
+                                <div style="width:${progressPct}%; height:100%; background:${progressColor}; transition:width 0.3s;"></div>
+                            </div>
+
+                            <p style="color:var(--primary); font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px;">
+                                <span>Tap to continue packing</span>
+                                <span class="material-icons" style="font-size:16px">arrow_forward</span>
+                            </p>
                         </div>
-                        <span class="material-icons" style="color:var(--primary)">chevron_right</span>
                     </div>
                 `;
             } else {
@@ -292,7 +323,16 @@
     window.openPacking = function() {
         if(!activeIndent) return;
         document.getElementById('packing-title').innerText = activeIndent.date;
-        fullItemsList = activeIndent.items;
+        
+        // --- SORT ALPHABETICALLY ---
+        fullItemsList = [...activeIndent.items].sort((a, b) => {
+            const nameA = (a.name || "").toLowerCase();
+            const nameB = (b.name || "").toLowerCase();
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+            return 0;
+        });
+
         renderPackingList(fullItemsList);
         document.getElementById('page-packing').classList.add('active');
     }
@@ -318,20 +358,26 @@
         
         items.forEach((item) => {
             let valQty, valKg, imgData;
-
-            if (localData[item.code]) {
-                valQty = localData[item.code].qty;
-                valKg = localData[item.code].kg;
-                imgData = localData[item.code].img; 
+            
+            // Check Data Sources
+            const local = localData[item.code];
+            const hasLocal = local && local.qty !== undefined;
+            const hasServer = item.savedQty !== undefined;
+            
+            if (local) {
+                valQty = local.qty;
+                valKg = local.kg;
+                imgData = local.img; 
             } else {
-                valQty = item.savedQty !== undefined ? item.savedQty : item.poQty;
+                // If saved on server, use that. Otherwise show Ordered Qty as placeholder/default
+                valQty = hasServer ? item.savedQty : item.poQty;
                 valKg = item.savedKg !== undefined ? item.savedKg : '';
                 imgData = item.savedImg || null;
-                if(!localData[item.code]) localData[item.code] = {};
             }
             
-            if(valQty === undefined) valQty = item.poQty;
-            const isFilled = (valQty != item.poQty) || (valKg && valKg !== '');
+            // FIX: Item is 'Filled' if Local data exists OR Server data exists OR Kg is entered
+            // This ensures green border shows even if you save 5/5 items.
+            const isFilled = hasLocal || hasServer || (valKg && valKg !== '');
 
             const div = document.createElement('div');
             div.className = `card ${isFilled ? 'has-data' : ''}`;
@@ -349,7 +395,7 @@
                         <span class="input-label">PACKED</span>
                         <input type="number" inputmode="numeric" id="qty-${item.code}" 
                             value="${valQty}" 
-                            class="qty-input ${valQty != item.poQty ? 'filled' : ''}"
+                            class="qty-input ${isFilled ? 'filled' : ''}"
                             oninput="updateLocal(${item.code}, 'qty', this.value)"
                             onfocus="this.select()">
                     </div>
@@ -393,17 +439,34 @@
 
         const updatedItems = activeIndent.items.map(item => {
             const saved = localData[item.code] || {};
-            return {
-                ...item,
-                savedQty: saved.qty !== undefined ? parseFloat(saved.qty) : (item.savedQty || item.poQty),
-                savedKg: saved.kg !== undefined ? parseFloat(saved.kg) : (item.savedKg || 0),
-                savedImg: saved.img || item.savedImg || null
-            };
+            
+            // Clone item to preserve existing data
+            const newItem = { ...item };
+
+            // Update QTY: Only if locally changed. 
+            // If not changed locally, we keep the existing item.savedQty (if any).
+            // We REMOVED the "|| item.poQty" fallback which was causing the bug.
+            if (saved.qty !== undefined) {
+                newItem.savedQty = parseFloat(saved.qty);
+            }
+
+            // Update KG
+            if (saved.kg !== undefined) {
+                newItem.savedKg = parseFloat(saved.kg);
+            }
+
+            // Update IMG
+            if (saved.img) {
+                newItem.savedImg = saved.img;
+            }
+
+            return newItem;
         });
 
         try {
             await set(ref(db, 'active_indent'), { ...activeIndent, items: updatedItems });
             if(showAlert) alert("Draft saved successfully.");
+            checkActiveTask(); // Refresh progress bar
         } catch (e) { alert("Error: " + e.message); }
     }
 

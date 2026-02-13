@@ -709,6 +709,12 @@
              <div class="card-header" style="border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
                 <button class="btn" onclick="closeHistoryDetail()"><span class="material-icons">arrow_back</span> Back</button>
                 <div style="flex:1; margin-left:15px; font-weight:500; font-size:16px;" id="hist-detail-title">Bill Detail</div>
+                        <!-- NEW BUTTON START -->
+        <button class="btn" onclick="downloadBillPDF()">
+            <span class="material-icons">receipt_long</span> Download Bill
+        </button>
+        <!-- NEW BUTTON END -->
+
                 <button class="btn btn-filled" onclick="downloadHistoryPDF()"><span class="material-icons">picture_as_pdf</span> Download Report</button>
             </div>
             
@@ -1255,6 +1261,8 @@
     }
 
     // --- Update Master Table with data-labels ---
+// FIND THIS FUNCTION IN index.html AND REPLACE IT
+// --- REPLACE EXISTING renderMasterTable FUNCTION ---
 function renderMasterTable() {
     const tbody = document.getElementById('master-body');
     const search = document.getElementById('search').value.toLowerCase();
@@ -1269,30 +1277,30 @@ function renderMasterTable() {
         const colorClass = marginPct >= 0 ? 'text-green' : 'text-red';
         const tr = document.createElement('tr');
         
-        // Added 'onclick' for mobile tooltip access
         const ttEvents = `onclick="showHistory(event, ${p.id})" onmouseenter="showHistory(event, ${p.id})" onmouseleave="hidePriceTooltip()"`;
 
+        // ADDED CLASSES (w-code, w-name, etc.) TO TD ELEMENTS BELOW
         if (isEditMode) {
             tr.innerHTML = `
-                <td data-label="Code">${p.id}</td>
-                <td data-label="Product">${p.name}</td>
-                <td data-label="UOM"><input class="cell-input" value="${p.uom}" data-id="${p.id}" data-field="uom"></td>
-                <td data-label="Conv"><input class="cell-input" type="number" value="${p.conv}" data-id="${p.id}" data-field="conv"></td>
-                <td data-label="Buy Cost"><input class="cell-input" type="number" value="${p.costKg}" data-id="${p.id}" data-field="costKg"></td>
-                <td data-label="Cost/Pc">₹${costPc.toFixed(2)}</td>
-                <td data-label="Sell Price"><input class="cell-input" type="number" value="${p.spPiece}" data-id="${p.id}" data-field="spPiece"></td>
-                <td data-label="Margin">${marginPct.toFixed(0)}%</td>
+                <td class="w-code t-left" data-label="Code">${p.id}</td>
+                <td class="w-name t-left" data-label="Product">${p.name}</td>
+                <td class="w-uom t-left" data-label="UOM"><input class="cell-input" value="${p.uom}" data-id="${p.id}" data-field="uom"></td>
+                <td class="w-num t-right" data-label="Conv"><input class="cell-input" type="number" value="${p.conv}" data-id="${p.id}" data-field="conv"></td>
+                <td class="w-num t-right" data-label="Buy Cost"><input class="cell-input" type="number" value="${p.costKg}" data-id="${p.id}" data-field="costKg"></td>
+                <td class="w-calc t-right" data-label="Cost/Pc">₹${costPc.toFixed(2)}</td>
+                <td class="w-num t-right" data-label="Sell Price"><input class="cell-input" type="number" value="${p.spPiece}" data-id="${p.id}" data-field="spPiece"></td>
+                <td class="w-stat t-right" data-label="Margin">${marginPct.toFixed(0)}%</td>
             `;
         } else {
             tr.innerHTML = `
-                <td data-label="Code">${p.id}</td>
-                <td data-label="Product" style="font-weight:bold; color:var(--primary)">${p.name}</td>
-                <td data-label="UOM">${p.uom}</td>
-                <td data-label="Conv">${p.conv}</td>
-                <td data-label="Buy Cost">₹${p.costKg}</td>
-                <td data-label="Cost/Pc">₹${costPc.toFixed(2)}</td>
-                <td data-label="Sell Price" ${ttEvents}><strong>₹${p.spPiece}</strong></td>
-                <td data-label="Margin" class="${colorClass}">${marginPct.toFixed(0)}%</td>
+                <td class="w-code t-left" data-label="Code">${p.id}</td>
+                <td class="w-name t-left" data-label="Product" style="font-weight:bold; color:var(--primary)">${p.name}</td>
+                <td class="w-uom t-left" data-label="UOM">${p.uom}</td>
+                <td class="w-num t-right" data-label="Conv">${p.conv}</td>
+                <td class="w-num t-right" data-label="Buy Cost">₹${p.costKg}</td>
+                <td class="w-calc t-right" data-label="Cost/Pc">₹${costPc.toFixed(2)}</td>
+                <td class="w-num t-right" data-label="Sell Price" ${ttEvents}><strong>₹${p.spPiece}</strong></td>
+                <td class="w-stat t-right" data-label="Margin"><span class="${colorClass}">${marginPct.toFixed(0)}%</span></td>
             `;
         }
         tbody.appendChild(tr);
@@ -1990,98 +1998,96 @@ function addToHistory(product, source, buy, sell) {
     }
 
     function viewHistoryDetail(index) {
-        currentViewedHistory = indents[index]; 
-        const rec = currentViewedHistory;
-        const displayDate = formatDate(rec.date);
-        
-        document.getElementById('hist-detail-title').innerText = `Bill Detail: ${displayDate}`;
-        
-        // Handle backwards compatibility
-        const tBillAmt = rec.totalBillAmt || rec.totalRev || 0;
-        const tIndentAmt = rec.totalIndentAmt || 0;
-        const tExp = rec.totalExpenses || 0;
-        const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
-        const grossMargin = tBillAmt > 0 ? (rec.profit / tBillAmt) * 100 : 0;
-        const netMargin = tBillAmt > 0 ? (tNet / tBillAmt) * 100 : 0;
+    currentViewedHistory = indents[index]; 
+    const rec = currentViewedHistory;
+    
+    // FILTER: Only items with Qty > 0
+    const validItems = (rec.items || []).filter(i => i.qty > 0);
 
-        document.getElementById('hist-kpi-indent').innerText = '₹' + tIndentAmt.toFixed(0);
-        document.getElementById('hist-kpi-bill').innerText = '₹' + tBillAmt.toFixed(0);
-        document.getElementById('hist-kpi-cost').innerText = '₹' + rec.totalCost.toFixed(0);
-        document.getElementById('hist-kpi-expenses').innerText = '₹' + tExp.toFixed(0);
-        
-        // Gross
-        const elProf = document.getElementById('hist-kpi-profit');
-        elProf.innerText = '₹' + rec.profit.toFixed(0);
-        elProf.className = 'kpi-value ' + (rec.profit >= 0 ? 'kpi-pos' : 'kpi-neg');
+    const displayDate = formatDate(rec.date);
+    
+    document.getElementById('hist-detail-title').innerText = `Bill Detail: ${displayDate}`;
+    
+    const tBillAmt = rec.totalBillAmt || rec.totalRev || 0;
+    const tIndentAmt = rec.totalIndentAmt || 0;
+    const tExp = rec.totalExpenses || 0;
+    const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
+    const grossMargin = tBillAmt > 0 ? (rec.profit / tBillAmt) * 100 : 0;
+    const netMargin = tBillAmt > 0 ? (tNet / tBillAmt) * 100 : 0;
 
-        const elGrossMarg = document.getElementById('hist-kpi-gross-margin');
-        elGrossMarg.innerText = grossMargin.toFixed(1) + '%';
-        elGrossMarg.className = 'kpi-value ' + (grossMargin >= 0 ? 'kpi-pos' : 'kpi-neg');
+    document.getElementById('hist-kpi-indent').innerText = '₹' + tIndentAmt.toFixed(0);
+    document.getElementById('hist-kpi-bill').innerText = '₹' + tBillAmt.toFixed(0);
+    document.getElementById('hist-kpi-cost').innerText = '₹' + (rec.totalCost || 0).toFixed(0);
+    document.getElementById('hist-kpi-expenses').innerText = '₹' + tExp.toFixed(0);
+    
+    // Gross
+    const elProf = document.getElementById('hist-kpi-profit');
+    elProf.innerText = '₹' + rec.profit.toFixed(0);
+    elProf.className = 'kpi-value ' + (rec.profit >= 0 ? 'kpi-pos' : 'kpi-neg');
 
-        // Net
-        const elNet = document.getElementById('hist-kpi-net-profit');
-        elNet.innerText = '₹' + tNet.toFixed(0);
-        elNet.className = 'kpi-value ' + (tNet >= 0 ? 'kpi-net' : 'kpi-neg');
+    const elGrossMarg = document.getElementById('hist-kpi-gross-margin');
+    elGrossMarg.innerText = grossMargin.toFixed(1) + '%';
+    elGrossMarg.className = 'kpi-value ' + (grossMargin >= 0 ? 'kpi-pos' : 'kpi-neg');
 
-        const elNetMarg = document.getElementById('hist-kpi-net-margin');
-        elNetMarg.innerText = netMargin.toFixed(1) + '%';
-        elNetMarg.className = 'kpi-value ' + (netMargin >= 0 ? 'kpi-net' : 'kpi-neg');
+    // Net
+    const elNet = document.getElementById('hist-kpi-net-profit');
+    elNet.innerText = '₹' + tNet.toFixed(0);
+    elNet.className = 'kpi-value ' + (tNet >= 0 ? 'kpi-net' : 'kpi-neg');
 
-        renderMarginDistribution(rec.items, 'hist-margin-distribution');
-        renderHistoryDetailTable();
+    const elNetMarg = document.getElementById('hist-kpi-net-margin');
+    elNetMarg.innerText = netMargin.toFixed(1) + '%';
+    elNetMarg.className = 'kpi-value ' + (netMargin >= 0 ? 'kpi-net' : 'kpi-neg');
 
-        document.getElementById('history-list-view').classList.add('hidden');
-        document.getElementById('history-detail-view').classList.remove('hidden');
+    // PASS FILTERED ITEMS TO MARGIN GRID
+    renderMarginDistribution(validItems, 'hist-margin-distribution');
+    renderHistoryDetailTable();
+
+    document.getElementById('history-list-view').classList.add('hidden');
+    document.getElementById('history-detail-view').classList.remove('hidden');
+}
+
+    // FIND THIS FUNCTION IN index.html AND REPLACE IT
+function renderHistoryDetailTable() {
+    const tbody = document.getElementById('hist-detail-body');
+    tbody.innerHTML = '';
+    
+    if(currentViewedHistory && currentViewedHistory.items) {
+        const historyIndex = indents.indexOf(currentViewedHistory);
+
+        // FILTER HERE AS WELL FOR THE TABLE ROW RENDER
+        currentViewedHistory.items.forEach((item, itemIndex) => {
+             if (!item.qty || item.qty <= 0) return; // Skip 0 qty items
+
+             const tr = document.createElement('tr');
+             const mPct = item.marginPct || 0;
+             const colorClass = mPct >= 0 ? 'text-green' : 'text-red';
+             
+             let nameDisplay = `<div>${item.name}</div>`;
+             let badges = '';
+             
+             if(item.actualKg !== undefined && item.actualKg > 0) {
+                 badges += ` <span style="font-size:10px; color:#1a73e8; background:#e8f0fe; padding:2px 5px; border-radius:4px; margin-right:5px;">${item.actualKg}kg</span>`;
+             }
+             if(item.img) {
+                 badges += `<span style="cursor:pointer; font-size:14px;" onclick="openImgModal('${historyIndex}', 'history', '${itemIndex}')">📷</span>`;
+             }
+             if(badges) { nameDisplay += `<div style="margin-top:2px;">${badges}</div>`; }
+
+             const totalLineCost = item.frozenCost || (item.myCost * item.qty);
+
+             tr.innerHTML = `
+                <td class="w-code t-left">${item.code}</td>
+                <td class="w-name t-left">${nameDisplay}</td>
+                <td class="w-num t-right">${item.qty}</td>
+                <td class="w-num t-right">₹${item.poRate}</td>
+                <td class="w-num t-right">₹${totalLineCost.toFixed(2)}</td>
+                <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
+                <td class="w-stat t-right ${colorClass}">${mPct.toFixed(0)}%</td>
+             `;
+             tbody.appendChild(tr);
+        });
     }
-
-    function renderHistoryDetailTable() {
-        const tbody = document.getElementById('hist-detail-body');
-        tbody.innerHTML = '';
-        
-        if(currentViewedHistory && currentViewedHistory.items) {
-            // Find global index for the modal to reference
-            const historyIndex = indents.indexOf(currentViewedHistory);
-
-            currentViewedHistory.items.forEach((item, itemIndex) => {
-                 const tr = document.createElement('tr');
-                 const mPct = item.marginPct || 0;
-                 const colorClass = mPct >= 0 ? 'text-green' : 'text-red';
-                 
-                 // Name Display with Badges
-                 let nameDisplay = `<div>${item.name}</div>`;
-                 
-                 let badges = '';
-                 
-                 // Actual Kg Badge
-                 if(item.actualKg !== undefined && item.actualKg > 0) {
-                     badges += ` <span style="font-size:10px; color:#1a73e8; background:#e8f0fe; padding:2px 5px; border-radius:4px; margin-right:5px;">${item.actualKg}kg</span>`;
-                 }
-
-                 // Image Button (Camera Icon)
-                 if(item.img) {
-                     badges += `<span style="cursor:pointer; font-size:14px;" onclick="openImgModal('${historyIndex}', 'history', '${itemIndex}')">📷</span>`;
-                 }
-
-                 if(badges) {
-                     nameDisplay += `<div style="margin-top:2px;">${badges}</div>`;
-                 }
-
-                 // Use frozenCost (Standard Cost) if available, else fallback
-                 const totalLineCost = item.frozenCost || (item.myCost * item.qty);
-
-                 tr.innerHTML = `
-                    <td class="w-code t-left">${item.code}</td>
-                    <td class="w-name t-left">${nameDisplay}</td>
-                    <td class="w-num t-right">${item.qty}</td>
-                    <td class="w-num t-right">₹${item.poRate}</td>
-                    <td class="w-num t-right">₹${totalLineCost.toFixed(2)}</td>
-                    <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
-                    <td class="w-stat t-right ${colorClass}">${mPct.toFixed(0)}%</td>
-                 `;
-                 tbody.appendChild(tr);
-            });
-        }
-    }
+}
 
     function closeHistoryDetail() {
         document.getElementById('history-detail-view').classList.add('hidden');
@@ -2089,323 +2095,492 @@ function addToHistory(product, source, buy, sell) {
         currentViewedHistory = null;
     }
 
-    function downloadHistoryPDF() {
-        if (!currentViewedHistory) return;
-        
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-        const rec = currentViewedHistory;
-        const displayDate = formatDate(rec.date);
-        
-        // --- COLORS ---
-        const c = {
-            blue: [26, 115, 232],
-            green: [24, 128, 56],
-            red: [217, 48, 37],
-            orange: [230, 81, 0],
-            yellow: [249, 171, 0],
-            textMain: [32, 33, 36],
-            textLight: [95, 99, 104],
-            bgLight: [248, 250, 252],
-            border: [218, 220, 224],
-            white: [255, 255, 255],
-            footerBg: [241, 243, 244],
-            borderDark: [0, 0, 0]
-        };
+    // --- REPLACE EXISTING downloadHistoryPDF FUNCTION ---
+function downloadHistoryPDF() {
+    if (!currentViewedHistory) return;
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const rec = currentViewedHistory;
+    
+    // FILTER ITEMS FOR PDF
+    const validItems = (rec.items || []).filter(i => i.qty > 0);
 
-        // --- DATA PREP ---
-        const tBill = rec.totalBillAmt || rec.totalRev || 0;
-        const tCost = rec.totalCost || 0;
-        const tGross = rec.profit || 0;
-        const tExp = rec.totalExpenses || 0;
-        const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
-        const grossM = tBill > 0 ? (rec.profit/tBill)*100 : 0;
-        const netM = tBill > 0 ? (tNet/tBill)*100 : 0;
-        const tIndent = rec.totalIndentAmt || 0;
-        
-        let expD = rec.expenseDetails;
-        if (!expD) expD = calculateTotalExpense(rec.date, tBill, tCost);
+    const displayDate = formatDate(rec.date);
+    
+    // --- COLORS ---
+    const c = {
+        blue: [26, 115, 232], green: [24, 128, 56], red: [217, 48, 37],
+        orange: [230, 81, 0], yellow: [249, 171, 0], textMain: [32, 33, 36],
+        textLight: [95, 99, 104], bgLight: [248, 250, 252], border: [218, 220, 224],
+        white: [255, 255, 255], footerBg: [241, 243, 244], borderDark: [0, 0, 0]
+    };
 
-        // --- HELPERS ---
-        const fmt = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-        const margin = 12;
-        const pageW = 210;
-        const pageH = 297;
-        const contentW = pageW - (margin * 2);
+    const fmt = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    const margin = 12;
+    const pageW = 210;
+    const pageH = 297;
+    const contentW = pageW - (margin * 2);
 
-        // ================= 1. HEADER =================
-        let y = 18;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(22);
-        doc.setTextColor(...c.textMain);
-        doc.text("SWIGGY REPORT", 105, y, { align: 'center' });
-        
-        y += 7;
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.setTextColor(...c.textLight);
-        doc.text(displayDate, 105, y, { align: 'center' });
-        y += 15;
+    // 1. HEADER
+    let y = 18;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(...c.textMain);
+    doc.text("SWIGGY REPORT", 105, y, { align: 'center' });
+    
+    y += 7;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(...c.textLight);
+    doc.text(displayDate, 105, y, { align: 'center' });
+    y += 15;
 
-        // ================= 2. KPI SCORECARDS =================
-        const cardGap = 3;
-        const cardW = (contentW - (cardGap * 4)) / 5;
-        const cardH = 28;
+    // 2. KPIS
+    const tBill = rec.totalBillAmt || rec.totalRev || 0;
+    const tCost = rec.totalCost || 0;
+    const tGross = rec.profit || 0;
+    const tExp = rec.totalExpenses || 0;
+    const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
+    const tIndent = rec.totalIndentAmt || 0;
 
-        const kpis = [
-            { l: 'INDENT AMT', v: tIndent, c: [100, 100, 100] },
-            { l: 'REVENUE', v: tBill, c: c.blue },
-            { l: 'COGS', v: tCost, c: [60, 60, 60] },
-            { l: 'EXPENSES', v: tExp, c: c.orange },
-            { l: 'NET PROFIT', v: tNet, c: tNet >= 0 ? c.green : c.red }
-        ];
+    const cardGap = 3;
+    const cardW = (contentW - (cardGap * 4)) / 5;
+    const cardH = 28;
 
-        kpis.forEach((k, i) => {
-            let x = margin + (i * (cardW + cardGap));
-            // Shadow
-            doc.setFillColor(230, 230, 230);
-            doc.roundedRect(x+1, y+1, cardW, cardH, 2, 2, 'F');
-            // Card
-            doc.setDrawColor(...c.borderDark);
-            doc.setLineWidth(0.3);
-            doc.setFillColor(...c.white);
-            doc.roundedRect(x, y, cardW, cardH, 2, 2, 'FD');
-            // Accent
-            doc.setFillColor(...k.c);
-            doc.rect(x+2, y+2, cardW-4, 1.5, 'F');
-            // Text
-            doc.setFontSize(7); doc.setTextColor(...c.textLight); doc.setFont("helvetica", "bold");
-            doc.text(k.l, x + (cardW/2), y + 10, { align: 'center' });
-            doc.setFontSize(13); doc.setTextColor(...c.textMain);
-            doc.text('Rs ' + fmt(k.v), x + (cardW/2), y + 20, { align: 'center' });
-        });
-        y += cardH + 12;
+    const kpis = [
+        { l: 'INDENT AMT', v: tIndent, c: [100, 100, 100] },
+        { l: 'REVENUE', v: tBill, c: c.blue },
+        { l: 'COGS', v: tCost, c: [60, 60, 60] },
+        { l: 'EXPENSES', v: tExp, c: c.orange },
+        { l: 'NET PROFIT', v: tNet, c: tNet >= 0 ? c.green : c.red }
+    ];
 
-        // ================= 3. SPLIT SECTION =================
-        const splitH = 80;
-        // REDUCED WATERFALL WIDTH slightly to give Margin Distribution more space
-        const leftW = (contentW * 0.45); 
-        const rightW = (contentW * 0.53); 
-        const gap = contentW - leftW - rightW;
-
-        // --- LEFT: WATERFALL ---
-        doc.setDrawColor(...c.borderDark);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(margin, y, leftW, splitH, 4, 4, 'S');
-        doc.setFontSize(11); doc.setTextColor(0); 
-        doc.text("Profitability Waterfall", margin + (leftW/2), y + 10, { align: 'center' });
-        
-        let fy = y + 20;
-        const drawFlow = (label, val, pct, type) => {
-            if(type === 'main') {
-                doc.setFillColor(...c.bgLight);
-                doc.roundedRect(margin + 3, fy - 3.5, leftW - 6, 9, 2, 2, 'F');
-                doc.setFont("helvetica", "bold");
-            } else {
-                doc.setFont("helvetica", "normal");
-            }
-            doc.setFontSize(9); doc.setTextColor(...c.textMain);
-            doc.text(label, margin + 6, fy + 2);
-            doc.text('Rs ' + fmt(val), margin + leftW - 20, fy + 2, {align:'right'});
-            if(pct) {
-                doc.setFontSize(7); doc.setTextColor(...c.textLight);
-                doc.text(pct, margin + leftW - 8, fy + 2, {align:'right'});
-            }
-            fy += 10;
-        };
-
-        drawFlow("Revenue", tBill, "100%");
-        drawFlow("(-) Cost", tCost, ((tCost/tBill)*100).toFixed(0)+"%");
-        drawFlow("= Gross Profit", tGross, grossM.toFixed(0)+"%", 'main');
-        fy += 4;
-        drawFlow("(-) Expenses", tExp, ((tExp/tBill)*100).toFixed(0)+"%");
-        
-        fy += 4;
-        const netCol = tNet>=0 ? c.green : c.red;
-        const netBg = tNet>=0 ? [230, 244, 234] : [252, 232, 230];
-        doc.setFillColor(...netBg);
-        doc.setDrawColor(...netCol);
-        doc.setLineWidth(0.4);
-        doc.roundedRect(margin + 5, fy - 4, leftW - 10, 12, 2, 2, 'FD');
-        doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0);
-        doc.text("NET PROFIT", margin + 10, fy + 4);
-        doc.setTextColor(...netCol);
-        doc.text('Rs ' + fmt(tNet), margin + leftW - 28, fy + 4, {align:'right'});
-        doc.setFillColor(...netCol);
-        doc.roundedRect(margin + leftW - 24, fy, 14, 5, 1.5, 1.5, 'F');
-        doc.setTextColor(255); doc.setFontSize(7);
-        doc.text(netM.toFixed(1)+'%', margin + leftW - 17, fy + 3.5, {align:'center'});
-
-        // --- RIGHT: MARGIN DISTRIBUTION ---
-        const rx = margin + leftW + gap;
-        doc.setDrawColor(...c.borderDark);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(rx, y, rightW, splitH, 4, 4, 'S');
-        doc.setFontSize(11); doc.setTextColor(0); doc.setFont("helvetica", "bold");
-        doc.text("Margin Distribution", rx + (rightW/2), y + 10, { align: 'center' });
-
-        let my = y + 20;
-        // Header Row
-        doc.setFillColor(...c.bgLight);
-        doc.rect(rx + 2, my - 5, rightW - 4, 8, 'F');
+    kpis.forEach((k, i) => {
+        let x = margin + (i * (cardW + cardGap));
+        doc.setFillColor(230, 230, 230); doc.roundedRect(x+1, y+1, cardW, cardH, 2, 2, 'F');
+        doc.setDrawColor(...c.borderDark); doc.setLineWidth(0.3); doc.setFillColor(...c.white);
+        doc.roundedRect(x, y, cardW, cardH, 2, 2, 'FD');
+        doc.setFillColor(...k.c); doc.rect(x+2, y+2, cardW-4, 1.5, 'F');
         doc.setFontSize(7); doc.setTextColor(...c.textLight); doc.setFont("helvetica", "bold");
+        doc.text(k.l, x + (cardW/2), y + 10, { align: 'center' });
+        doc.setFontSize(13); doc.setTextColor(...c.textMain);
+        doc.text('Rs ' + fmt(k.v), x + (cardW/2), y + 20, { align: 'center' });
+    });
+    y += cardH + 12;
+
+    // 3. SPLIT SECTION
+    const splitH = 80;
+    const leftW = (contentW * 0.45); 
+    const rightW = (contentW * 0.53); 
+    const gap = contentW - leftW - rightW;
+
+    // LEFT: WATERFALL
+    doc.setDrawColor(...c.borderDark); doc.setLineWidth(0.2);
+    doc.roundedRect(margin, y, leftW, splitH, 4, 4, 'S');
+    doc.setFontSize(11); doc.setTextColor(0); 
+    doc.text("Profitability Waterfall", margin + (leftW/2), y + 10, { align: 'center' });
+    
+    let fy = y + 20;
+    const drawFlow = (label, val, pct, type) => {
+        if(type === 'main') {
+            doc.setFillColor(...c.bgLight); doc.roundedRect(margin + 3, fy - 3.5, leftW - 6, 9, 2, 2, 'F');
+            doc.setFont("helvetica", "bold");
+        } else {
+            doc.setFont("helvetica", "normal");
+        }
+        doc.setFontSize(9); doc.setTextColor(...c.textMain);
+        doc.text(label, margin + 6, fy + 2);
+        doc.text('Rs ' + fmt(val), margin + leftW - 20, fy + 2, {align:'right'});
+        if(pct) {
+            doc.setFontSize(7); doc.setTextColor(...c.textLight);
+            doc.text(pct, margin + leftW - 8, fy + 2, {align:'right'});
+        }
+        fy += 10;
+    };
+
+    drawFlow("Revenue", tBill, "100%");
+    drawFlow("(-) Cost", tCost, ((tCost/tBill)*100).toFixed(0)+"%");
+    const grossM = tBill > 0 ? (rec.profit/tBill)*100 : 0;
+    const netM = tBill > 0 ? (tNet/tBill)*100 : 0;
+    drawFlow("= Gross Profit", tGross, grossM.toFixed(0)+"%", 'main');
+    fy += 4;
+    drawFlow("(-) Expenses", tExp, ((tExp/tBill)*100).toFixed(0)+"%");
+    
+    fy += 4;
+    const netCol = tNet>=0 ? c.green : c.red;
+    const netBg = tNet>=0 ? [230, 244, 234] : [252, 232, 230];
+    doc.setFillColor(...netBg); doc.setDrawColor(...netCol); doc.setLineWidth(0.4);
+    doc.roundedRect(margin + 5, fy - 4, leftW - 10, 12, 2, 2, 'FD');
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0);
+    doc.text("NET PROFIT", margin + 10, fy + 4);
+    doc.setTextColor(...netCol);
+    doc.text('Rs ' + fmt(tNet), margin + leftW - 28, fy + 4, {align:'right'});
+    doc.setFillColor(...netCol);
+    doc.roundedRect(margin + leftW - 24, fy, 14, 5, 1.5, 1.5, 'F');
+    doc.setTextColor(255); doc.setFontSize(7);
+    doc.text(netM.toFixed(1)+'%', margin + leftW - 17, fy + 3.5, {align:'center'});
+
+    // RIGHT: MARGIN DISTRIBUTION (USING VALID ITEMS)
+    const rx = margin + leftW + gap;
+    doc.setDrawColor(...c.borderDark); doc.setLineWidth(0.2);
+    doc.roundedRect(rx, y, rightW, splitH, 4, 4, 'S');
+    doc.setFontSize(11); doc.setTextColor(0); doc.setFont("helvetica", "bold");
+    doc.text("Margin Distribution", rx + (rightW/2), y + 10, { align: 'center' });
+
+    let my = y + 20;
+    doc.setFillColor(...c.bgLight); doc.rect(rx + 2, my - 5, rightW - 4, 8, 'F');
+    doc.setFontSize(7); doc.setTextColor(...c.textLight); doc.setFont("helvetica", "bold");
+    doc.text("CATEGORY", rx + 6, my);
+    doc.text("#", rx + 35, my, {align:'right'}); 
+    doc.text("SALES", rx + 55, my, {align:'right'});
+    doc.text("PROFIT", rx + 78, my, {align:'right'}); 
+    doc.text("MGN%", rx + rightW - 6, my, {align:'right'});
+    my += 10;
+
+    const buckets = [
+        { l: 'Loss (<0%)', c: 0, s: 0, p: 0, col: c.red },
+        { l: 'Low (0-10%)', c: 0, s: 0, p: 0, col: c.orange },
+        { l: 'Mid (10-20%)', c: 0, s: 0, p: 0, col: c.yellow },
+        { l: 'Good (20-50%)', c: 0, s: 0, p: 0, col: c.blue },
+        { l: 'High (>50%)', c: 0, s: 0, p: 0, col: c.green }
+    ];
+
+    // LOOP OVER VALID ITEMS ONLY
+    validItems.forEach(i => {
+        const m = i.marginPct;
+        const s = i.poRate * i.qty;
+        const p = i.profit;
+        let idx = 4;
+        if (m < 0) idx = 0; else if (m < 10) idx = 1; else if (m < 20) idx = 2; else if (m < 50) idx = 3;
+        buckets[idx].c++; buckets[idx].s += s; buckets[idx].p += p;
+    });
+
+    buckets.forEach(b => {
+        const bMargin = b.s > 0 ? (b.p / b.s) * 100 : 0;
+        doc.setFillColor(...b.col); doc.roundedRect(rx + 4, my - 3, 26, 5, 1.5, 1.5, 'F');
+        doc.setTextColor(255); doc.setFontSize(5.5); doc.setFont("helvetica", "bold");
+        doc.text(b.l, rx + 17, my + 0.5, {align:'center'});
+        doc.setTextColor(...c.textMain); doc.setFontSize(8); doc.setFont("helvetica", "normal");
+        doc.text(b.c.toString(), rx + 35, my + 0.5, {align:'right'});
+        doc.text(fmt(b.s).replace('Rs ',''), rx + 55, my + 0.5, {align:'right'});
+        if(b.p < 0) doc.setTextColor(...c.red); else doc.setTextColor(...c.green);
+        doc.text(fmt(b.p).replace('Rs ',''), rx + 78, my + 0.5, {align:'right'});
+        doc.text(bMargin.toFixed(0) + '%', rx + rightW - 6, my + 0.5, {align:'right'});
+        my += 9;
+    });
+
+    y += splitH + 8;
+
+    // 4. EXPENSES
+    const expH = 30;
+    doc.setDrawColor(...c.borderDark); doc.setLineWidth(0.2);
+    doc.roundedRect(margin, y, contentW, expH, 4, 4, 'S');
+    doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "bold");
+    doc.text("Expense Composition", margin + 6, y + 8);
+
+    let expD = rec.expenseDetails;
+    if (!expD) expD = calculateTotalExpense(rec.date, tBill, tCost);
+    const totalExpReal = expD.total || 1;
+    const segs = [
+        { l: 'Wages', v: expD.wage, c: [66, 133, 244] }, 
+        { l: 'Transport', v: expD.transport, c: [251, 188, 4] },
+        { l: 'Packing', v: expD.packing, c: [52, 168, 83] }, 
+        { l: 'Dump/Misc', v: expD.dump + expD.misc, c: [234, 67, 53] } 
+    ];
+
+    let bx = margin + 10;
+    let by = y + 14;
+    const barW = contentW - 20;
+    const barHeight = 8; 
+
+    segs.forEach(s => {
+        const w = (s.v / totalExpReal) * barW;
+        if (w > 0) {
+            doc.setFillColor(...s.c); doc.rect(bx, by, w, barHeight, 'F');
+            if(w > 12) { doc.setTextColor(255); doc.setFontSize(7); doc.text(s.v.toFixed(0), bx+(w/2), by+5, {align:'center'}); }
+            bx += w;
+        }
+    });
+    doc.setDrawColor(200); doc.rect(margin + 10, by, barW, barHeight, 'S');
+
+    let lx = margin + 10;
+    let ly = by + 14; 
+    segs.forEach(s => {
+        if(s.v > 0) {
+            doc.setFillColor(...s.c); doc.circle(lx, ly-1, 2, 'F');
+            doc.setFontSize(8); doc.setTextColor(...c.textLight);
+            doc.text(`${s.l}`, lx + 4, ly);
+            lx += 38;
+        }
+    });
+    y += expH + 10;
+
+    // 5. ITEM LISTS (USING VALID ITEMS)
+    const remainingH = pageH - y - margin; 
+    
+    // FILTER LISTS FROM VALID ITEMS
+    const lossItems = validItems.filter(i => i.marginPct < 0).sort((a,b) => a.profit - b.profit); 
+    const lowItems = validItems.filter(i => i.marginPct >= 0 && i.marginPct < 10).sort((a,b) => a.marginPct - b.marginPct);
+    const midItems = validItems.filter(i => i.marginPct >= 10 && i.marginPct < 20).sort((a,b) => a.marginPct - b.marginPct);
+
+    const colGap = 5;
+    const colWidth = (contentW - (colGap*2)) / 3;
+
+    const drawList = (title, items, x, color) => {
+        doc.setFillColor(...color); doc.roundedRect(x, y, colWidth, 8, 2, 2, 'F');
+        doc.setTextColor(255); doc.setFontSize(9); doc.setFont("helvetica", "bold");
+        doc.text(title, x + (colWidth/2), y + 5.5, {align:'center'});
         
-        // FIXED COLUMN ALIGNMENT
-        doc.text("CATEGORY", rx + 6, my);
-        doc.text("#", rx + 35, my, {align:'right'}); 
-        doc.text("SALES", rx + 55, my, {align:'right'});
-        doc.text("PROFIT", rx + 78, my, {align:'right'}); 
-        doc.text("MGN%", rx + rightW - 6, my, {align:'right'});
-        my += 10;
-
-        const buckets = [
-            { l: 'Loss (<0%)', c: 0, s: 0, p: 0, col: c.red },
-            { l: 'Low (0-10%)', c: 0, s: 0, p: 0, col: c.orange },
-            { l: 'Mid (10-20%)', c: 0, s: 0, p: 0, col: c.yellow },
-            { l: 'Good (20-50%)', c: 0, s: 0, p: 0, col: c.blue },
-            { l: 'High (>50%)', c: 0, s: 0, p: 0, col: c.green }
-        ];
-
-        rec.items.forEach(i => {
-            const m = i.marginPct;
-            const s = i.poRate * i.qty;
-            const p = i.profit;
-            let idx = 4;
-            if (m < 0) idx = 0; else if (m < 10) idx = 1; else if (m < 20) idx = 2; else if (m < 50) idx = 3;
-            buckets[idx].c++; buckets[idx].s += s; buckets[idx].p += p;
-        });
-
-        buckets.forEach(b => {
-            const bMargin = b.s > 0 ? (b.p / b.s) * 100 : 0;
-            
-            // WIDER PILL FOR FULL LABEL
-            doc.setFillColor(...b.col);
-            doc.roundedRect(rx + 4, my - 3, 26, 5, 1.5, 1.5, 'F');
-            doc.setTextColor(255); doc.setFontSize(5.5); doc.setFont("helvetica", "bold");
-            doc.text(b.l, rx + 17, my + 0.5, {align:'center'}); // Full Label
-
+        let ly = y + 14;
+        const rowH = 6;
+        const maxItems = Math.floor((remainingH - 8) / rowH);
+        
+        items.slice(0, maxItems).forEach((item, idx) => {
+            if(idx % 2 === 0) { doc.setFillColor(...c.bgLight); doc.rect(x+0.5, ly-4, colWidth-1, 6, 'F'); }
             doc.setTextColor(...c.textMain); doc.setFontSize(8); doc.setFont("helvetica", "normal");
             
-            // Count
-            doc.text(b.c.toString(), rx + 35, my + 0.5, {align:'right'});
-            
-            // Sales
-            doc.text(fmt(b.s).replace('Rs ',''), rx + 55, my + 0.5, {align:'right'});
-            
-            // Profit
-            if(b.p < 0) doc.setTextColor(...c.red); else doc.setTextColor(...c.green);
-            doc.text(fmt(b.p).replace('Rs ',''), rx + 78, my + 0.5, {align:'right'});
-            
-            // Margin
-            doc.text(bMargin.toFixed(0) + '%', rx + rightW - 6, my + 0.5, {align:'right'});
-
-            my += 9;
-        });
-
-        y += splitH + 8;
-
-        // ================= 4. EXPENSE BAR =================
-        const expH = 30;
-        doc.setDrawColor(...c.borderDark);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(margin, y, contentW, expH, 4, 4, 'S');
-        doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "bold");
-        doc.text("Expense Composition", margin + 6, y + 8);
-
-        const totalExpReal = expD.total || 1;
-        const segs = [
-            { l: 'Wages', v: expD.wage, c: [66, 133, 244] }, 
-            { l: 'Transport', v: expD.transport, c: [251, 188, 4] },
-            { l: 'Packing', v: expD.packing, c: [52, 168, 83] }, 
-            { l: 'Dump/Misc', v: expD.dump + expD.misc, c: [234, 67, 53] } 
-        ];
-
-        let bx = margin + 10;
-        let by = y + 14;
-        const barW = contentW - 20;
-        const barHeight = 8; 
-
-        segs.forEach(s => {
-            const w = (s.v / totalExpReal) * barW;
-            if (w > 0) {
-                doc.setFillColor(...s.c);
-                doc.rect(bx, by, w, barHeight, 'F');
-                if(w > 12) { doc.setTextColor(255); doc.setFontSize(7); doc.text(s.v.toFixed(0), bx+(w/2), by+5, {align:'center'}); }
-                bx += w;
-            }
+            let name = item.name;
+            if(name.length > 15) name = name.substring(0, 13) + '..';
+            doc.text(name, x + 3, ly);
+            doc.setTextColor(...c.textLight);
+            doc.text('x' + item.qty, x + colWidth - 28, ly, {align:'right'});
+            doc.setFont("helvetica", "bold");
+            if(title.includes("LOSS")) doc.setTextColor(...c.red); else doc.setTextColor(0, 100, 0);
+            doc.text('Rs ' + fmt(item.profit).replace('Rs ',''), x + colWidth - 3, ly, {align:'right'});
+            ly += rowH;
         });
         
-        doc.setDrawColor(200); doc.rect(margin + 10, by, barW, barHeight, 'S');
+        if(items.length === 0) {
+            doc.setTextColor(...c.textLight); doc.setFontSize(8); doc.setFont("helvetica", "italic");
+            doc.text("No items", x + (colWidth/2), y + 20, {align:'center'});
+        }
+    };
 
-        let lx = margin + 10;
-        let ly = by + 14; 
-        segs.forEach(s => {
-            if(s.v > 0) {
-                doc.setFillColor(...s.c);
-                doc.circle(lx, ly-1, 2, 'F');
-                doc.setFontSize(8); doc.setTextColor(...c.textLight);
-                doc.text(`${s.l}`, lx + 4, ly);
-                lx += 38;
-            }
-        });
+    drawList("TOP LOSS MAKERS", lossItems, margin, c.red);
+    drawList("LOW MARGIN (0-10%)", lowItems, margin + colWidth + colGap, c.orange);
+    drawList("MID MARGIN (10-20%)", midItems, margin + (colWidth*2) + (colGap*2), c.yellow);
 
-        y += expH + 10;
+    doc.save(`Swiggy_Report_${rec.date}.pdf`);
+}
 
-        // ================= 5. ITEM LISTS =================
-        const remainingH = pageH - y - margin; 
-        
-        const lossItems = rec.items.filter(i => i.marginPct < 0).sort((a,b) => a.profit - b.profit); 
-        const lowItems = rec.items.filter(i => i.marginPct >= 0 && i.marginPct < 10).sort((a,b) => a.marginPct - b.marginPct);
-        const midItems = rec.items.filter(i => i.marginPct >= 10 && i.marginPct < 20).sort((a,b) => a.marginPct - b.marginPct);
+function downloadBillPDF() {
+    if (!currentViewedHistory) return;
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const rec = currentViewedHistory;
+    
+    // 1. FILTER: Exclude 0 qty items
+    const validItems = (rec.items || []).filter(i => i.qty > 0);
+    
+    // 2. DATA PREP
+    const dateParts = rec.date.split('-'); 
+    const year = dateParts[0];
+    const month = dateParts[1];
+    const day = dateParts[2];
+    
+    const invoiceNo = `MFB${day}${month}`;
+    const displayDate = `${day}-${month}-${year}`;
 
-        const colGap = 5;
-        const colWidth = (contentW - (colGap*2)) / 3;
+    const fmt = (n) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        const drawList = (title, items, x, color) => {
-            doc.setFillColor(...color);
-            doc.roundedRect(x, y, colWidth, 8, 2, 2, 'F');
-            doc.setTextColor(255); doc.setFontSize(9); doc.setFont("helvetica", "bold");
-            doc.text(title, x + (colWidth/2), y + 5.5, {align:'center'});
-            
-            let ly = y + 14;
-            const rowH = 6;
-            const maxItems = Math.floor((remainingH - 8) / rowH);
-            
-            items.slice(0, maxItems).forEach((item, idx) => {
-                if(idx % 2 === 0) {
-                    doc.setFillColor(...c.bgLight);
-                    doc.rect(x+0.5, ly-4, colWidth-1, 6, 'F');
-                }
+    // --- LAYOUT CONSTANTS ---
+    const margin = 20; 
+    const pageW = 210;
+    const contentW = pageW - (margin * 2);
+    let y = 15;
 
-                doc.setTextColor(...c.textMain); doc.setFontSize(8); doc.setFont("helvetica", "normal");
-                
-                let name = item.name;
-                if(name.length > 15) name = name.substring(0, 13) + '..';
-                doc.text(name, x + 3, ly);
-                
-                doc.setTextColor(...c.textLight);
-                doc.text('x' + item.qty, x + colWidth - 28, ly, {align:'right'});
+    // --- 1. HEADER SECTION ---
+    
+    // -- LEFT SIDE: INVOICE TITLE & SENDER --
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12); // Reduced Size
+    doc.setTextColor(40, 40, 40);
+    doc.text("INVOICE", margin, y); 
+    
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text("MF BIGMARKET IRITTY", margin, y + 5);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    doc.text("Ground Floor, City Center", margin, y + 9);
+    doc.text("Iritty, Kerala", margin, y + 13);
 
-                doc.setFont("helvetica", "bold");
-                if(title.includes("LOSS")) doc.setTextColor(...c.red);
-                else doc.setTextColor(0, 100, 0);
-                doc.text('Rs ' + fmt(item.profit).replace('Rs ',''), x + colWidth - 3, ly, {align:'right'});
+    // -- RIGHT SIDE: BILL TO & METADATA --
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    // Combined To + Name on same line
+    doc.text("To: SPWAVE PVT LTD", pageW - margin, y, { align: 'right' }); 
+    
+    // Invoice Metadata (Right Aligned)
+    let metaY = y + 7;
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    
+    // Invoice No
+    doc.setTextColor(100, 100, 100);
+    doc.text("Invoice No:", pageW - margin - 35, metaY); 
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text(invoiceNo, pageW - margin, metaY, { align: 'right' });
+    
+    metaY += 5;
+    
+    // Date
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "normal");
+    doc.text("Date:", pageW - margin - 35, metaY); 
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text(displayDate, pageW - margin, metaY, { align: 'right' });
 
-                ly += rowH;
-            });
-            
-            if(items.length === 0) {
-                doc.setTextColor(...c.textLight); doc.setFontSize(8); doc.setFont("helvetica", "italic");
-                doc.text("No items", x + (colWidth/2), y + 20, {align:'center'});
-            }
-        };
+    y = metaY + 8; // Reduced gap between header and table
 
-        drawList("TOP LOSS MAKERS", lossItems, margin, c.red);
-        drawList("LOW MARGIN (0-10%)", lowItems, margin + colWidth + colGap, c.orange);
-        drawList("MID MARGIN (10-20%)", midItems, margin + (colWidth*2) + (colGap*2), c.yellow);
+    // --- 2. TABLE CONFIGURATION ---
+    
+    // Column Widths
+    const wSl = 10;
+    const wCode = 20;
+    const wUom = 20;
+    const wQty = 20;
+    const wCost = 20;
+    const wTotal = 25;
+    const wName = contentW - (wSl + wCode + wUom + wQty + wCost + wTotal); 
 
-        doc.save(`Swiggy_Report_${rec.date}.pdf`);
+    // X Coordinates
+    const xSl = margin;
+    const xCode = xSl + wSl;
+    const xName = xCode + wCode;
+    const xUom = xName + wName;
+    const xQty = xUom + wUom;
+    const xCost = xQty + wQty;
+    const xTotal = xCost + wCost;
+
+    const rowHeight = 7; 
+    const headerHeight = 8; 
+
+    // Vertical Divider Positions
+    const vLines = [xCode, xName, xUom, xQty, xCost, xTotal];
+
+    // Helper to draw Header Row
+    function drawTableHeader(yPos) {
+        // Background
+        doc.setFillColor(235, 237, 240); 
+        doc.setDrawColor(0, 0, 0); // Black Border
+        doc.setLineWidth(0.3);
+        doc.rect(margin, yPos, contentW, headerHeight, 'FD');
+
+        // Vertical Separators
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.1);
+        vLines.forEach(x => doc.line(x, yPos, x, yPos + headerHeight));
+
+        // Text
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(0, 0, 0);
+        const ty = yPos + 5; 
+
+        doc.text("SL", xSl + 2, ty);
+        doc.text("CODE", xCode + 2, ty);
+        doc.text("ITEM NAME", xName + 2, ty);
+        doc.text("UOM", xUom + 2, ty);
+        doc.text("QTY", xQty + wQty - 2, ty, { align: 'right' });
+        doc.text("COST", xCost + wCost - 2, ty, { align: 'right' });
+        doc.text("TOTAL", xTotal + wTotal - 2, ty, { align: 'right' });
     }
+
+    drawTableHeader(y);
+    y += headerHeight;
+
+    // --- 3. TABLE BODY ---
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10.5);
+    
+    let totalAmount = 0;
+
+    validItems.forEach((item, index) => {
+        // Page Break
+        if (y > 270) {
+            doc.addPage();
+            y = 15; 
+            drawTableHeader(y);
+            y += headerHeight;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10.5);
+        }
+
+        // Alternating Background
+        if (index % 2 === 1) {
+            doc.setFillColor(250, 250, 250); 
+            doc.setDrawColor(0, 0, 0); 
+            doc.rect(margin, y, contentW, rowHeight, 'F');
+        }
+
+        // Row Border (Black)
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.1);
+        doc.rect(margin, y, contentW, rowHeight, 'S');
+
+        // Vertical Separators
+        vLines.forEach(x => doc.line(x, y, x, y + rowHeight));
+
+        const lineTotal = item.qty * item.poRate;
+        totalAmount += lineTotal;
+        
+        const masterItem = products.find(p => p.id === item.code);
+        const uomStr = masterItem ? masterItem.uom : '-';
+
+        const cy = y + 4.5; 
+
+        doc.setTextColor(0, 0, 0);
+        doc.text((index + 1).toString(), xSl + 2, cy);
+        doc.text(item.code.toString(), xCode + 2, cy);
+        
+        // Truncate Name
+        let pName = item.name;
+        if (pName.length > 35) pName = pName.substring(0, 32) + "..";
+        doc.text(pName, xName + 2, cy);
+
+        doc.text(uomStr, xUom + 2, cy);
+        doc.text(item.qty.toString(), xQty + wQty - 2, cy, { align: 'right' });
+        doc.text(fmt(item.poRate), xCost + wCost - 2, cy, { align: 'right' });
+        doc.text(fmt(lineTotal), xTotal + wTotal - 2, cy, { align: 'right' });
+
+        y += rowHeight;
+    });
+
+    y += 2;
+
+    // --- 4. GRAND TOTAL ---
+    
+    // Top Border
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5); 
+    doc.line(margin, y, pageW - margin, y);
+    
+    y += 7;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("GRAND TOTAL", margin, y);
+
+    doc.setFontSize(12);
+    doc.text("Rs " + fmt(totalAmount), pageW - margin - 2, y, { align: 'right' });
+    
+    y += 3;
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageW - margin, y);
+
+    // --- 5. FOOTER ---
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Computer Generated Invoice", pageW / 2, 285, { align: 'center' });
+
+    doc.save(`Bill_${invoiceNo}.pdf`);
+}
 
 
     // --- UTILS ---
