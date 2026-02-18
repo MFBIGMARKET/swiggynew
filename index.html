@@ -35,6 +35,16 @@
 
         * { box-sizing: border-box; }
 
+        /* Compact Button Style */
+.btn-compact {
+    padding: 0 10px;
+    height: 30px;
+    font-size: 12px;
+}
+.btn-compact .material-icons {
+    font-size: 16px;
+}
+
         body {
             margin: 0; padding: 0;
             background-color: var(--background);
@@ -679,6 +689,27 @@
         
         <!-- HISTORY LIST -->
         <div id="history-list-view">
+                <div class="kpi-grid" style="margin-bottom:15px;">
+        <div class="kpi-card">
+            <div class="kpi-label">Month Revenue</div>
+            <div class="kpi-value" id="hkpi-rev">₹0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Month Cost</div>
+            <div class="kpi-value" id="hkpi-cost">₹0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Total Expenses</div>
+            <div class="kpi-value kpi-warn" id="hkpi-exp">₹0</div>
+        </div>
+        <div class="kpi-card" style="border-top: 4px solid var(--purple);">
+            <div class="kpi-label">Net Profit (Margin)</div>
+            <div class="kpi-value kpi-net">
+                <span id="hkpi-net">₹0</span> 
+                <span id="hkpi-marg" style="font-size:14px; font-weight:500; margin-left:5px;">(0%)</span>
+            </div>
+        </div>
+    </div>
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Saved Bills</span>
@@ -707,16 +738,25 @@
         <!-- HISTORY DETAIL VIEW -->
         <div id="history-detail-view" class="hidden">
              <div class="card-header" style="border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
-                <button class="btn" onclick="closeHistoryDetail()"><span class="material-icons">arrow_back</span> Back</button>
-                <div style="flex:1; margin-left:15px; font-weight:500; font-size:16px;" id="hist-detail-title">Bill Detail</div>
-                        <!-- NEW BUTTON START -->
-        <button class="btn" onclick="downloadBillPDF()">
-            <span class="material-icons">receipt_long</span> Download Bill
+    <button class="btn btn-compact" onclick="closeHistoryDetail()">
+        <span class="material-icons">arrow_back</span> Back
+    </button>
+    
+    <div style="flex:1; margin-left:15px; font-weight:500; font-size:16px;" id="hist-detail-title">Bill Detail</div>
+    
+    <!-- COMPACT ACTION BUTTONS -->
+    <div style="display:flex; gap:5px;">
+        <button id="btn-hist-edit" class="btn btn-compact" onclick="toggleHistoryEdit()">
+            <span class="material-icons">edit</span> Edit
         </button>
-        <!-- NEW BUTTON END -->
-
-                <button class="btn btn-filled" onclick="downloadHistoryPDF()"><span class="material-icons">picture_as_pdf</span> Download Report</button>
-            </div>
+        <button class="btn btn-compact" onclick="downloadBillPDF()">
+            <span class="material-icons">receipt_long</span> Bill
+        </button>
+        <button class="btn btn-filled btn-compact" onclick="downloadHistoryPDF()">
+            <span class="material-icons">picture_as_pdf</span> Report
+        </button>
+    </div>
+    </div>
             
             <!-- HIST KPI CARDS -->
             <div class="kpi-grid">
@@ -887,6 +927,7 @@
     let currentIndent = [];
     let currentIndentDate = null; 
     let isEditMode = false;
+    let isHistoryEditMode = false;
     let sortState = { key: null, direction: 1 };
     let currentBucketsData = []; 
     let currentViewedHistory = null;
@@ -1945,49 +1986,75 @@ function addToHistory(product, source, buy, sell) {
 
     // --- 3. INDENT HISTORY ---
     function renderIndentHistory() {
-        const filterVal = document.getElementById('history-month-filter').value; // YYYY-MM
-        const tbody = document.getElementById('history-body');
-        tbody.innerHTML = '';
+    const filterVal = document.getElementById('history-month-filter').value; // YYYY-MM
+    const tbody = document.getElementById('history-body');
+    tbody.innerHTML = '';
 
-        indents.forEach((rec, index) => {
-            // Filter Logic
-            if(filterVal) {
-                // rec.date is YYYY-MM-DD
-                const recMonth = rec.date.substring(0, 7);
-                if (recMonth !== filterVal) return;
-            }
+    // KPI Variables
+    let sumRev = 0;
+    let sumCost = 0;
+    let sumExp = 0;
+    let sumNet = 0;
 
-            const tr = document.createElement('tr');
-            tr.className = 'clickable-row';
-            tr.onclick = function() { viewHistoryDetail(index); };
-            
-            const displayDate = formatDate(rec.date);
-            const netP = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - (rec.totalExpenses||0));
-            const tBill = rec.totalBillAmt || rec.totalRev || 0;
-            const grossM = tBill > 0 ? (rec.profit / tBill) * 100 : 0;
-            const netM = tBill > 0 ? (netP / tBill) * 100 : 0;
-            
-            // Color Classes
-            const grossClass = grossM >= 0 ? 'text-green' : 'text-red';
-            const netClass = netM >= 0 ? 'text-green' : 'text-red';
+    indents.forEach((rec, index) => {
+        // Filter Logic
+        if(filterVal) {
+            const recMonth = rec.date.substring(0, 7);
+            if (recMonth !== filterVal) return;
+        }
 
-            tr.innerHTML = `
-                <td class="h-date t-left">${displayDate}</td>
-                <td class="h-id t-left">#${rec.id.toString().slice(-4)}</td>
-                <td class="h-items t-right">${rec.itemsCount || rec.items.length}</td>
-                <td class="h-money t-right" style="color:#5f6368">₹${rec.totalIndentAmt ? rec.totalIndentAmt.toFixed(0) : '0'}</td>
-                <td class="h-money t-right">₹${tBill.toFixed(0)}</td>
-                <td class="h-profit t-right" style="color:${rec.profit<0?'var(--red)':'var(--green)'}">₹${rec.profit.toFixed(0)}</td>
-                <td class="h-margin t-right ${grossClass}">${grossM.toFixed(1)}%</td>
-                <td class="h-profit t-right" style="color:${netP<0?'var(--red)':'var(--purple)'}">₹${netP.toFixed(0)}</td>
-                <td class="h-margin t-right ${netClass}">${netM.toFixed(1)}%</td>
-                <td class="w-action t-center" onclick="event.stopPropagation()">
-                    <button class="btn-icon" style="color:var(--red)" onclick="deleteIndent(${rec.id})"><span class="material-icons">delete</span></button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
+        // --- CALC VALUES ---
+        const tBill = rec.totalBillAmt || rec.totalRev || 0;
+        const tCost = rec.totalCost || 0;
+        const tExp = rec.totalExpenses || 0;
+        const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
+        const grossM = tBill > 0 ? (rec.profit / tBill) * 100 : 0;
+        const netM = tBill > 0 ? (tNet / tBill) * 100 : 0;
+
+        // --- ACCUMULATE TOTALS ---
+        sumRev += tBill;
+        sumCost += tCost;
+        sumExp += tExp;
+        sumNet += tNet;
+
+        // --- RENDER TABLE ROW ---
+        const tr = document.createElement('tr');
+        tr.className = 'clickable-row';
+        tr.onclick = function() { viewHistoryDetail(index); };
+        
+        const displayDate = formatDate(rec.date);
+        const grossClass = grossM >= 0 ? 'text-green' : 'text-red';
+        const netClass = netM >= 0 ? 'text-green' : 'text-red';
+
+        tr.innerHTML = `
+            <td class="h-date t-left">${displayDate}</td>
+            <td class="h-id t-left">#${rec.id.toString().slice(-4)}</td>
+            <td class="h-items t-right">${rec.itemsCount || rec.items.length}</td>
+            <td class="h-money t-right" style="color:#5f6368">₹${rec.totalIndentAmt ? rec.totalIndentAmt.toFixed(0) : '0'}</td>
+            <td class="h-money t-right">₹${tBill.toFixed(0)}</td>
+            <td class="h-profit t-right" style="color:${rec.profit<0?'var(--red)':'var(--green)'}">₹${rec.profit.toFixed(0)}</td>
+            <td class="h-margin t-right ${grossClass}">${grossM.toFixed(1)}%</td>
+            <td class="h-profit t-right" style="color:${tNet<0?'var(--red)':'var(--purple)'}">₹${tNet.toFixed(0)}</td>
+            <td class="h-margin t-right ${netClass}">${netM.toFixed(1)}%</td>
+            <td class="w-action t-center" onclick="event.stopPropagation()">
+                <button class="btn-icon" style="color:var(--red)" onclick="deleteIndent(${rec.id})"><span class="material-icons">delete</span></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // --- UPDATE DASHBOARD TILES ---
+    document.getElementById('hkpi-rev').innerText = '₹' + sumRev.toLocaleString('en-IN', {maximumFractionDigits:0});
+    document.getElementById('hkpi-cost').innerText = '₹' + sumCost.toLocaleString('en-IN', {maximumFractionDigits:0});
+    document.getElementById('hkpi-exp').innerText = '₹' + sumExp.toLocaleString('en-IN', {maximumFractionDigits:0});
+    
+    document.getElementById('hkpi-net').innerText = '₹' + sumNet.toLocaleString('en-IN', {maximumFractionDigits:0});
+    const totalMargin = sumRev > 0 ? (sumNet / sumRev) * 100 : 0;
+    document.getElementById('hkpi-marg').innerText = `(${totalMargin.toFixed(1)}%)`;
+    
+    // Color coding for Net Profit
+    document.getElementById('hkpi-net').style.color = sumNet >= 0 ? 'var(--purple)' : 'var(--red)';
+}
     
     function deleteIndent(id) {
         if(!confirm("Delete this record permanently?")) return;
@@ -1998,6 +2065,9 @@ function addToHistory(product, source, buy, sell) {
     }
 
     function viewHistoryDetail(index) {
+            isHistoryEditMode = false; // Reset mode
+    document.getElementById('btn-hist-edit').innerHTML = '<span class="material-icons">edit</span> Edit';
+    document.getElementById('btn-hist-edit').classList.remove('btn-filled');
     currentViewedHistory = indents[index]; 
     const rec = currentViewedHistory;
     
@@ -2044,6 +2114,7 @@ function addToHistory(product, source, buy, sell) {
 
     document.getElementById('history-list-view').classList.add('hidden');
     document.getElementById('history-detail-view').classList.remove('hidden');
+    refreshHistoryKPIs(); 
 }
 
     // FIND THIS FUNCTION IN index.html AND REPLACE IT
@@ -2054,31 +2125,47 @@ function renderHistoryDetailTable() {
     if(currentViewedHistory && currentViewedHistory.items) {
         const historyIndex = indents.indexOf(currentViewedHistory);
 
-        // FILTER HERE AS WELL FOR THE TABLE ROW RENDER
         currentViewedHistory.items.forEach((item, itemIndex) => {
-             if (!item.qty || item.qty <= 0) return; // Skip 0 qty items
+             // Show all items in edit mode, even 0 qty, so we can fix them
+             if (!isHistoryEditMode && (!item.qty || item.qty <= 0)) return; 
 
              const tr = document.createElement('tr');
              const mPct = item.marginPct || 0;
              const colorClass = mPct >= 0 ? 'text-green' : 'text-red';
-             
-             let nameDisplay = `<div>${item.name}</div>`;
-             let badges = '';
-             
-             if(item.actualKg !== undefined && item.actualKg > 0) {
-                 badges += ` <span style="font-size:10px; color:#1a73e8; background:#e8f0fe; padding:2px 5px; border-radius:4px; margin-right:5px;">${item.actualKg}kg</span>`;
-             }
-             if(item.img) {
-                 badges += `<span style="cursor:pointer; font-size:14px;" onclick="openImgModal('${historyIndex}', 'history', '${itemIndex}')">📷</span>`;
-             }
-             if(badges) { nameDisplay += `<div style="margin-top:2px;">${badges}</div>`; }
-
              const totalLineCost = item.frozenCost || (item.myCost * item.qty);
+
+             // --- NAME COLUMN LOGIC ---
+             let nameDisplay = `<div>${item.name}</div>`;
+             
+             if (isHistoryEditMode) {
+                 // EDIT MODE: Input for Actual Kg
+                 nameDisplay += `<div style="margin-top:4px; display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:10px; color:#888;">Act Kg:</span>
+                    <input type="number" class="cell-input" style="width:60px; padding:2px;" 
+                        value="${item.actualKg || 0}" id="edit-kg-${itemIndex}">
+                 </div>`;
+             } else {
+                 // VIEW MODE: Badges
+                 let badges = '';
+                 if(item.actualKg !== undefined && item.actualKg > 0) {
+                     badges += ` <span style="font-size:10px; color:#1a73e8; background:#e8f0fe; padding:2px 5px; border-radius:4px; margin-right:5px;">${item.actualKg}kg</span>`;
+                 }
+                 if(item.img) {
+                     badges += `<span style="cursor:pointer; font-size:14px;" onclick="openImgModal('${historyIndex}', 'history', '${itemIndex}')">📷</span>`;
+                 }
+                 if(badges) nameDisplay += `<div style="margin-top:2px;">${badges}</div>`;
+             }
+
+             // --- QTY COLUMN LOGIC ---
+             let qtyDisplay = item.qty;
+             if (isHistoryEditMode) {
+                 qtyDisplay = `<input type="number" class="qty-edit" value="${item.qty}" id="edit-qty-${itemIndex}">`;
+             }
 
              tr.innerHTML = `
                 <td class="w-code t-left">${item.code}</td>
                 <td class="w-name t-left">${nameDisplay}</td>
-                <td class="w-num t-right">${item.qty}</td>
+                <td class="w-num t-right">${qtyDisplay}</td>
                 <td class="w-num t-right">₹${item.poRate}</td>
                 <td class="w-num t-right">₹${totalLineCost.toFixed(2)}</td>
                 <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
@@ -2087,6 +2174,109 @@ function renderHistoryDetailTable() {
              tbody.appendChild(tr);
         });
     }
+}
+function toggleHistoryEdit() {
+    const btn = document.getElementById('btn-hist-edit');
+    
+    if (!isHistoryEditMode) {
+        // ENTER EDIT MODE
+        isHistoryEditMode = true;
+        btn.innerHTML = '<span class="material-icons">save</span> Save';
+        btn.classList.add('btn-filled');
+        renderHistoryDetailTable();
+    } else {
+        // SAVE CHANGES
+        if(!confirm("Save changes to this bill? Financials will be recalculated.")) return;
+
+        // 1. Update Items
+        let tBill=0, tStdCost=0, tDumpCost=0, tIndent=0;
+
+        currentViewedHistory.items.forEach((item, idx) => {
+            const qtyInput = document.getElementById(`edit-qty-${idx}`);
+            const kgInput = document.getElementById(`edit-kg-${idx}`);
+            
+            if(qtyInput && kgInput) {
+                const newQty = parseFloat(qtyInput.value) || 0;
+                const newKg = parseFloat(kgInput.value) || 0;
+
+                // Update Item
+                item.qty = newQty;
+                item.actualKg = newKg;
+
+                // Recalculate Item Metrics
+                // We need master data to get fresh cost/conv
+                const master = products.find(p => p.id === item.code);
+                const costPerKg = master ? (master.costKg || 0) : 0;
+                const conv = master ? (master.conv || 0) : 0;
+                
+                // Financials
+                const standardKg = newQty * conv;
+                const standardCost = standardKg * costPerKg;
+                const excessKg = Math.max(0, newKg - standardKg);
+                const dumpCost = excessKg * costPerKg;
+                
+                const lineRev = newQty * item.poRate;
+                const lineProf = lineRev - standardCost;
+                
+                // Update Item Fields
+                item.frozenCost = standardCost;
+                item.itemDumpCost = dumpCost;
+                item.profit = lineProf;
+                item.myCost = newQty > 0 ? (standardCost / newQty) : 0;
+                item.marginPct = lineRev > 0 ? (lineProf/lineRev)*100 : 0;
+
+                // Accumulate Totals
+                tBill += lineRev;
+                tStdCost += standardCost;
+                tDumpCost += dumpCost;
+                tIndent += ((item.originalQty||0) * item.poRate);
+            }
+        });
+
+        // 2. Recalculate Record Totals
+        const expenseObj = calculateTotalExpense(currentViewedHistory.date, tBill, tStdCost, tDumpCost);
+        const grossProfit = tBill - tStdCost;
+        
+        currentViewedHistory.totalBillAmt = tBill;
+        currentViewedHistory.totalRev = tBill; // Legacy support
+        currentViewedHistory.totalCost = tStdCost;
+        currentViewedHistory.profit = grossProfit;
+        currentViewedHistory.margin = tBill > 0 ? (grossProfit/tBill)*100 : 0;
+        currentViewedHistory.totalExpenses = expenseObj.total;
+        currentViewedHistory.expenseDetails = expenseObj;
+        currentViewedHistory.netProfit = grossProfit - expenseObj.total;
+        currentViewedHistory.totalIndentAmt = tIndent;
+
+        // 3. Save to Firebase
+        saveData('indents', indents);
+
+        // 4. Exit Edit Mode
+        isHistoryEditMode = false;
+        btn.innerHTML = '<span class="material-icons">edit</span> Edit';
+        btn.classList.remove('btn-filled');
+        
+        // 5. Refresh UI
+        refreshHistoryKPIs();
+        renderHistoryDetailTable();
+    }
+}
+function refreshHistoryKPIs() {
+    const rec = currentViewedHistory;
+    const tBill = rec.totalBillAmt || 0;
+    const tNet = rec.netProfit;
+    const grossM = tBill > 0 ? (rec.profit / tBill) * 100 : 0;
+    const netM = tBill > 0 ? (tNet / tBill) * 100 : 0;
+
+    document.getElementById('hist-kpi-indent').innerText = '₹' + (rec.totalIndentAmt||0).toFixed(0);
+    document.getElementById('hist-kpi-bill').innerText = '₹' + tBill.toFixed(0);
+    document.getElementById('hist-kpi-cost').innerText = '₹' + rec.totalCost.toFixed(0);
+    document.getElementById('hist-kpi-expenses').innerText = '₹' + rec.totalExpenses.toFixed(0);
+    
+    document.getElementById('hist-kpi-profit').innerText = '₹' + rec.profit.toFixed(0);
+    document.getElementById('hist-kpi-gross-margin').innerText = grossM.toFixed(1) + '%';
+    
+    document.getElementById('hist-kpi-net-profit').innerText = '₹' + tNet.toFixed(0);
+    document.getElementById('hist-kpi-net-margin').innerText = netM.toFixed(1) + '%';
 }
 
     function closeHistoryDetail() {
@@ -2102,27 +2292,30 @@ function downloadHistoryPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
     const rec = currentViewedHistory;
-    
-    // FILTER ITEMS FOR PDF
-    const validItems = (rec.items || []).filter(i => i.qty > 0);
-
     const displayDate = formatDate(rec.date);
     
     // --- COLORS ---
     const c = {
-        blue: [26, 115, 232], green: [24, 128, 56], red: [217, 48, 37],
-        orange: [230, 81, 0], yellow: [249, 171, 0], textMain: [32, 33, 36],
-        textLight: [95, 99, 104], bgLight: [248, 250, 252], border: [218, 220, 224],
-        white: [255, 255, 255], footerBg: [241, 243, 244], borderDark: [0, 0, 0]
+        blue: [26, 115, 232],
+        green: [24, 128, 56],
+        red: [217, 48, 37],
+        orange: [230, 81, 0],
+        yellow: [249, 171, 0],
+        textMain: [32, 33, 36],
+        textLight: [95, 99, 104],
+        bgLight: [248, 250, 252],
+        border: [218, 220, 224],
+        white: [255, 255, 255],
+        borderDark: [0, 0, 0]
     };
 
     const fmt = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-    const margin = 12;
+    const margin = 10; // Slightly reduced margin for more space
     const pageW = 210;
     const pageH = 297;
     const contentW = pageW - (margin * 2);
 
-    // 1. HEADER
+    // ================= PAGE 1: DASHBOARD (UNCHANGED) =================
     let y = 18;
     doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(...c.textMain);
     doc.text("SWIGGY REPORT", 105, y, { align: 'center' });
@@ -2132,13 +2325,18 @@ function downloadHistoryPDF() {
     doc.text(displayDate, 105, y, { align: 'center' });
     y += 15;
 
-    // 2. KPIS
+    // --- KPIs ---
     const tBill = rec.totalBillAmt || rec.totalRev || 0;
     const tCost = rec.totalCost || 0;
     const tGross = rec.profit || 0;
     const tExp = rec.totalExpenses || 0;
     const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
+    const grossM = tBill > 0 ? (rec.profit/tBill)*100 : 0;
+    const netM = tBill > 0 ? (tNet/tBill)*100 : 0;
     const tIndent = rec.totalIndentAmt || 0;
+
+    let expD = rec.expenseDetails;
+    if (!expD) expD = calculateTotalExpense(rec.date, tBill, tCost);
 
     const cardGap = 3;
     const cardW = (contentW - (cardGap * 4)) / 5;
@@ -2165,13 +2363,12 @@ function downloadHistoryPDF() {
     });
     y += cardH + 12;
 
-    // 3. SPLIT SECTION
+    // --- WATERFALL & DISTRIBUTION ---
     const splitH = 80;
     const leftW = (contentW * 0.45); 
     const rightW = (contentW * 0.53); 
     const gap = contentW - leftW - rightW;
 
-    // LEFT: WATERFALL
     doc.setDrawColor(...c.borderDark); doc.setLineWidth(0.2);
     doc.roundedRect(margin, y, leftW, splitH, 4, 4, 'S');
     doc.setFontSize(11); doc.setTextColor(0); 
@@ -2197,8 +2394,6 @@ function downloadHistoryPDF() {
 
     drawFlow("Revenue", tBill, "100%");
     drawFlow("(-) Cost", tCost, ((tCost/tBill)*100).toFixed(0)+"%");
-    const grossM = tBill > 0 ? (rec.profit/tBill)*100 : 0;
-    const netM = tBill > 0 ? (tNet/tBill)*100 : 0;
     drawFlow("= Gross Profit", tGross, grossM.toFixed(0)+"%", 'main');
     fy += 4;
     drawFlow("(-) Expenses", tExp, ((tExp/tBill)*100).toFixed(0)+"%");
@@ -2217,7 +2412,7 @@ function downloadHistoryPDF() {
     doc.setTextColor(255); doc.setFontSize(7);
     doc.text(netM.toFixed(1)+'%', margin + leftW - 17, fy + 3.5, {align:'center'});
 
-    // RIGHT: MARGIN DISTRIBUTION (USING VALID ITEMS)
+    // Margin Dist
     const rx = margin + leftW + gap;
     doc.setDrawColor(...c.borderDark); doc.setLineWidth(0.2);
     doc.roundedRect(rx, y, rightW, splitH, 4, 4, 'S');
@@ -2242,8 +2437,7 @@ function downloadHistoryPDF() {
         { l: 'High (>50%)', c: 0, s: 0, p: 0, col: c.green }
     ];
 
-    // LOOP OVER VALID ITEMS ONLY
-    validItems.forEach(i => {
+    rec.items.forEach(i => {
         const m = i.marginPct;
         const s = i.poRate * i.qty;
         const p = i.profit;
@@ -2268,15 +2462,13 @@ function downloadHistoryPDF() {
 
     y += splitH + 8;
 
-    // 4. EXPENSES
+    // --- EXPENSES ---
     const expH = 30;
     doc.setDrawColor(...c.borderDark); doc.setLineWidth(0.2);
     doc.roundedRect(margin, y, contentW, expH, 4, 4, 'S');
     doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "bold");
     doc.text("Expense Composition", margin + 6, y + 8);
 
-    let expD = rec.expenseDetails;
-    if (!expD) expD = calculateTotalExpense(rec.date, tBill, tCost);
     const totalExpReal = expD.total || 1;
     const segs = [
         { l: 'Wages', v: expD.wage, c: [66, 133, 244] }, 
@@ -2312,13 +2504,11 @@ function downloadHistoryPDF() {
     });
     y += expH + 10;
 
-    // 5. ITEM LISTS (USING VALID ITEMS)
+    // --- PAGE 1: LISTS (Top/Low/Mid) ---
     const remainingH = pageH - y - margin; 
-    
-    // FILTER LISTS FROM VALID ITEMS
-    const lossItems = validItems.filter(i => i.marginPct < 0).sort((a,b) => a.profit - b.profit); 
-    const lowItems = validItems.filter(i => i.marginPct >= 0 && i.marginPct < 10).sort((a,b) => a.marginPct - b.marginPct);
-    const midItems = validItems.filter(i => i.marginPct >= 10 && i.marginPct < 20).sort((a,b) => a.marginPct - b.marginPct);
+    const lossItems = rec.items.filter(i => i.marginPct < 0).sort((a,b) => a.profit - b.profit); 
+    const lowItems = rec.items.filter(i => i.marginPct >= 0 && i.marginPct < 10).sort((a,b) => a.marginPct - b.marginPct);
+    const midItems = rec.items.filter(i => i.marginPct >= 10 && i.marginPct < 20).sort((a,b) => a.marginPct - b.marginPct);
 
     const colGap = 5;
     const colWidth = (contentW - (colGap*2)) / 3;
@@ -2346,7 +2536,6 @@ function downloadHistoryPDF() {
             doc.text('Rs ' + fmt(item.profit).replace('Rs ',''), x + colWidth - 3, ly, {align:'right'});
             ly += rowH;
         });
-        
         if(items.length === 0) {
             doc.setTextColor(...c.textLight); doc.setFontSize(8); doc.setFont("helvetica", "italic");
             doc.text("No items", x + (colWidth/2), y + 20, {align:'center'});
@@ -2356,6 +2545,119 @@ function downloadHistoryPDF() {
     drawList("TOP LOSS MAKERS", lossItems, margin, c.red);
     drawList("LOW MARGIN (0-10%)", lowItems, margin + colWidth + colGap, c.orange);
     drawList("MID MARGIN (10-20%)", midItems, margin + (colWidth*2) + (colGap*2), c.yellow);
+
+
+    // ================= PAGE 2: SPLIT REPORT =================
+    doc.addPage();
+    let y2 = 15;
+
+    // --- TITLE ---
+    doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(...c.textMain);
+    doc.text("EXCEPTION REPORT", 105, y2, { align: 'center' });
+    y2 += 12;
+
+    // --- DATA PREP ---
+    const missingItems = rec.items.filter(i => {
+        const ordered = i.originalQty || i.poQty || 0;
+        return ordered > i.qty;
+    }).sort((a,b) => (b.originalQty||0) - (b.qty));
+
+    const dumpItems = rec.items.filter(i => {
+        const master = products.find(p => p.id === i.code);
+        const conv = master ? master.conv : 0;
+        const std = i.qty * conv;
+        return (i.actualKg > std + 0.02); 
+    }).sort((a,b) => (b.actualKg - (b.qty * (products.find(p=>p.id===b.code)?.conv||0))) - (a.actualKg - (a.qty * (products.find(p=>p.id===a.code)?.conv||0))));
+
+    // --- LAYOUT SETUP ---
+    const halfW = (contentW - 5) / 2; // 5mm gap
+    const leftX = margin;
+    const rightX = margin + halfW + 5;
+    
+    // -- LEFT HEADER (SHORTAGE) --
+    doc.setFillColor(252, 232, 230); // Light Red
+    doc.rect(leftX, y2, halfW, 6, 'F');
+    doc.setFontSize(9); doc.setTextColor(...c.red); doc.setFont("helvetica", "bold");
+    doc.text(`SHORTAGE (${missingItems.length})`, leftX + 2, y2 + 4.5);
+    
+    // Left Columns
+    doc.setFontSize(8); doc.setTextColor(...c.textLight);
+    doc.text("ITEM NAME", leftX + 2, y2 + 10);
+    doc.text("SHORT", leftX + halfW - 2, y2 + 10, {align:'right'});
+
+    // -- RIGHT HEADER (EXCESS) --
+    doc.setFillColor(255, 248, 225); // Light Orange
+    doc.rect(rightX, y2, halfW, 6, 'F');
+    doc.setTextColor(...c.orange); doc.setFontSize(9);
+    doc.text(`EXCESS WEIGHT (${dumpItems.length})`, rightX + 2, y2 + 4.5);
+
+    // Right Columns
+    doc.setFontSize(8); doc.setTextColor(...c.textLight);
+    doc.text("ITEM NAME", rightX + 2, y2 + 10);
+    doc.text("SOLD", rightX + halfW - 20, y2 + 10, {align:'right'});
+    doc.text("EXCESS", rightX + halfW - 2, y2 + 10, {align:'right'});
+
+    y2 += 13; // Start rows
+
+    // --- RENDER ROWS SIDE-BY-SIDE ---
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+    
+    const maxRows = Math.max(missingItems.length, dumpItems.length);
+    const rowH = 6;
+
+    for(let i=0; i<maxRows; i++) {
+        // Page Break
+        if(y2 > 280) {
+            doc.addPage();
+            y2 = 15;
+            // Redraw Headers (Simplified for new page)
+            doc.setFont("helvetica", "bold");
+            doc.text("SHORTAGE (Cont.)", leftX, y2);
+            doc.text("EXCESS (Cont.)", rightX, y2);
+            y2 += 5;
+        }
+
+        // --- LEFT ITEM ---
+        if(i < missingItems.length) {
+            const item = missingItems[i];
+            const diff = (item.originalQty||item.poQty||0) - item.qty;
+            
+            if(i % 2 === 0) { doc.setFillColor(252, 252, 252); doc.rect(leftX, y2, halfW, rowH, 'F'); }
+            
+            doc.setTextColor(...c.textMain);
+            doc.text(item.name.substring(0,28), leftX + 2, y2 + 4);
+            
+            doc.setTextColor(...c.red); doc.setFont("helvetica", "bold");
+            doc.text(diff.toString(), leftX + halfW - 2, y2 + 4, {align:'right'});
+            doc.setFont("helvetica", "normal");
+        }
+
+        // --- RIGHT ITEM ---
+        if(i < dumpItems.length) {
+            const item = dumpItems[i];
+            const master = products.find(p => p.id === item.code);
+            const conv = master ? master.conv : 0;
+            const stdKg = item.qty * conv;
+            const dumpKg = Math.max(0, item.actualKg - stdKg);
+
+            if(i % 2 === 0) { doc.setFillColor(252, 252, 252); doc.rect(rightX, y2, halfW, rowH, 'F'); }
+
+            doc.setTextColor(...c.textMain);
+            doc.text(item.name.substring(0,22), rightX + 2, y2 + 4);
+            
+            doc.text(item.qty.toString(), rightX + halfW - 20, y2 + 4, {align:'right'});
+            
+            doc.setTextColor(...c.orange); doc.setFont("helvetica", "bold");
+            doc.text("+" + dumpKg.toFixed(2), rightX + halfW - 2, y2 + 4, {align:'right'});
+            doc.setFont("helvetica", "normal");
+        }
+        
+        // Vertical Divider
+        doc.setDrawColor(230);
+        doc.line(rightX - 2.5, y2, rightX - 2.5, y2 + rowH);
+
+        y2 += rowH;
+    }
 
     doc.save(`Swiggy_Report_${rec.date}.pdf`);
 }
@@ -2376,7 +2678,8 @@ function downloadBillPDF() {
     const month = dateParts[1];
     const day = dateParts[2];
     
-    const invoiceNo = `MFB${day}${month}`;
+    // CHANGED: Added Year (YY) to end
+    const invoiceNo = `MFB${day}${month}${year.slice(-2)}`;
     const displayDate = `${day}-${month}-${year}`;
 
     const fmt = (n) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -2391,7 +2694,7 @@ function downloadBillPDF() {
     
     // -- LEFT SIDE: INVOICE TITLE & SENDER --
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12); // Reduced Size
+    doc.setFontSize(12); 
     doc.setTextColor(40, 40, 40);
     doc.text("INVOICE", margin, y); 
     
@@ -2409,7 +2712,6 @@ function downloadBillPDF() {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
-    // Combined To + Name on same line
     doc.text("To: SPWAVE PVT LTD", pageW - margin, y, { align: 'right' }); 
     
     // Invoice Metadata (Right Aligned)
@@ -2435,17 +2737,17 @@ function downloadBillPDF() {
     doc.setFont("helvetica", "bold");
     doc.text(displayDate, pageW - margin, metaY, { align: 'right' });
 
-    y = metaY + 8; // Reduced gap between header and table
+    y = metaY + 8; // Reduced gap
 
     // --- 2. TABLE CONFIGURATION ---
     
     // Column Widths
     const wSl = 10;
-    const wCode = 20;
-    const wUom = 20;
+    const wCode = 15;
+    const wUom = 15;
     const wQty = 20;
-    const wCost = 20;
-    const wTotal = 25;
+    const wCost = 25;
+    const wTotal = 30;
     const wName = contentW - (wSl + wCode + wUom + wQty + wCost + wTotal); 
 
     // X Coordinates
@@ -2465,18 +2767,15 @@ function downloadBillPDF() {
 
     // Helper to draw Header Row
     function drawTableHeader(yPos) {
-        // Background
         doc.setFillColor(235, 237, 240); 
         doc.setDrawColor(0, 0, 0); // Black Border
         doc.setLineWidth(0.3);
         doc.rect(margin, yPos, contentW, headerHeight, 'FD');
 
-        // Vertical Separators
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.1);
         vLines.forEach(x => doc.line(x, yPos, x, yPos + headerHeight));
 
-        // Text
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.setTextColor(0, 0, 0);
@@ -2496,34 +2795,30 @@ function downloadBillPDF() {
 
     // --- 3. TABLE BODY ---
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10.5);
+    doc.setFontSize(9);
     
     let totalAmount = 0;
 
     validItems.forEach((item, index) => {
-        // Page Break
         if (y > 270) {
             doc.addPage();
             y = 15; 
             drawTableHeader(y);
             y += headerHeight;
             doc.setFont("helvetica", "normal");
-            doc.setFontSize(10.5);
+            doc.setFontSize(9);
         }
 
-        // Alternating Background
         if (index % 2 === 1) {
             doc.setFillColor(250, 250, 250); 
             doc.setDrawColor(0, 0, 0); 
             doc.rect(margin, y, contentW, rowHeight, 'F');
         }
 
-        // Row Border (Black)
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.1);
         doc.rect(margin, y, contentW, rowHeight, 'S');
 
-        // Vertical Separators
         vLines.forEach(x => doc.line(x, y, x, y + rowHeight));
 
         const lineTotal = item.qty * item.poRate;
@@ -2538,7 +2833,6 @@ function downloadBillPDF() {
         doc.text((index + 1).toString(), xSl + 2, cy);
         doc.text(item.code.toString(), xCode + 2, cy);
         
-        // Truncate Name
         let pName = item.name;
         if (pName.length > 35) pName = pName.substring(0, 32) + "..";
         doc.text(pName, xName + 2, cy);
@@ -2554,8 +2848,6 @@ function downloadBillPDF() {
     y += 2;
 
     // --- 4. GRAND TOTAL ---
-    
-    // Top Border
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.5); 
     doc.line(margin, y, pageW - margin, y);

@@ -10,11 +10,11 @@
     <meta name="theme-color" content="#1a73e8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <style>
-        :root { --primary: #1a73e8; --bg: #f0f2f5; --border: #dadce0; --green: #188038; --text-main: #202124; --text-sub: #5f6368; }
+        :root { --primary: #1a73e8; --bg: #f0f2f5; --border: #dadce0; --green: #188038; --red: #d93025; --orange: #f57c00; --text-main: #202124; --text-sub: #5f6368; }
         * { box-sizing: border-box; }
         body { font-family: 'Roboto', sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text-main); height: 100vh; overflow: hidden; }
         
@@ -25,7 +25,7 @@
             transform: translateX(100%); transition: transform 0.3s ease-in-out; z-index: 100;
         }
         .page.active { transform: translateX(0); }
-        .page.root-page { transform: translateX(0); z-index: 10; } /* Main Dashboard */
+        .page.root-page { transform: translateX(0); z-index: 10; } 
 
         /* --- HEADER --- */
         .header {
@@ -34,16 +34,14 @@
             padding: 0 16px; border-bottom: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .header h2 { margin: 0; font-size: 18px; color: var(--primary); font-weight: 700; }
-        .header-actions { display: flex; gap: 15px; }
         .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-sub); display: flex; align-items: center; }
         .icon-btn.primary { color: var(--primary); }
         .icon-btn.success { color: var(--green); }
+        .header-actions { display: flex; gap: 15px; }
 
-        /* --- CONTENT SCROLL AREA --- */
+        /* --- CONTENT --- */
         .content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
-        .full-content { flex: 1; overflow-y: auto; padding: 15px; } /* For pages without bottom nav */
-
-        /* --- TABS (Dashboard) --- */
+        .full-content { flex: 1; overflow-y: auto; padding: 15px; } 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
@@ -51,7 +49,7 @@
         .bottom-nav {
             height: 60px; background: white; border-top: 1px solid #ddd;
             display: flex; justify-content: space-around; align-items: center;
-            flex-shrink: 0;
+            flex-shrink: 0; z-index: 200;
         }
         .nav-item {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -60,68 +58,71 @@
         .nav-item.active { color: var(--primary); }
         .nav-item .material-icons { font-size: 24px; margin-bottom: 2px; }
 
-        /* --- LIST CARDS (Dashboard) --- */
+        /* --- TASK CARDS --- */
         .task-card {
             background: white; border-radius: 12px; padding: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px;
             display: flex; justify-content: space-between; align-items: center;
             border-left: 5px solid var(--primary); cursor: pointer;
         }
-        .task-info h3 { margin: 0 0 5px 0; font-size: 16px; }
-        .task-info p { margin: 0; color: #666; font-size: 13px; }
-
         .history-card {
             background: white; border-radius: 8px; padding: 15px; margin-bottom: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #666;
             cursor: pointer; display: flex; justify-content: space-between; align-items: center;
         }
 
-        /* --- PACKING ITEM CARDS --- */
+        /* --- PACKING ITEMS --- */
         .search-bar { padding: 10px; background: #fff; border-bottom: 1px solid #eee; }
         .search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #f8f9fa; outline:none; }
-
-        .card { 
-            background: white; border-radius: 12px; margin-bottom: 12px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden;
-            border: 1px solid transparent; transition: 0.2s;
-        }
+        .card { background: white; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid transparent; }
         .card.has-data { border-color: #a5d6a7; background: #fdfefe; }
-
-        .card-header {
-            padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid #eee;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .card-header { padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .item-name { font-weight: 700; font-size: 15px; color: #333; }
         .item-code { font-family: monospace; font-weight: 700; font-size: 13px; color: var(--text-sub); background: #eee; padding: 2px 6px; border-radius: 4px; }
-
-        .card-body {
-            padding: 12px;
-            display: grid; grid-template-columns: 1fr 1fr 1fr 0.6fr; gap: 8px; align-items: end;
-        }
-
+        .card-body { padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr 0.6fr; gap: 8px; align-items: end; }
         .input-group { display: flex; flex-direction: column; }
         .input-label { font-size: 10px; color: #888; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; text-align: center; }
-        
         .val-box { background: #e8f0fe; color: var(--primary); padding: 10px 0; border-radius: 8px; font-weight: 700; text-align: center; height: 42px; line-height: 20px; border:1px solid #d2e3fc;}
-        
-        input.qty-input { 
-            width: 100%; height: 42px; border: 1px solid #ccc; border-radius: 8px; 
-            font-size: 18px; text-align: center; font-weight: bold; background: #fff; padding:0;
-        }
+        input.qty-input { width: 100%; height: 42px; border: 1px solid #ccc; border-radius: 8px; font-size: 18px; text-align: center; font-weight: bold; background: #fff; padding:0; }
         input.qty-input:focus { border-color: var(--primary); outline: none; }
         input.filled { border-color: var(--green); background: #f1f8e9; color: var(--green); }
-
-        .cam-btn {
-            height: 42px; border-radius: 8px; border: 1px solid #ccc; background: #f1f3f4; 
-            display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; color:#5f6368;
-        }
+        .cam-btn { height: 42px; border-radius: 8px; border: 1px solid #ccc; background: #f1f3f4; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; color:#5f6368; }
         .cam-btn.has-img { background: var(--primary); color: white; border-color: var(--primary); }
         .cam-input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; z-index: 2; }
 
+        /* --- NEW ATTENDANCE STYLES --- */
+        .att-header { background:white; padding:15px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-bottom:15px; }
+        .emp-select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background: white; margin-bottom:10px; }
+        .att-status-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+        .loc-badge { font-size:12px; padding:4px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; }
+        .loc-ok { background:#e8f5e9; color:var(--green); }
+        .loc-err { background:#ffebee; color:var(--red); }
+        
+        .clock-btn {
+            width: 100%; height: 50px; border-radius: 8px; border: none;
+            font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing:1px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px; transition:0.2s;
+        }
+        .clock-btn:active { transform:scale(0.98); }
+        .btn-in { background: var(--green); color: white; }
+        .btn-out { background: var(--red); color: white; }
+        .btn-done { background: #f5f5f5; color: #aaa; border:1px solid #ddd; box-shadow:none; cursor:default; }
+
+        .history-section { margin-top:20px; }
+        .section-title { font-size:13px; font-weight:700; color:#555; text-transform:uppercase; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;}
+        .month-picker { padding:5px; border:1px solid #ccc; border-radius:4px; font-size:13px; }
+        
+        .att-list { background:white; border-radius:12px; overflow:hidden; border:1px solid #eee; }
+        .att-row { display:grid; grid-template-columns: 0.8fr 1fr 1fr 0.8fr; padding:12px; border-bottom:1px solid #f0f0f0; font-size:13px; align-items:center; }
+        .att-row:last-child { border-bottom:none; }
+        .att-row.head { background:#f9f9f9; font-weight:700; color:#666; font-size:11px; text-transform:uppercase; }
+        
+        .ot-val { font-weight:700; color:var(--orange); background:#fff3e0; padding:2px 6px; border-radius:4px; font-size:12px; display:inline-block; }
+        .ot-none { color:#ccc; }
+
         /* HELPERS */
         .status-msg { text-align: center; margin-top: 50px; color: #666; }
-        
-        /* IMAGE MODAL */
         #img-modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
         #img-content { margin: auto; display: block; max-width: 90%; max-height: 80vh; margin-top: 10vh; }
         .close-img { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
@@ -148,7 +149,51 @@
             </div>
         </div>
 
-        <!-- TAB 2: HISTORY -->
+        <!-- TAB 2: ATTENDANCE (REVAMPED) -->
+        <div id="tab-attendance" class="tab-content">
+            <h4 style="margin:10px 0; color:#555; text-transform:uppercase; font-size:12px;">Staff Attendance</h4>
+            
+            <!-- CONTROLS CARD -->
+            <div class="att-header">
+                <select id="emp-select" class="emp-select" onchange="refreshAttendanceTab()">
+                    <option value="RAJEEV">RAJEEV</option>
+                    <option value="MOUSUM">MOUSUM</option>
+                </select>
+
+                <div class="att-status-row">
+                    <div id="loc-badge" class="loc-badge loc-err">
+                        <span class="material-icons" style="font-size:14px">gps_off</span> Checking...
+                    </div>
+                    <div id="today-time" style="font-size:12px; color:#888; font-weight:500;">--:--</div>
+                </div>
+
+                <div id="att-action-area">
+                    <!-- Dynamic Button -->
+                </div>
+            </div>
+
+            <!-- HISTORY LIST -->
+            <div class="history-section">
+                <div class="section-title">
+                    <span>Attendance Log</span>
+                    <input type="month" id="att-month-filter" class="month-picker" onchange="loadAttendanceHistory()">
+                </div>
+                
+                <div class="att-list">
+                    <div class="att-row head">
+                        <div>Date</div>
+                        <div>In</div>
+                        <div>Out</div>
+                        <div style="text-align:right">OT</div>
+                    </div>
+                    <div id="att-history-body">
+                        <!-- Rows injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: HISTORY -->
         <div id="tab-history" class="tab-content">
             <h4 style="margin:10px 0; color:#555; text-transform:uppercase; font-size:12px;">Past Orders</h4>
             <div id="history-list"></div>
@@ -158,7 +203,11 @@
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('available', this)">
             <span class="material-icons">assignment</span>
-            <span>Available</span>
+            <span>Tasks</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('attendance', this)">
+            <span class="material-icons">fingerprint</span>
+            <span>Attendance</span>
         </div>
         <div class="nav-item" onclick="switchTab('history', this)">
             <span class="material-icons">history</span>
@@ -183,11 +232,9 @@
             </button>
         </div>
     </div>
-    
     <div class="search-bar">
         <input type="text" id="searchBox" class="search-input" placeholder="Search item..." onkeyup="filterList()">
     </div>
-
     <div class="full-content" id="packing-list-container"></div>
 </div>
 
@@ -198,7 +245,7 @@
             <span class="material-icons">arrow_back</span>
         </button>
         <h2 style="font-size:16px;">Order Details</h2>
-        <div style="width:24px;"></div> <!-- Spacer -->
+        <div style="width:24px;"></div>
     </div>
     <div class="full-content" id="history-detail-content"></div>
 </div>
@@ -225,14 +272,29 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    
+    // --- VARIABLES ---
     let activeIndent = null;
     let localData = {};
     let fullItemsList = []; 
     let historyData = [];
+    
+    // --- ATTENDANCE VARIABLES ---
+    // ⚠️ UPDATE THESE WITH YOUR SHOP LOCATION ⚠️
+    const SHOP_LAT = 11.932276447689077; 
+    const SHOP_LNG = 75.57773169123767; 
+    const ALLOWED_RADIUS_KM = 0.100; // 100 meters
+    const TEST_MODE = false; // Set to FALSE in production
+    let currentUserAtt = null;
 
     // --- INITIALIZATION ---
     async function init() {
         checkActiveTask();
+        // Set Month Picker to Current Month
+        const now = new Date();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const y = now.getFullYear();
+        document.getElementById('att-month-filter').value = `${y}-${m}`;
     }
 
     // --- DASHBOARD LOGIC ---
@@ -243,7 +305,6 @@
             if (snapshot.exists()) {
                 activeIndent = snapshot.val();
                 
-                // Sync Local Data
                 const savedDate = localStorage.getItem('swiggy_indent_date');
                 if (savedDate !== activeIndent.date) {
                     localStorage.setItem('swiggy_indent_date', activeIndent.date);
@@ -253,21 +314,16 @@
                     localData = JSON.parse(localStorage.getItem('swiggy_packing_data') || '{}');
                 }
 
-                // --- PROGRESS CALCULATION ---
+                // Progress
                 const itemCount = activeIndent.items ? activeIndent.items.length : 0;
                 let packedCount = 0;
                 
                 if (activeIndent.items) {
                     activeIndent.items.forEach(item => {
-                        // Check if item has data locally or from server draft
                         const local = localData[item.code];
                         const hasLocalData = local && (local.qty !== undefined || local.kg !== undefined);
                         const hasServerData = item.savedQty !== undefined || item.savedKg !== undefined;
-                        
-                        // We consider it "Started/Packed" if data exists
-                        if (hasLocalData || hasServerData) {
-                            packedCount++;
-                        }
+                        if (hasLocalData || hasServerData) packedCount++;
                     });
                 }
 
@@ -275,7 +331,6 @@
                 let progressColor = 'var(--primary)';
                 if(progressPct === 100) progressColor = 'var(--green)';
 
-                // --- RENDER CARD ---
                 container.innerHTML = `
                     <div class="task-card" onclick="openPacking()">
                         <div class="task-info" style="width:100%">
@@ -283,12 +338,9 @@
                                 <h3>Order Date: ${activeIndent.date}</h3>
                                 <span style="font-size:12px; font-weight:bold; color:${progressColor}">${packedCount}/${itemCount} Done</span>
                             </div>
-                            
-                            <!-- Progress Bar -->
                             <div style="width:100%; height:6px; background:#eee; border-radius:3px; margin:8px 0; overflow:hidden;">
                                 <div style="width:${progressPct}%; height:100%; background:${progressColor}; transition:width 0.3s;"></div>
                             </div>
-
                             <p style="color:var(--primary); font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px;">
                                 <span>Tap to continue packing</span>
                                 <span class="material-icons" style="font-size:16px">arrow_forward</span>
@@ -297,16 +349,10 @@
                     </div>
                 `;
             } else {
-                container.innerHTML = `
-                    <div class="status-msg">
-                        <span class="material-icons" style="font-size:48px; color:#ccc">assignment_turned_in</span>
-                        <p>No new orders.</p>
-                    </div>`;
+                container.innerHTML = `<div class="status-msg"><span class="material-icons" style="font-size:48px; color:#ccc">assignment_turned_in</span><p>No new orders.</p></div>`;
                 activeIndent = null;
             }
-        } catch (error) {
-            container.innerHTML = `<p class="status-msg" style="color:red">Error: ${error.message}</p>`;
-        }
+        } catch (error) { container.innerHTML = `<p class="status-msg" style="color:red">Error: ${error.message}</p>`; }
     }
 
     window.switchTab = function(tabName, el) {
@@ -317,273 +363,144 @@
 
         if(tabName === 'history') loadHistory();
         if(tabName === 'available') checkActiveTask();
+        if(tabName === 'attendance') { refreshAttendanceTab(); }
     }
 
-    // --- PACKING INTERFACE LOGIC ---
+    // --- PACKING INTERFACE ---
     window.openPacking = function() {
         if(!activeIndent) return;
         document.getElementById('packing-title').innerText = activeIndent.date;
-        
-        // --- SORT ALPHABETICALLY ---
-        fullItemsList = [...activeIndent.items].sort((a, b) => {
-            const nameA = (a.name || "").toLowerCase();
-            const nameB = (b.name || "").toLowerCase();
-            if (nameA < nameB) return -1;
-            if (nameA > nameB) return 1;
-            return 0;
-        });
-
+        fullItemsList = [...activeIndent.items].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         renderPackingList(fullItemsList);
         document.getElementById('page-packing').classList.add('active');
     }
 
     window.closePage = function(pageId) {
         document.getElementById(pageId).classList.remove('active');
-        // Refresh dashboard on close just in case
         if(pageId === 'page-packing') checkActiveTask();
     }
 
     window.filterList = function() {
         const term = document.getElementById('searchBox').value.toLowerCase();
-        const filtered = fullItemsList.filter(item => 
-            item.name.toLowerCase().includes(term) || 
-            item.code.toString().includes(term)
-        );
+        const filtered = fullItemsList.filter(item => item.name.toLowerCase().includes(term) || item.code.toString().includes(term));
         renderPackingList(filtered);
     }
 
     function renderPackingList(items) {
         const container = document.getElementById('packing-list-container');
         container.innerHTML = '';
-        
         items.forEach((item) => {
             let valQty, valKg, imgData;
-            
-            // Check Data Sources
             const local = localData[item.code];
             const hasLocal = local && local.qty !== undefined;
             const hasServer = item.savedQty !== undefined;
             
-            if (local) {
-                valQty = local.qty;
-                valKg = local.kg;
-                imgData = local.img; 
-            } else {
-                // If saved on server, use that. Otherwise show Ordered Qty as placeholder/default
-                valQty = hasServer ? item.savedQty : item.poQty;
-                valKg = item.savedKg !== undefined ? item.savedKg : '';
-                imgData = item.savedImg || null;
-            }
+            if (local) { valQty = local.qty; valKg = local.kg; imgData = local.img; } 
+            else { valQty = hasServer ? item.savedQty : item.poQty; valKg = item.savedKg !== undefined ? item.savedKg : ''; imgData = item.savedImg || null; }
             
-            // FIX: Item is 'Filled' if Local data exists OR Server data exists OR Kg is entered
-            // This ensures green border shows even if you save 5/5 items.
             const isFilled = hasLocal || hasServer || (valKg && valKg !== '');
-
             const div = document.createElement('div');
             div.className = `card ${isFilled ? 'has-data' : ''}`;
             div.innerHTML = `
-                <div class="card-header">
-                    <span class="item-name">${item.name}</span>
-                    <span class="item-code">#${item.code}</span>
-                </div>
+                <div class="card-header"><span class="item-name">${item.name}</span><span class="item-code">#${item.code}</span></div>
                 <div class="card-body">
-                    <div class="input-group">
-                        <span class="input-label">ORDER</span>
-                        <div class="val-box">${item.poQty}</div>
-                    </div>
-                    <div class="input-group">
-                        <span class="input-label">PACKED</span>
-                        <input type="number" inputmode="numeric" id="qty-${item.code}" 
-                            value="${valQty}" 
-                            class="qty-input ${isFilled ? 'filled' : ''}"
-                            oninput="updateLocal(${item.code}, 'qty', this.value)"
-                            onfocus="this.select()">
-                    </div>
-                    <div class="input-group">
-                        <span class="input-label">KG/NOS</span>
-                        <input type="number" inputmode="decimal" id="kg-${item.code}" 
-                            placeholder="0.0" 
-                            value="${valKg}" 
-                            class="qty-input ${valKg ? 'filled' : ''}"
-                            oninput="updateLocal(${item.code}, 'kg', this.value)"
-                            onfocus="this.select()">
-                    </div>
-                    <div class="input-group">
-                        <span class="input-label">PHOTO</span>
-                        <div class="cam-btn ${imgData ? 'has-img' : ''}" id="btn-cam-${item.code}">
-                            <span class="material-icons">${imgData ? 'visibility' : 'camera_alt'}</span>
-                            ${!imgData ? `<input type="file" accept="image/*" capture="environment" class="cam-input" onchange="handleImage(this, ${item.code})">` : `<div style="position:absolute; width:100%; height:100%;" onclick="openModal('${imgData}')"></div><span style="position:absolute; right:-5px; top:-5px; background:white; color:red; border-radius:50%; padding:2px; font-size:12px; border:1px solid #ccc;" onclick="clearImage(${item.code}); event.stopPropagation();">X</span>`}
-                        </div>
-                    </div>
-                </div>
-            `;
+                    <div class="input-group"><span class="input-label">ORDER</span><div class="val-box">${item.poQty}</div></div>
+                    <div class="input-group"><span class="input-label">PACKED</span><input type="number" inputmode="numeric" id="qty-${item.code}" value="${valQty}" class="qty-input ${isFilled?'filled':''}" oninput="updateLocal(${item.code},'qty',this.value)" onfocus="this.select()"></div>
+                    <div class="input-group"><span class="input-label">KG/NOS</span><input type="number" inputmode="decimal" id="kg-${item.code}" placeholder="0.0" value="${valKg}" class="qty-input ${valKg?'filled':''}" oninput="updateLocal(${item.code},'kg',this.value)" onfocus="this.select()"></div>
+                    <div class="input-group"><span class="input-label">PHOTO</span><div class="cam-btn ${imgData?'has-img':''}" id="btn-cam-${item.code}"><span class="material-icons">${imgData?'visibility':'camera_alt'}</span>${!imgData ? `<input type="file" accept="image/*" capture="environment" class="cam-input" onchange="handleImage(this, ${item.code})">` : `<div style="position:absolute; width:100%; height:100%;" onclick="openModal('${imgData}')"></div><span style="position:absolute; right:-5px; top:-5px; background:white; color:red; border-radius:50%; padding:2px; font-size:12px; border:1px solid #ccc;" onclick="clearImage(${item.code}); event.stopPropagation();">X</span>`}</div></div>
+                </div>`;
             container.appendChild(div);
         });
     }
 
-    // --- ACTIONS ---
     window.updateLocal = function(code, field, value) {
         if (!localData[code]) localData[code] = {};
         localData[code][field] = value;
         localStorage.setItem('swiggy_packing_data', JSON.stringify(localData));
-        
         const input = document.getElementById(`${field}-${code}`);
-        if(input) {
-            if(value && value !== "") input.classList.add('filled');
-            else input.classList.remove('filled');
-        }
+        if(input) { if(value && value !== "") input.classList.add('filled'); else input.classList.remove('filled'); }
     }
 
     window.saveDraft = async function(showAlert = false) {
         if(showAlert && !confirm("Save progress to server?")) return;
-
         const updatedItems = activeIndent.items.map(item => {
             const saved = localData[item.code] || {};
-            
-            // Clone item to preserve existing data
             const newItem = { ...item };
-
-            // Update QTY: Only if locally changed. 
-            // If not changed locally, we keep the existing item.savedQty (if any).
-            // We REMOVED the "|| item.poQty" fallback which was causing the bug.
-            if (saved.qty !== undefined) {
-                newItem.savedQty = parseFloat(saved.qty);
-            }
-
-            // Update KG
-            if (saved.kg !== undefined) {
-                newItem.savedKg = parseFloat(saved.kg);
-            }
-
-            // Update IMG
-            if (saved.img) {
-                newItem.savedImg = saved.img;
-            }
-
+            if (saved.qty !== undefined) newItem.savedQty = parseFloat(saved.qty);
+            if (saved.kg !== undefined) newItem.savedKg = parseFloat(saved.kg);
+            if (saved.img) newItem.savedImg = saved.img;
             return newItem;
         });
-
         try {
             await set(ref(db, 'active_indent'), { ...activeIndent, items: updatedItems });
             if(showAlert) alert("Draft saved successfully.");
-            checkActiveTask(); // Refresh progress bar
+            checkActiveTask();
         } catch (e) { alert("Error: " + e.message); }
     }
 
     window.submitToReview = async function() {
         if(!confirm("Are you sure you want to finish and send to Office?")) return;
-
         try {
             const reviewItems = activeIndent.items.map(item => {
                 const saved = localData[item.code] || {};
                 let finalQty = item.poQty;
                 if(saved.qty !== undefined) finalQty = parseFloat(saved.qty);
                 else if(item.savedQty !== undefined) finalQty = parseFloat(item.savedQty);
-
                 let finalKg = 0;
                 if(saved.kg !== undefined) finalKg = parseFloat(saved.kg);
                 else if(item.savedKg !== undefined) finalKg = parseFloat(item.savedKg);
-
-                return {
-                    ...item,
-                    qty: finalQty, actualKg: finalKg, poQty: item.poQty,
-                    img: saved.img || item.savedImg || null
-                };
+                return { ...item, qty: finalQty, actualKg: finalKg, poQty: item.poQty, img: saved.img || item.savedImg || null };
             });
-
-            const reviewData = {
-                date: activeIndent.date,
-                items: reviewItems,
-                timestamp: Date.now()
-            };
-
+            const reviewData = { date: activeIndent.date, items: reviewItems, timestamp: Date.now() };
             await set(ref(db, 'completed_packing'), reviewData);
             await remove(ref(db, 'active_indent'));
             localStorage.removeItem('swiggy_packing_data');
-            
             alert("Order Submitted!");
             closePage('page-packing');
-            checkActiveTask(); // Refresh home
-        } catch (e) {
-            alert("Error: " + e.message);
-        }
+            checkActiveTask();
+        } catch (e) { alert("Error: " + e.message); }
     }
 
     // --- HISTORY LOGIC ---
     window.loadHistory = async function() {
         const histContainer = document.getElementById('history-list');
         histContainer.innerHTML = '<div class="status-msg">Loading history...</div>';
-        
         try {
             const q = query(ref(db, 'indents'), limitToLast(20));
             const snapshot = await get(q);
             if(snapshot.exists()) {
                 const rawData = snapshot.val();
                 historyData = Object.values(rawData).sort((a,b) => b.id - a.id);
-                
                 histContainer.innerHTML = '';
                 historyData.forEach((rec, idx) => {
                     const el = document.createElement('div');
                     el.className = 'history-card';
                     el.onclick = () => openHistoryDetail(idx);
-                    el.innerHTML = `
-                        <div>
-                            <div style="font-weight:700; font-size:15px;">${rec.date}</div>
-                            <div style="color:#666; font-size:13px;">${rec.items ? rec.items.length : 0} items packed</div>
-                        </div>
-                        <span class="material-icons" style="color:#ccc">chevron_right</span>
-                    `;
+                    el.innerHTML = `<div><div style="font-weight:700; font-size:15px;">${rec.date}</div><div style="color:#666; font-size:13px;">${rec.items ? rec.items.length : 0} items packed</div></div><span class="material-icons" style="color:#ccc">chevron_right</span>`;
                     histContainer.appendChild(el);
                 });
-            } else {
-                histContainer.innerHTML = '<div class="status-msg">No history found.</div>';
-            }
-        } catch(e) {
-            histContainer.innerHTML = `<div class="status-msg">Error: ${e.message}</div>`;
-        }
+            } else { histContainer.innerHTML = '<div class="status-msg">No history found.</div>'; }
+        } catch(e) { histContainer.innerHTML = `<div class="status-msg">Error: ${e.message}</div>`; }
     }
 
     window.openHistoryDetail = function(idx) {
-    const rec = historyData[idx];
-    const container = document.getElementById('history-detail-content');
-    container.innerHTML = '';
-
-    // Prioritize the raw packing data, fallback to items if snapshot doesn't exist
-    const displayItems = rec.packingSnapshot || rec.items;
-
-    if(displayItems) {
-        displayItems.forEach(item => {
-            const hasImg = item.img ? true : false;
-            const el = document.createElement('div');
-            el.className = 'card';
-            el.style.background = "#f9f9f9"; 
-            el.innerHTML = `
-                <div class="card-header">
-                    <span class="item-name">${item.name}</span>
-                    ${hasImg ? `<span class="material-icons" style="color:var(--primary); cursor:pointer" onclick="openModal('${item.img}')">image</span>` : ''}
-                </div>
-                <div class="card-body" style="grid-template-columns: 1fr 1fr 1fr;">
-                    <div class="input-group">
-                        <span class="input-label">Ordered</span>
-                        <div class="val-box" style="background:#fff; color:#666; border-color:#eee">${item.originalQty || item.poQty || '-'}</div>
-                    </div>
-                    <div class="input-group">
-                        <span class="input-label">Packed</span>
-                        <div class="val-box" style="background:#fff; color:#333; border-color:#ccc">${item.qty}</div>
-                    </div>
-                    <div class="input-group">
-                        <span class="input-label">KG/NOS</span> <!-- UPDATED LABEL -->
-                        <div class="val-box" style="background:${item.actualKg > 0 ? '#e8f0fe' : '#fff'}; color:#333; border-color:#ccc">${item.actualKg || '-'}</div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(el);
-        });
+        const rec = historyData[idx];
+        const container = document.getElementById('history-detail-content');
+        container.innerHTML = '';
+        const displayItems = rec.packingSnapshot || rec.items;
+        if(displayItems) {
+            displayItems.forEach(item => {
+                const hasImg = item.img ? true : false;
+                const el = document.createElement('div');
+                el.className = 'card';
+                el.style.background = "#f9f9f9"; 
+                el.innerHTML = `<div class="card-header"><span class="item-name">${item.name}</span>${hasImg ? `<span class="material-icons" style="color:var(--primary); cursor:pointer" onclick="openModal('${item.img}')">image</span>` : ''}</div><div class="card-body" style="grid-template-columns: 1fr 1fr 1fr;"><div class="input-group"><span class="input-label">Ordered</span><div class="val-box" style="background:#fff; color:#666; border-color:#eee">${item.originalQty || item.poQty || '-'}</div></div><div class="input-group"><span class="input-label">Packed</span><div class="val-box" style="background:#fff; color:#333; border-color:#ccc">${item.qty}</div></div><div class="input-group"><span class="input-label">KG/NOS</span><div class="val-box" style="background:${item.actualKg > 0 ? '#e8f0fe' : '#fff'}; color:#333; border-color:#ccc">${item.actualKg || '-'}</div></div></div>`;
+                container.appendChild(el);
+            });
+        }
+        document.getElementById('page-history-detail').classList.add('active');
     }
-    document.getElementById('page-history-detail').classList.add('active');
-}
 
-    // --- IMAGES ---
     window.handleImage = function(input, code) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -603,8 +520,6 @@
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
                     updateLocal(code, 'img', dataUrl);
-                    
-                    // Simple refresh of card UI
                     btn.classList.add('has-img');
                     btn.innerHTML = `<span class="material-icons">visibility</span>`;
                     btn.onclick = () => openModal(dataUrl);
@@ -618,17 +533,162 @@
             reader.readAsDataURL(file);
         }
     }
+    window.clearImage = function(code) { if(confirm('Remove image?')) { updateLocal(code, 'img', null); filterList(); } }
+    window.openModal = function(src) { document.getElementById('img-content').src = src; document.getElementById('img-modal').style.display = 'block'; }
 
-    window.clearImage = function(code) {
-        if(confirm('Remove image?')) {
-            updateLocal(code, 'img', null);
-            filterList(); // Re-renders to reset UI
-        }
+    // --- ATTENDANCE LOGIC (REVAMPED) ---
+    window.refreshAttendanceTab = function() {
+        checkLocation();
+        loadTodayStatus();
+        loadAttendanceHistory();
     }
 
-    window.openModal = function(src) {
-        document.getElementById('img-content').src = src;
-        document.getElementById('img-modal').style.display = 'block';
+    async function loadTodayStatus() {
+        const empName = document.getElementById('emp-select').value;
+        const today = new Date().toISOString().split('T')[0];
+        const actionArea = document.getElementById('att-action-area');
+        const timeDisplay = document.getElementById('today-time');
+        
+        // Live Clock
+        timeDisplay.innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+        try {
+            const snap = await get(child(ref(db), `attendance/${today}/${empName}`));
+            if (snap.exists()) {
+                const data = snap.val();
+                if (data.inTime && !data.outTime) {
+                    actionArea.innerHTML = `<button class="clock-btn btn-out" onclick="confirmCheckOut()"><span class="material-icons">logout</span> CHECK OUT</button>`;
+                } else if (data.outTime) {
+                    actionArea.innerHTML = `<button class="clock-btn btn-done" disabled><span class="material-icons">check_circle</span> DONE TODAY</button>`;
+                }
+            } else {
+                actionArea.innerHTML = `<button class="clock-btn btn-in" onclick="confirmCheckIn()"><span class="material-icons">login</span> CHECK IN</button>`;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    window.loadAttendanceHistory = async function() {
+        const empName = document.getElementById('emp-select').value;
+        const filterVal = document.getElementById('att-month-filter').value; // YYYY-MM
+        const tbody = document.getElementById('att-history-body');
+        tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Loading logs...</div>';
+
+        try {
+            const snap = await get(ref(db, 'attendance'));
+            if(snap.exists()) {
+                const allData = snap.val();
+                const rows = [];
+                
+                // Process Data
+                Object.keys(allData).forEach(date => {
+                    // Filter by Month
+                    if (filterVal && date.substring(0, 7) !== filterVal) return;
+                    
+                    const dayData = allData[date][empName];
+                    if (dayData) {
+                        rows.push({
+                            date: date,
+                            in: dayData.inTime,
+                            out: dayData.outTime,
+                            ot: dayData.otMinutes || 0
+                        });
+                    }
+                });
+
+                // Sort Descending
+                rows.sort((a,b) => b.date.localeCompare(a.date));
+
+                // Render
+                tbody.innerHTML = '';
+                if(rows.length === 0) {
+                    tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No records found.</div>';
+                    return;
+                }
+
+                rows.forEach(r => {
+                    const day = r.date.split('-')[2];
+                    const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+                    const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+                    
+                    let otDisplay = `<span class="ot-none">-</span>`;
+                    if (r.ot > 0) {
+                        const h = Math.floor(r.ot / 60);
+                        const m = r.ot % 60;
+                        otDisplay = `<span class="ot-val">${h}h ${m}m</span>`;
+                    }
+
+                    tbody.innerHTML += `
+                        <div class="att-row">
+                            <div style="font-weight:500">${day}</div>
+                            <div>${inT}</div>
+                            <div>${outT}</div>
+                            <div style="text-align:right">${otDisplay}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No data found.</div>';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // --- GEO-FENCING ---
+    window.checkLocation = function() {
+        const badge = document.getElementById('loc-badge');
+        if (!navigator.geolocation) { badge.innerHTML = 'No GPS'; return; }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const dist = getDistanceFromLatLonInKm(pos.coords.latitude, pos.coords.longitude, SHOP_LAT, SHOP_LNG);
+                if (dist <= ALLOWED_RADIUS_KM || TEST_MODE) {
+                    badge.className = 'loc-badge loc-ok';
+                    badge.innerHTML = '<span class="material-icons" style="font-size:14px">verified</span> Shop Location';
+                    window.isLocationValid = true;
+                } else {
+                    badge.className = 'loc-badge loc-err';
+                    badge.innerHTML = `<span class="material-icons" style="font-size:14px">error</span> Too Far (${dist.toFixed(2)}km)`;
+                    window.isLocationValid = false;
+                }
+            },
+            () => { badge.className = 'loc-badge loc-err'; badge.innerHTML = 'GPS Error'; window.isLocationValid = false; }
+        );
+    }
+
+    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+        var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); 
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; 
+    }
+    function deg2rad(deg) { return deg * (Math.PI/180); }
+
+    window.confirmCheckIn = async function() {
+        if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop to check in!"); return; }
+        if (!confirm("Check In Now?")) return;
+        const empName = document.getElementById('emp-select').value;
+        const today = new Date().toISOString().split('T')[0];
+        try {
+            await set(ref(db, `attendance/${today}/${empName}`), { inTime: new Date().toISOString(), name: empName });
+            alert("Checked In!"); refreshAttendanceTab();
+        } catch(e) { alert(e.message); }
+    }
+
+    window.confirmCheckOut = async function() {
+        if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop to check out!"); return; }
+        if (!confirm("Check Out Now?")) return;
+        const empName = document.getElementById('emp-select').value;
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        
+        let otMinutes = 0;
+        const standardEnd = new Date();
+        standardEnd.setHours(21, 0, 0, 0); // 9:00 PM
+        if (now > standardEnd) { otMinutes = Math.floor((now - standardEnd) / 60000); }
+
+        try {
+            await set(ref(db, `attendance/${today}/${empName}/outTime`), now.toISOString());
+            await set(ref(db, `attendance/${today}/${empName}/otMinutes`), otMinutes);
+            alert(`Checked Out! OT: ${Math.floor(otMinutes/60)}h ${otMinutes%60}m`);
+            refreshAttendanceTab();
+        } catch(e) { alert(e.message); }
     }
 
     init();
