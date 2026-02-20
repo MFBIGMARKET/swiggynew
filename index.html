@@ -389,6 +389,22 @@
         /* Interactive Rows */
         .clickable-row { cursor: pointer; transition: background 0.1s; }
         .clickable-row:hover { background-color: #e3f2fd !important; }
+        /* Report Modal Styles */
+.change-row {
+    display: grid; 
+    grid-template-columns: 1fr 80px 80px; 
+    gap: 10px; 
+    padding: 10px 8px; 
+    border-bottom: 1px solid #f1f3f4;
+    font-size: 13px;
+    align-items: center;
+}
+.change-row:last-child { border-bottom: none; }
+.change-row:hover { background-color: #f8f9fa; }
+
+.val-old { text-align: right; color: var(--text-sub); text-decoration: line-through; font-size: 12px; }
+.val-new { text-align: right; color: var(--green); font-weight: 700; }
+.val-new.highlight { color: var(--primary); } /* For new items */
 
         .upload-area { border: 2px dashed #dadce0; border-radius: 8px; background: #fafafa; height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; margin-bottom: 20px; }
         .upload-area:hover { border-color: var(--primary); background: #f4f8ff; }
@@ -471,33 +487,40 @@
 <div id="indent-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('indent')" onmouseleave="hideIndentTooltip()"></div>
 
 <!-- HEADER -->
+<!-- REPLACE YOUR EXISTING HEADER & TOOLBAR WITH THIS STRUCTURE -->
+
 <header>
     <div class="brand">
         <span class="material-icons" style="color:var(--primary)">cloud_queue</span>
         <span>Swiggy<strong> Reports</strong></span>
     </div>
-    <div style="display:flex; gap:10px;">
+    
+    <!-- WRAPPED BUTTONS IN A SPECIFIC DIV ID -->
+    <div id="header-actions-master" style="display:flex; gap:10px;">
         <button class="btn btn-icon" onclick="toggleSettings()" title="Clear Data"><span class="material-icons">delete_sweep</span></button>
+        
         <button class="btn" onclick="openExpenseModal()">
             <span class="material-icons">account_balance_wallet</span> Expenses
         </button>
-            <!-- NEW ERP UPLOAD BUTTON START -->
-    <input type="file" id="erpUpload" accept=".csv" style="display:none" onchange="handleErpUpload(this)">
-    <button class="btn" onclick="document.getElementById('erpUpload').click()" style="border-color: #34a853; color: #34a853;">
-        <span class="material-icons">currency_rupee</span> Update Costs (ERP)
-    </button>
-    <!-- NEW ERP UPLOAD BUTTON END -->
+        
+        <input type="file" id="erpUpload" accept=".csv" style="display:none" onchange="handleErpUpload(this)">
+        <button id="btn-erp-update" class="btn" onclick="document.getElementById('erpUpload').click()" 
+            style="border-color: #34a853; color: #34a853;"
+            onmouseenter="showErpLastUpdate(event)" onmouseleave="hidePriceTooltip()">
+            <span class="material-icons">currency_rupee</span> Update Costs (ERP)
+        </button>
+
         <input type="file" id="masterUpload" accept=".csv" style="display:none" onchange="handleMasterUpload(this)">
         <button class="btn" onclick="document.getElementById('masterUpload').click()">
             <span class="material-icons">upload</span> Update Prices
         </button>
+        
         <button class="btn btn-filled" onclick="openAddModal()">
             <span class="material-icons">add</span> New Product
         </button>
     </div>
 </header>
 
-<!-- TOOLBAR -->
 <div class="toolbar">
     <div class="tabs">
         <div class="tab active" onclick="switchTab('view-master')">Price Master</div>
@@ -507,7 +530,8 @@
     </div>
     <div class="search-wrapper">
         <span class="material-icons" style="font-size:20px; color:#5f6368">search</span>
-        <input type="text" id="search" placeholder="Search product..." onkeyup="renderMasterTable()">
+        <!-- CHANGED ONKEYUP FUNCTION HERE -->
+        <input type="text" id="search" placeholder="Search..." onkeyup="handleGlobalSearch()">
     </div>
 </div>
 
@@ -936,6 +960,7 @@
     let indents = [];
     let currentIndent = [];
     let currentIndentDate = null; 
+    let currentTabId = 'view-master'; // Track active tab
     let isEditMode = false;
     let isHistoryEditMode = false;
     let sortState = { key: null, direction: 1 };
@@ -1316,23 +1341,45 @@
         }
     }
 
-    // --- NAVIGATION ---
     function switchTab(tabId) {
-        document.querySelectorAll('.main > div').forEach(d => d.classList.add('hidden'));
-        document.getElementById(tabId).classList.remove('hidden');
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        const activeBtn = Array.from(document.querySelectorAll('.tab')).find(t => t.getAttribute('onclick').includes(tabId));
-        if(activeBtn) activeBtn.classList.add('active');
-        
-        if (tabId === 'view-history') {
-            closeHistoryDetail(); 
-            renderIndentHistory();
-        }
-        // ADD THIS LINE:
-        if (tabId === 'view-review') {
-            checkReviewData();
-        }
+    currentTabId = tabId; // Update global state
+
+    // 1. Show/Hide Views
+    document.querySelectorAll('.main > div').forEach(d => d.classList.add('hidden'));
+    document.getElementById(tabId).classList.remove('hidden');
+    
+    // 2. Update Tabs Styles
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    const activeBtn = Array.from(document.querySelectorAll('.tab')).find(t => t.getAttribute('onclick').includes(tabId));
+    if(activeBtn) activeBtn.classList.add('active');
+    
+    // 3. Toggle Header Buttons (Show only for Master)
+    const masterActions = document.getElementById('header-actions-master');
+    if (tabId === 'view-master') {
+        masterActions.classList.remove('hidden');
+    } else {
+        masterActions.classList.add('hidden');
     }
+
+    // 4. Reset Search & Refresh
+    document.getElementById('search').value = '';
+    
+    if (tabId === 'view-history') {
+        closeHistoryDetail(); 
+        renderIndentHistory();
+    }
+    if (tabId === 'view-review') {
+        checkReviewData();
+    }
+    // Trigger render to clear filter
+    handleGlobalSearch();
+}
+function handleGlobalSearch() {
+    if (currentTabId === 'view-master') renderMasterTable();
+    else if (currentTabId === 'view-indent') renderIndentPreview();
+    else if (currentTabId === 'view-review') renderReviewTable();
+    else if (currentTabId === 'view-history') renderIndentHistory();
+}
 
 function renderMasterTable() {
     const tbody = document.getElementById('master-body');
@@ -1422,6 +1469,44 @@ function renderMasterTable() {
     });
     saveData('products', products);
     toggleEditMode();
+}
+let pendingChangesCallback = null;
+
+function showChangeReport(title, summary, changes, onConfirm) {
+    document.getElementById('report-title').innerText = title;
+    document.getElementById('report-summary').innerText = summary;
+    const list = document.getElementById('report-list');
+    list.innerHTML = '';
+
+    if (changes.length === 0) {
+        list.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">No changes detected.</div>';
+        document.getElementById('btn-report-confirm').classList.add('hidden');
+    } else {
+        document.getElementById('btn-report-confirm').classList.remove('hidden');
+        changes.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'change-row';
+            div.innerHTML = `
+                <div style="font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.name}</div>
+                <div class="val-old">${c.oldVal}</div>
+                <div class="val-new ${c.isNew?'highlight':''}">${c.newVal}</div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    pendingChangesCallback = onConfirm;
+    document.getElementById('btn-report-confirm').onclick = () => {
+        if(pendingChangesCallback) pendingChangesCallback();
+        closeReportModal();
+    };
+
+    document.getElementById('report-modal').classList.remove('hidden');
+}
+
+function closeReportModal() {
+    document.getElementById('report-modal').classList.add('hidden');
+    pendingChangesCallback = null;
 }
 
     // --- 2. INDENT LOGIC ---
@@ -1646,8 +1731,13 @@ function renderMasterTable() {
 // --- Update Indent Preview with data-labels ---
 function renderIndentPreview() {
     const tbody = document.getElementById('indent-body');
+    const search = document.getElementById('search').value.toLowerCase(); // Read Search
     tbody.innerHTML = '';
+    
     currentIndent.forEach(item => {
+        // Filter Logic
+        if (search && !item.name.toLowerCase().includes(search) && !item.code.toString().includes(search)) return;
+
         const tr = document.createElement('tr');
         const colorClass = item.marginPct >= 0 ? 'text-green' : 'text-red';
         tr.innerHTML = `
@@ -1684,28 +1774,77 @@ function addToHistory(product, source, buy, sell) {
 }
 
     function applyIndentPricesToMaster() {
-        let updateCount = 0;
-        currentIndent.forEach(item => {
-            const master = products.find(p => p && p.id === item.code);
-            if (master) {
-                if (master.spPiece !== item.poRate) {
-                    master.spPiece = item.poRate;
-                    addToHistory(master, 'Indent Upload', master.costKg, item.poRate);
-                    updateCount++;
-                }
+    let changes = [];
+    let pendingUpdates = [];
+    let pendingNewItems = [];
+
+    currentIndent.forEach(item => {
+        let master = products.find(p => p && p.id === item.code);
+
+        if (master) {
+            // Existing Item: Check Price Difference
+            if (master.spPiece !== item.poRate) {
+                changes.push({
+                    name: master.name,
+                    oldVal: '₹' + master.spPiece,
+                    newVal: '₹' + item.poRate,
+                    isNew: false
+                });
+                
+                pendingUpdates.push({ product: master, newPrice: item.poRate });
             }
+        } else {
+            // New Item
+            changes.push({
+                name: item.name || 'New Item',
+                oldVal: '---',
+                newVal: '₹' + item.poRate,
+                isNew: true
+            });
+
+            const newItem = {
+                id: item.code,
+                name: item.name || 'New Item',
+                uom: 'Unit',
+                conv: 1,
+                costKg: 0,
+                spPiece: item.poRate,
+                history: []
+            };
+            // Init history for new item
+            newItem.history.push({
+                date: new Date().toISOString().split('T')[0],
+                source: 'New via Indent',
+                buy: 0,
+                sell: item.poRate
+            });
+            
+            pendingNewItems.push(newItem);
+        }
+    });
+
+    const summary = `Found ${pendingUpdates.length} price updates and ${pendingNewItems.length} new items.`;
+
+    showChangeReport('Indent Price Updates', summary, changes, () => {
+        // --- COMMIT CHANGES ---
+        
+        // 1. Update Existing
+        pendingUpdates.forEach(u => {
+            addToHistory(u.product, 'Indent Update', u.product.costKg, u.newPrice);
+            u.product.spPiece = u.newPrice;
         });
 
-        if (updateCount > 0) {
-            saveData('products', products);
-            alert(`Success! Updated selling prices for ${updateCount} items.`);
-            renderMasterTable();
-            switchTab('view-master');
-            resetIndent();
-        } else {
-            alert("No price changes detected or matching items found.");
-        }
-    }
+        // 2. Add New
+        pendingNewItems.forEach(item => {
+            products.push(item);
+        });
+
+        saveData('products', products);
+        renderMasterTable();
+        switchTab('view-master');
+        resetIndent();
+    });
+}
 
     // --- 4. PACKING REVIEW LOGIC (UPDATED WITH EDITING) ---
     
@@ -1726,120 +1865,103 @@ function addToHistory(product, source, buy, sell) {
     }
 
     function renderReviewTable() {
-        if(!pendingReviewData) return;
-        document.getElementById('review-date').innerText = pendingReviewData.date;
-        const tbody = document.getElementById('review-body');
-        tbody.innerHTML = '';
+    if(!pendingReviewData) return;
+    document.getElementById('review-date').innerText = pendingReviewData.date;
+    const tbody = document.getElementById('review-body');
+    const search = document.getElementById('search').value.toLowerCase(); // Read Search
+    tbody.innerHTML = '';
 
-        pendingReviewData.items.forEach((item, index) => {
-            // 1. Get Master Data
-            const master = products.find(p => p.id === item.code);
-            const costPerKg = master ? (master.costKg || 0) : 0;
-            const conv = master ? (master.conv || 0) : 0;
+    pendingReviewData.items.forEach((item, index) => {
+        // Filter Logic
+        if (search && !item.name.toLowerCase().includes(search) && !item.code.toString().includes(search)) return;
 
-            // 2. Calculate Standard (Theory) vs Actual
-            const standardKg = (item.qty || 0) * conv;
-            const actualKg = (item.actualKg || 0);
-            
-            // 3. Financials
-            const standardCost = standardKg * costPerKg;
-            const revenue = (item.qty || 0) * item.poRate;
-            const profit = revenue - standardCost; // Profit based on Standard
-
-            // 4. Dump Calculation (Excess Usage)
-            const excessKg = Math.max(0, actualKg - standardKg);
-            const dumpCost = excessKg * costPerKg;
-
-            // 5. Image Button Logic
-            let imgBtn = '';
-            if (item.img) {
-                // Pass index and type to the modal opener
-                imgBtn = `<div style="margin-top:4px;"><button class="btn-view-img" onclick="openImgModal('${index}', 'review')">📷 View Photo</button></div>`;
-            }
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="t-left">
-                    <span style="font-weight:500">${item.name}</span>
-                    ${imgBtn}
-                    <div style="font-size:10px; color:#888; margin-top:4px;">
-                        Std: ${conv}kg | Cost: ₹${costPerKg}/kg
-                    </div>
-                </td>
-                <td class="t-right" style="color:#888">${item.poQty}</td>
-                
-                <!-- EDITABLE QTY -->
-                <td class="t-right">
-                    <input type="number" class="review-input" 
-                        value="${item.qty}" 
-                        onchange="updateReviewItem(${index}, 'qty', this.value)">
-                </td>
-                
-                <!-- EDITABLE ACTUAL KG -->
-                <td class="t-right" style="background:#fff8e1;">
-                    <input type="number" class="review-input" 
-                        value="${item.actualKg}" 
-                        onchange="updateReviewItem(${index}, 'actualKg', this.value)">
-                     <div style="font-size:9px; color:${excessKg>0?'red':'green'}; margin-top:2px;">
-                        ${excessKg>0 ? '+' + excessKg.toFixed(2) + ' Dump' : 'OK'}
-                     </div>
-                </td>
-                
-                <!-- Standard Cost (Profit Basis) -->
-                <td class="t-right">
-                    <div id="rev-std-cost-${index}">₹${standardCost.toFixed(0)}</div>
-                    <div id="rev-dump-cost-${index}" style="font-size:9px; color:var(--red)">
-                        Dump: ₹${dumpCost.toFixed(0)}
-                    </div>
-                </td>
-
-                <td class="t-right" id="rev-prof-${index}" style="font-weight:bold; color:${profit<0?'var(--red)':'var(--green)'}">
-                    ₹${profit.toFixed(0)}
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        recalculateReviewTotals();
-    }
-
-    window.updateReviewItem = function(index, field, value) {
-        if(!pendingReviewData || !pendingReviewData.items[index]) return;
-
-        let val = parseFloat(value);
-        if(isNaN(val)) val = 0;
-        pendingReviewData.items[index][field] = val;
-
-        // Recalculate Row
-        const item = pendingReviewData.items[index];
+        // 1. Get Master Data
         const master = products.find(p => p.id === item.code);
         const costPerKg = master ? (master.costKg || 0) : 0;
         const conv = master ? (master.conv || 0) : 0;
 
-        const standardKg = item.qty * conv;
-        const excessKg = Math.max(0, item.actualKg - standardKg);
-        
+        // 2. Calculations
+        const standardKg = (item.qty || 0) * conv;
+        const actualKg = (item.actualKg || 0);
         const standardCost = standardKg * costPerKg;
-        const dumpCost = excessKg * costPerKg;
-        const revenue = item.qty * item.poRate;
+        const revenue = (item.qty || 0) * item.poRate;
         const profit = revenue - standardCost;
+        const excessKg = Math.max(0, actualKg - standardKg);
+        const dumpCost = excessKg * costPerKg;
 
-        // Update DOM
-        document.getElementById(`rev-std-cost-${index}`).innerText = '₹' + standardCost.toFixed(0);
-        document.getElementById(`rev-dump-cost-${index}`).innerText = 'Dump: ₹' + dumpCost.toFixed(0);
-        
-        const profEl = document.getElementById(`rev-prof-${index}`);
-        profEl.innerText = '₹' + profit.toFixed(0);
-        profEl.style.color = profit < 0 ? 'var(--red)' : 'var(--green)';
+        // 5. Image Button
+        let imgBtn = '';
+        if (item.img) {
+            imgBtn = `<div style="margin-top:4px;"><button class="btn-view-img" onclick="openImgModal('${index}', 'review')">📷 View Photo</button></div>`;
+        }
 
-        // Re-render the "Dump Label" under actual Kg input
-        // (Simplified: In a real app we'd target a specific ID, but here recalculating totals is enough for the big numbers)
-        recalculateReviewTotals(); 
-        
-        // Force full re-render to update the small +/- labels if needed, or implement specific ID targeting
-        // For smoothness, we'll leave specific label update out of this snippet or just call renderReviewTable() 
-        // Calling renderReviewTable() resets focus, so ideally we don't. 
-    }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="t-left">
+                <span style="font-weight:500">${item.name}</span>
+                ${imgBtn}
+                <div style="font-size:10px; color:#888; margin-top:4px;">Std: ${conv}kg | Cost: ₹${costPerKg}/kg</div>
+            </td>
+            <td class="t-right" style="color:#888">${item.poQty}</td>
+            
+            <!-- CHANGED: Passing item.code instead of index -->
+            <td class="t-right">
+                <input type="number" class="review-input" 
+                    value="${item.qty}" 
+                    onchange="updateReviewItem(${item.code}, 'qty', this.value)">
+            </td>
+            
+            <td class="t-right" style="background:#fff8e1;">
+                <input type="number" class="review-input" 
+                    value="${item.actualKg}" 
+                    onchange="updateReviewItem(${item.code}, 'actualKg', this.value)">
+                 <div style="font-size:9px; color:${excessKg>0?'red':'green'}; margin-top:2px;">
+                    ${excessKg>0 ? '+' + excessKg.toFixed(2) + ' Dump' : 'OK'}
+                 </div>
+            </td>
+            
+            <td class="t-right">
+                <div>₹${standardCost.toFixed(0)}</div>
+                <div style="font-size:9px; color:var(--red)">Dump: ₹${dumpCost.toFixed(0)}</div>
+            </td>
+
+            <td class="t-right" style="font-weight:bold; color:${profit<0?'var(--red)':'var(--green)'}">
+                ₹${profit.toFixed(0)}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    recalculateReviewTotals();
+}
+
+    window.updateReviewItem = function(code, field, value) {
+    if(!pendingReviewData) return;
+    
+    // Find item by Code instead of Index
+    const item = pendingReviewData.items.find(i => i.code === code);
+    if (!item) return;
+
+    let val = parseFloat(value);
+    if(isNaN(val)) val = 0;
+    
+    // Update Data
+    item[field] = val;
+
+    // Refresh UI (Full re-render is safest here to update totals and dump labels)
+    // Note: Re-rendering loses focus, but ensures calculations are perfect. 
+    // Given the previous requirement for totals, we call the calculation function:
+    recalculateReviewTotals(); 
+    
+    // To update the specific row visuals without losing focus is complex with search active.
+    // Ideally, we just re-render or let the user type and click away.
+    // For now, let's trigger a full search render to update calculated columns immediately.
+    renderReviewTable();
+    
+    // Restore focus hack (Optional, simplified)
+    // const activeInput = document.querySelector(`input[onchange*="${code}"][onchange*="${field}"]`);
+    // if(activeInput) activeInput.focus();
+}
 
     function recalculateReviewTotals() {
         let tBill=0, tStdCost=0, tDump=0;
@@ -1873,32 +1995,33 @@ function addToHistory(product, source, buy, sell) {
     }
 
     // Called when you edit an input box
-    window.updateReviewItem = function(index, field, value) {
-        if(!pendingReviewData || !pendingReviewData.items[index]) return;
+    window.updateReviewItem = function(code, field, value) {
+    if(!pendingReviewData) return;
+    
+    // Find item by Code instead of Index
+    const item = pendingReviewData.items.find(i => i.code === code);
+    if (!item) return;
 
-        // 1. Update Data Object
-        let val = parseFloat(value);
-        if(isNaN(val)) val = 0;
-        pendingReviewData.items[index][field] = val;
+    let val = parseFloat(value);
+    if(isNaN(val)) val = 0;
+    
+    // Update Data
+    item[field] = val;
 
-        // 2. Recalculate Row Math
-        const item = pendingReviewData.items[index];
-        const master = products.find(p => p.id === item.code);
-        const costPerKg = master ? (master.costKg || 0) : 0;
-
-        const lineCost = item.actualKg * costPerKg;
-        const lineRev = item.qty * item.poRate;
-        const lineProf = lineRev - lineCost;
-
-        // 3. Update Row DOM (Visuals)
-        document.getElementById(`rev-cost-${index}`).innerText = '₹' + lineCost.toFixed(0);
-        const profEl = document.getElementById(`rev-prof-${index}`);
-        profEl.innerText = '₹' + lineProf.toFixed(0);
-        profEl.style.color = lineProf < 0 ? 'var(--red)' : 'var(--green)';
-
-        // 4. Update Header Totals
-        recalculateReviewTotals();
-    }
+    // Refresh UI (Full re-render is safest here to update totals and dump labels)
+    // Note: Re-rendering loses focus, but ensures calculations are perfect. 
+    // Given the previous requirement for totals, we call the calculation function:
+    recalculateReviewTotals(); 
+    
+    // To update the specific row visuals without losing focus is complex with search active.
+    // Ideally, we just re-render or let the user type and click away.
+    // For now, let's trigger a full search render to update calculated columns immediately.
+    renderReviewTable();
+    
+    // Restore focus hack (Optional, simplified)
+    // const activeInput = document.querySelector(`input[onchange*="${code}"][onchange*="${field}"]`);
+    // if(activeInput) activeInput.focus();
+}
 
     function recalculateReviewTotals() {
         let tBill=0, tCost=0, tProf=0;
@@ -2039,26 +2162,21 @@ function addToHistory(product, source, buy, sell) {
         document.getElementById('indent-preview').classList.add('hidden');
     }
 
-    // --- 3. INDENT HISTORY ---
     function renderIndentHistory() {
-    const filterVal = document.getElementById('history-month-filter').value; // YYYY-MM
+    const filterVal = document.getElementById('history-month-filter').value;
+    const search = document.getElementById('search').value.toLowerCase(); // Read Search
     const tbody = document.getElementById('history-body');
     tbody.innerHTML = '';
 
-    // KPI Variables
-    let sumRev = 0;
-    let sumCost = 0;
-    let sumExp = 0;
-    let sumNet = 0;
+    let sumRev=0, sumCost=0, sumExp=0, sumNet=0;
 
     indents.forEach((rec, index) => {
-        // Filter Logic
-        if(filterVal) {
-            const recMonth = rec.date.substring(0, 7);
-            if (recMonth !== filterVal) return;
-        }
+        // Month Filter
+        if(filterVal && rec.date.substring(0, 7) !== filterVal) return;
 
-        // --- CALC VALUES ---
+        // Search Filter (ID or Date)
+        if (search && !rec.id.toString().includes(search) && !rec.date.includes(search)) return;
+
         const tBill = rec.totalBillAmt || rec.totalRev || 0;
         const tCost = rec.totalCost || 0;
         const tExp = rec.totalExpenses || 0;
@@ -2066,13 +2184,8 @@ function addToHistory(product, source, buy, sell) {
         const grossM = tBill > 0 ? (rec.profit / tBill) * 100 : 0;
         const netM = tBill > 0 ? (tNet / tBill) * 100 : 0;
 
-        // --- ACCUMULATE TOTALS ---
-        sumRev += tBill;
-        sumCost += tCost;
-        sumExp += tExp;
-        sumNet += tNet;
+        sumRev += tBill; sumCost += tCost; sumExp += tExp; sumNet += tNet;
 
-        // --- RENDER TABLE ROW ---
         const tr = document.createElement('tr');
         tr.className = 'clickable-row';
         tr.onclick = function() { viewHistoryDetail(index); };
@@ -2098,7 +2211,7 @@ function addToHistory(product, source, buy, sell) {
         tbody.appendChild(tr);
     });
 
-    // --- UPDATE DASHBOARD TILES ---
+    // Update KPI Tiles
     document.getElementById('hkpi-rev').innerText = '₹' + sumRev.toLocaleString('en-IN', {maximumFractionDigits:0});
     document.getElementById('hkpi-cost').innerText = '₹' + sumCost.toLocaleString('en-IN', {maximumFractionDigits:0});
     document.getElementById('hkpi-exp').innerText = '₹' + sumExp.toLocaleString('en-IN', {maximumFractionDigits:0});
@@ -2106,10 +2219,9 @@ function addToHistory(product, source, buy, sell) {
     document.getElementById('hkpi-net').innerText = '₹' + sumNet.toLocaleString('en-IN', {maximumFractionDigits:0});
     const totalMargin = sumRev > 0 ? (sumNet / sumRev) * 100 : 0;
     document.getElementById('hkpi-marg').innerText = `(${totalMargin.toFixed(1)}%)`;
-    
-    // Color coding for Net Profit
     document.getElementById('hkpi-net').style.color = sumNet >= 0 ? 'var(--purple)' : 'var(--red)';
 }
+
     
     function deleteIndent(id) {
         if(!confirm("Delete this record permanently?")) return;
@@ -2973,7 +3085,7 @@ function downloadBillPDF() {
         }
     }
 
-    function handleErpUpload(input) {
+   function handleErpUpload(input) {
     const file = input.files[0];
     if(!file) return;
     const reader = new FileReader();
@@ -2981,13 +3093,12 @@ function downloadBillPDF() {
         const text = e.target.result;
         const lines = text.split(/\r?\n/);
         
-        // 1. Locate the Header Row (ERP exports often have metadata top rows)
+        // 1. Locate Headers
         let headerRowIndex = -1;
         let headers = [];
         
         for(let i=0; i<lines.length; i++) {
             const row = parseCSVLine(lines[i]);
-            // Look for specific column names from ERP file
             if (row.includes("Item Code") && row.includes("Purchase Cost")) {
                 headerRowIndex = i;
                 headers = row;
@@ -2996,71 +3107,58 @@ function downloadBillPDF() {
         }
 
         if(headerRowIndex === -1) {
-            alert("Error: Could not find 'Item Code' and 'Purchase Cost' columns in this file.");
+            alert("Error: Could not find 'Item Code' and 'Purchase Cost' columns.");
             return;
         }
 
         const idxErpCode = headers.indexOf("Item Code");
         const idxCost = headers.indexOf("Purchase Cost");
         
-        // 2. Process Changes
-        let matchCount = 0;
-        let changeCount = 0;
-        let changesList = []; // For logging
+        // 2. Detect Changes
+        let changes = [];
+        let pendingUpdates = []; // Store the updates to apply later
 
         for(let i = headerRowIndex + 1; i < lines.length; i++) {
             if(!lines[i].trim()) continue;
             const row = parseCSVLine(lines[i]);
-            
             const csvErpCode = row[idxErpCode];
             const csvCost = parseFloat(row[idxCost]);
 
-            // --- OLD LOGIC (DO NOT USE) ---
-// const product = products.find(p => p.erpCode == csvErpCode);
-// if (product) { ... update logic ... }
-
-// --- NEW LOGIC (USE THIS) ---
-if (csvErpCode) {
-    // Find ALL matching products
-    const matchingProducts = products.filter(p => p.erpCode == csvErpCode);
-    
-    matchingProducts.forEach(product => {
-        matchCount++;
-        // Check if cost is different and valid number
-        if (!isNaN(csvCost) && product.costKg !== csvCost) {
-            changesList.push(`- ${product.name}: ₹${product.costKg} -> ₹${csvCost}`);
-            
-            // Add to price history
-            addToHistory(product, 'ERP Update', csvCost, product.spPiece);
-            
-            // Update Cost
-            product.costKg = csvCost;
-            changeCount++;
-        }
-    });
-}
+            if (csvErpCode) {
+                const product = products.find(p => p.erpCode == csvErpCode);
+                if (product && !isNaN(csvCost) && product.costKg !== csvCost) {
+                    // Add to UI list
+                    changes.push({
+                        name: product.name,
+                        oldVal: '₹' + product.costKg,
+                        newVal: '₹' + csvCost,
+                        isNew: false
+                    });
+                    
+                    // Add to Data Queue
+                    pendingUpdates.push({ product: product, newCost: csvCost });
+                }
+            }
         }
 
-        // 3. Confirm and Save
-        let msg = `Analysis Complete:\n` +
-                  `• Items Matched via ERP Code: ${matchCount}\n` +
-                  `• Cost Changes Detected: ${changeCount}\n\n`;
+        // 3. Show Modal
+        const summary = `Found ${changes.length} cost updates from ERP file.`;
         
-        if (changeCount > 0) {
-            msg += `Apply these ${changeCount} cost updates?`;
-            // Show first 5 changes as preview
-            if(changesList.length > 0) {
-                msg += `\n\nPreview:\n${changesList.slice(0, 5).join('\n')}\n...`;
-            }
+        showChangeReport('ERP Cost Updates', summary, changes, () => {
+            // --- COMMIT CHANGES ---
+            pendingUpdates.forEach(u => {
+                addToHistory(u.product, 'ERP Update', u.product.costKg, u.product.spPiece); // Log History
+                u.product.costKg = u.newCost; // Update Value
+            });
 
-            if(confirm(msg)) {
-                saveData('products', products);
-                renderMasterTable();
-                alert("Costs updated successfully!");
-            }
-        } else {
-            alert(msg + "No cost changes found.");
-        }
+            // Save Timestamp
+            const nowStr = new Date().toLocaleString();
+            lastErpUpdate = nowStr;
+            saveData('settings/lastErpUpdate', nowStr);
+            
+            saveData('products', products);
+            renderMasterTable();
+        });
     };
     reader.readAsText(file);
     input.value = '';
@@ -3143,5 +3241,30 @@ function handleMasterUpload(input) {
     input.value = '';
 }
 </script>
+<!-- CHANGE REPORT MODAL -->
+<div id="report-modal" class="modal-overlay hidden">
+    <div class="modal" style="width: 500px;">
+        <div class="modal-body" style="padding-bottom:0;">
+            <h3 id="report-title" style="margin-top:0; color:var(--primary);">Review Changes</h3>
+            <p id="report-summary" style="color:var(--text-sub); margin-bottom:15px; font-size:13px;"></p>
+            
+            <!-- Header for List -->
+            <div style="display:grid; grid-template-columns: 1fr 80px 80px; gap:10px; padding:8px; background:#f1f3f4; font-weight:700; font-size:11px; color:var(--text-sub); border-radius:4px;">
+                <span>ITEM NAME</span>
+                <span style="text-align:right">OLD</span>
+                <span style="text-align:right">NEW</span>
+            </div>
+
+            <!-- Scrollable List -->
+            <div id="report-list" style="max-height: 300px; overflow-y: auto; margin-top:5px; border:1px solid #eee; border-radius:4px;">
+                <!-- Items injected by JS -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeReportModal()">Cancel</button>
+            <button id="btn-report-confirm" class="btn btn-filled">Confirm & Save</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
