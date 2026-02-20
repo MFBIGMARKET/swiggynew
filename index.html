@@ -1173,23 +1173,46 @@
         }, 300);
     }
 
-    function showHistory(e, id) {
-        clearTooltipTimer('price');
-        const p = products.find(x => x.id === id);
-        if(!p) return;
-        
-        const tt = document.getElementById('price-tooltip');
-        let html = `<h4>Price History: ${p.name}</h4>`;
-        if (!p.history || p.history.length === 0) { html += '<div class="hist-row">No history recorded.</div>'; } 
-        else {
-            const recent = p.history.slice(-5).reverse();
-            recent.forEach(h => {
-                html += `<div class="hist-row"><span>${h.date} (${h.source})</span><span>₹${h.sell}</span></div>`;
+    function showHistory(e, id, type) {
+    clearTooltipTimer('price');
+    const p = products.find(x => x.id === id);
+    if(!p) return;
+    
+    const tt = document.getElementById('price-tooltip');
+    const isCost = type === 'cost';
+    const title = isCost ? 'Buy Cost History' : 'Sell Price History';
+    
+    let html = `<h4>${title}: ${p.name}</h4>`;
+    
+    if (!p.history || p.history.length === 0) { 
+        html += '<div class="hist-row">No history recorded.</div>'; 
+    } else {
+        // STRICT FILTERING
+        const historyToShow = p.history.filter(h => {
+            const s = h.source;
+            if (isCost) {
+                // Show in Cost Column: ERP Updates or Manual Edits
+                return s === 'ERP Update' || s === 'Manual';
+            } else {
+                // Show in Price Column: Indent Updates, New Items, or Manual Edits
+                // Exclude ERP Updates from Price view
+                return s.includes('Indent') || s === 'Manual' || s === 'New via Indent';
+            }
+        }).slice(-5).reverse(); // Show last 5 recent
+
+        if (historyToShow.length === 0) {
+            html += '<div class="hist-row" style="color:#999; font-style:italic;">No changes recorded.</div>';
+        } else {
+            historyToShow.forEach(h => {
+                const val = isCost ? h.buy : h.sell;
+                const displayVal = val !== undefined ? val : 0;
+                html += `<div class="hist-row"><span>${h.date} (${h.source})</span><span>₹${displayVal}</span></div>`;
             });
         }
-        tt.innerHTML = html;
-        positionTooltip(e, 'price-tooltip');
     }
+    tt.innerHTML = html;
+    positionTooltip(e, 'price-tooltip');
+}
 
     function hidePriceTooltip() {
         priceTooltipTimer = setTimeout(() => {
@@ -1311,16 +1334,12 @@
         }
     }
 
-    // --- Update Master Table with data-labels ---
-// FIND THIS FUNCTION IN index.html AND REPLACE IT
-// --- REPLACE EXISTING renderMasterTable FUNCTION ---
 function renderMasterTable() {
     const tbody = document.getElementById('master-body');
     const search = document.getElementById('search').value.toLowerCase();
     tbody.innerHTML = '';
     
     products.forEach(p => {
-        // Search logic: checks ID, Name, and ERP CODE
         if (!p || (p.name && !p.name.toLowerCase().includes(search) && !p.id.toString().includes(search) && !(p.erpCode || '').toString().includes(search))) return;
 
         const costPc = (p.costKg || 0) * (p.conv || 0);
@@ -1329,13 +1348,15 @@ function renderMasterTable() {
         const colorClass = marginPct >= 0 ? 'text-green' : 'text-red';
         const tr = document.createElement('tr');
         
-        const ttEvents = `onclick="showHistory(event, ${p.id})" onmouseenter="showHistory(event, ${p.id})" onmouseleave="hidePriceTooltip()"`;
+        const erpDisplay = p.erpCode ? `<span style="background:#eee; padding:2px 5px; border-radius:4px; font-size:11px;">${p.erpCode}</span>` : '-';
 
-        // EDIT MODE: Shows Inputs
+        // EVENTS: 'cost' for Buy Cost column, 'price' for Sell Price column
+        const costEvents = `onmouseenter="showHistory(event, ${p.id}, 'cost')" onmouseleave="hidePriceTooltip()"`;
+        const priceEvents = `onmouseenter="showHistory(event, ${p.id}, 'price')" onmouseleave="hidePriceTooltip()"`;
+
         if (isEditMode) {
             tr.innerHTML = `
                 <td class="w-code t-left" data-label="Code">${p.id}</td>
-                <!-- NEW: Editable ERP Code Input -->
                 <td class="w-code t-left" data-label="ERP">
                     <input class="cell-input" value="${p.erpCode || ''}" data-id="${p.id}" data-field="erpCode" placeholder="ERP #">
                 </td>
@@ -1347,19 +1368,26 @@ function renderMasterTable() {
                 <td class="w-num t-right" data-label="Sell Price"><input class="cell-input" type="number" value="${p.spPiece}" data-id="${p.id}" data-field="spPiece"></td>
                 <td class="w-stat t-right" data-label="Margin">${marginPct.toFixed(0)}%</td>
             `;
-        } 
-        // VIEW MODE: Shows Text
-        else {
-            const erpDisplay = p.erpCode ? `<span style="background:#eee; padding:2px 5px; border-radius:4px; font-size:11px;">${p.erpCode}</span>` : '-';
+        } else {
             tr.innerHTML = `
                 <td class="w-code t-left" data-label="Code">${p.id}</td>
                 <td class="w-code t-left" data-label="ERP">${erpDisplay}</td>
                 <td class="w-name t-left" data-label="Product" style="font-weight:bold; color:var(--primary)">${p.name}</td>
                 <td class="w-uom t-left" data-label="UOM">${p.uom}</td>
                 <td class="w-num t-right" data-label="Conv">${p.conv}</td>
-                <td class="w-num t-right" data-label="Buy Cost">₹${p.costKg}</td>
+                
+                <!-- BUY COST (With Cost History Hover) -->
+                <td class="w-num t-right" data-label="Buy Cost" ${costEvents} style="cursor:help; text-decoration:underline; text-decoration-style:dotted; text-underline-offset:4px; text-decoration-color:#ccc;">
+                    ₹${p.costKg}
+                </td>
+                
                 <td class="w-calc t-right" data-label="Cost/Pc">₹${costPc.toFixed(2)}</td>
-                <td class="w-num t-right" data-label="Sell Price" ${ttEvents}><strong>₹${p.spPiece}</strong></td>
+                
+                <!-- SELL PRICE (With Price History Hover) -->
+                <td class="w-num t-right" data-label="Sell Price" ${priceEvents} style="cursor:help;">
+                    <strong>₹${p.spPiece}</strong>
+                </td>
+                
                 <td class="w-stat t-right" data-label="Margin"><span class="${colorClass}">${marginPct.toFixed(0)}%</span></td>
             `;
         }
@@ -2987,25 +3015,30 @@ function downloadBillPDF() {
             const csvErpCode = row[idxErpCode];
             const csvCost = parseFloat(row[idxCost]);
 
-            if (csvErpCode) {
-                // Find matching product in our App by ERP Code
-                const product = products.find(p => p.erpCode == csvErpCode);
-                
-                if (product) {
-                    matchCount++;
-                    // Check if cost is different and valid number
-                    if (!isNaN(csvCost) && product.costKg !== csvCost) {
-                        changesList.push(`- ${product.name}: ₹${product.costKg} -> ₹${csvCost}`);
-                        
-                        // Add to price history
-                        addToHistory(product, 'ERP Update', csvCost, product.spPiece);
-                        
-                        // Update Cost
-                        product.costKg = csvCost;
-                        changeCount++;
-                    }
-                }
-            }
+            // --- OLD LOGIC (DO NOT USE) ---
+// const product = products.find(p => p.erpCode == csvErpCode);
+// if (product) { ... update logic ... }
+
+// --- NEW LOGIC (USE THIS) ---
+if (csvErpCode) {
+    // Find ALL matching products
+    const matchingProducts = products.filter(p => p.erpCode == csvErpCode);
+    
+    matchingProducts.forEach(product => {
+        matchCount++;
+        // Check if cost is different and valid number
+        if (!isNaN(csvCost) && product.costKg !== csvCost) {
+            changesList.push(`- ${product.name}: ₹${product.costKg} -> ₹${csvCost}`);
+            
+            // Add to price history
+            addToHistory(product, 'ERP Update', csvCost, product.spPiece);
+            
+            // Update Cost
+            product.costKg = csvCost;
+            changeCount++;
+        }
+    });
+}
         }
 
         // 3. Confirm and Save
