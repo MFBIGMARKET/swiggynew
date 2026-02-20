@@ -550,6 +550,11 @@
             <div class="card-header">
                 <span class="card-title">Product Master List</span>
                 <div style="display:flex; gap:10px;">
+                            <!-- NEW DOWNLOAD BUTTON START -->
+        <button class="btn" onclick="downloadMasterExcel()">
+            <span class="material-icons">file_download</span> Download Excel
+        </button>
+        <!-- NEW DOWNLOAD BUTTON END -->
                     <button id="btn-edit-master" class="btn" onclick="toggleEditMode()">
                         <span class="material-icons">edit</span> Edit Costs
                     </button>
@@ -2115,6 +2120,58 @@ function addToHistory(product, source, buy, sell) {
         pendingReviewData = null;
         switchTab('view-history');
     }
+
+    function downloadMasterExcel() {
+    if (!products || products.length === 0) {
+        alert("No data to export.");
+        return;
+    }
+
+    // 1. Define Headers
+    let csvContent = "Code,ERP Code,Product Name,UOM,Conv (Kg),Buy Cost,Cost/Pc,Sell Price,Margin %\n";
+
+    // 2. Loop through products
+    products.forEach(p => {
+        // Calculate fields that aren't stored directly
+        const costPc = (p.costKg || 0) * (p.conv || 0);
+        const profit = (p.spPiece || 0) - costPc;
+        const marginPct = (p.spPiece > 0) ? (profit / p.spPiece) * 100 : 0;
+
+        // Escape Name to handle commas (e.g., "Apple, Red")
+        const cleanName = p.name ? `"${p.name.replace(/"/g, '""')}"` : "";
+        const cleanErp = p.erpCode ? `"${p.erpCode}"` : "";
+
+        const row = [
+            p.id,
+            cleanErp,
+            cleanName,
+            p.uom,
+            p.conv,
+            p.costKg,
+            costPc.toFixed(2),
+            p.spPiece,
+            marginPct.toFixed(1) + "%"
+        ].join(",");
+
+        csvContent += row + "\n";
+    });
+
+    // 3. Create Blob with BOM (Byte Order Mark) so Excel reads symbols like ₹ correctly
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // 4. Trigger Download
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    
+    // Date stamp for filename
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute("download", `Master_Price_List_${dateStr}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 
     function rejectPacking() {
         if(confirm("Reject this packing data? It will be deleted and Packing App will need to start over.")) {
