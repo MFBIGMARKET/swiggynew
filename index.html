@@ -15,6 +15,8 @@
 </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Excel Reader Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Removed autotable as we are custom drawing the dashboard -->
 
     <style>
@@ -503,7 +505,8 @@
             <span class="material-icons">account_balance_wallet</span> Expenses
         </button>
         
-        <input type="file" id="erpUpload" accept=".csv" style="display:none" onchange="handleErpUpload(this)">
+        <!-- FIND THIS INPUT AND REPLACE IT -->
+<input type="file" id="erpUpload" accept=".xlsx, .xls" style="display:none" onchange="handleErpUpload(this)">
         <button id="btn-erp-update" class="btn" onclick="document.getElementById('erpUpload').click()" 
             style="border-color: #34a853; color: #34a853;"
             onmouseenter="showErpLastUpdate(event)" onmouseleave="hidePriceTooltip()">
@@ -968,6 +971,7 @@
     let currentTabId = 'view-master'; // Track active tab
     let isEditMode = false;
     let isHistoryEditMode = false;
+    let lastErpUpdate = "Never";
     let sortState = { key: null, direction: 1 };
     let currentBucketsData = []; 
     let currentViewedHistory = null;
@@ -1057,6 +1061,25 @@
             `;
         });
     }
+
+    // 2. Add these functions to fix the Tooltip error
+function showErpLastUpdate(e) {
+    if(window.clearTooltipTimer) clearTooltipTimer('price');
+    const tt = document.getElementById('price-tooltip');
+    if(tt) {
+        tt.innerHTML = `<h4>ERP Sync Status</h4><div class="hist-row"><span>Last Updated:</span><span style="font-weight:bold; color:var(--green)">${lastErpUpdate}</span></div>`;
+        positionTooltip(e, 'price-tooltip');
+    }
+}
+
+// (Ensure this exists, or add it if missing)
+function hidePriceTooltip() {
+    if(window.priceTooltipTimer) clearTimeout(window.priceTooltipTimer);
+    window.priceTooltipTimer = setTimeout(() => {
+        const tt = document.getElementById('price-tooltip');
+        if(tt) tt.style.display = 'none';
+    }, 300);
+}
 
     function saveExpenses() {
         const wages = document.querySelectorAll('.wage-inp');
@@ -3145,80 +3168,102 @@ function downloadBillPDF() {
    function handleErpUpload(input) {
     const file = input.files[0];
     if(!file) return;
+
     const reader = new FileReader();
+    
     reader.onload = e => {
-        const text = e.target.result;
-        const lines = text.split(/\r?\n/);
-        
-        // 1. Locate Headers
-        let headerRowIndex = -1;
-        let headers = [];
-        
-        for(let i=0; i<lines.length; i++) {
-            const row = parseCSVLine(lines[i]);
-            if (row.includes("Item Code") && row.includes("Purchase Cost")) {
-                headerRowIndex = i;
-                headers = row;
-                break;
+        try {
+            const data = new Uint8Array(e.target.result);
+            // Attempt to read. If ERP file format is weird, this might fail.
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: false, cellText: false });
+            
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Get data as array of arrays
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+            if (!rows || rows.length === 0) {
+                alert("Error: The Excel file appears to be empty.");
+                return;
             }
-        }
 
-        if(headerRowIndex === -1) {
-            alert("Error: Could not find 'Item Code' and 'Purchase Cost' columns.");
-            return;
-        }
-
-        const idxErpCode = headers.indexOf("Item Code");
-        const idxCost = headers.indexOf("Purchase Cost");
-        
-        // 2. Detect Changes
-        let changes = [];
-        let pendingUpdates = []; // Store the updates to apply later
-
-        for(let i = headerRowIndex + 1; i < lines.length; i++) {
-            if(!lines[i].trim()) continue;
-            const row = parseCSVLine(lines[i]);
-            const csvErpCode = row[idxErpCode];
-            const csvCost = parseFloat(row[idxCost]);
-
-            if (csvErpCode) {
-                const product = products.find(p => p.erpCode == csvErpCode);
-                if (product && !isNaN(csvCost) && product.costKg !== csvCost) {
-                    // Add to UI list
-                    changes.push({
-                        name: product.name,
-                        oldVal: '₹' + product.costKg,
-                        newVal: '₹' + csvCost,
-                        isNew: false
-                    });
-                    
-                    // Add to Data Queue
-                    pendingUpdates.push({ product: product, newCost: csvCost });
+            // 1. Locate Headers
+            let headerRowIndex = -1;
+            
+            for(let i=0; i<rows.length; i++) {
+                const row = rows[i];
+                // Check if row exists and has the columns
+                if (row && row.includes("Item Code") && row.includes("Purchase Cost")) {
+                    headerRowIndex = i;
+                    break;
                 }
             }
-        }
 
-        // 3. Show Modal
-        const summary = `Found ${changes.length} cost updates from ERP file.`;
-        
-        showChangeReport('ERP Cost Updates', summary, changes, () => {
-            // --- COMMIT CHANGES ---
-            pendingUpdates.forEach(u => {
-                addToHistory(u.product, 'ERP Update', u.product.costKg, u.product.spPiece); // Log History
-                u.product.costKg = u.newCost; // Update Value
+            if(headerRowIndex === -1) {
+                alert("Error: Could not find 'Item Code' and 'Purchase Cost' columns.\n\nTip: If this is a fresh ERP download, try opening it in Excel and saving it as a standard .xlsx file first.");
+                input.value = '';
+                return;
+            }
+
+            const headers = rows[headerRowIndex];
+            const idxErpCode = headers.indexOf("Item Code");
+            const idxCost = headers.indexOf("Purchase Cost");
+            
+            // 2. Detect Changes
+            let changes = [];
+            let pendingUpdates = [];
+
+            for(let i = headerRowIndex + 1; i < rows.length; i++) {
+                const row = rows[i];
+                if(!row) continue;
+
+                const csvErpCode = row[idxErpCode];
+                const rawCost = row[idxCost];
+                const csvCost = parseFloat(rawCost);
+
+                if (csvErpCode) {
+                    // Loose comparison (==) allows string "123" to match number 123
+                    const product = products.find(p => p.erpCode == csvErpCode);
+                    
+                    if (product && !isNaN(csvCost) && product.costKg !== csvCost) {
+                        changes.push({
+                            name: product.name,
+                            oldVal: '₹' + product.costKg,
+                            newVal: '₹' + csvCost,
+                            isNew: false
+                        });
+                        
+                        pendingUpdates.push({ product: product, newCost: csvCost });
+                    }
+                }
+            }
+
+            // 3. Show Report
+            const summary = `Found ${changes.length} cost updates from Excel file.`;
+            
+            showChangeReport('ERP Cost Updates', summary, changes, () => {
+                pendingUpdates.forEach(u => {
+                    addToHistory(u.product, 'ERP Update', u.product.costKg, u.product.spPiece);
+                    u.product.costKg = u.newCost;
+                });
+
+                const nowStr = new Date().toLocaleString();
+                lastErpUpdate = nowStr;
+                saveData('settings/lastErpUpdate', nowStr);
+                
+                saveData('products', products);
+                renderMasterTable();
             });
 
-            // Save Timestamp
-            const nowStr = new Date().toLocaleString();
-            lastErpUpdate = nowStr;
-            saveData('settings/lastErpUpdate', nowStr);
-            
-            saveData('products', products);
-            renderMasterTable();
-        });
+        } catch (error) {
+            console.error(error);
+            alert("Failed to read file. \n\nReason: The ERP exports a special XML/HTML format that the browser cannot read directly.\n\nFix: Open the file in Excel, click 'Save As', choose 'Excel Workbook (.xlsx)', and upload that.");
+        }
     };
-    reader.readAsText(file);
-    input.value = '';
+    
+    reader.readAsArrayBuffer(file);
+    input.value = ''; 
 }
 
     function toggleSettings() { document.getElementById('settings-panel').classList.toggle('hidden'); }
