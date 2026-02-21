@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Swiggy Packing App</title>
     
-    <!-- PWA Settings -->
     <link rel="manifest" href="packing-manifest.json">
     <meta name="theme-color" content="#1a73e8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <style>
@@ -18,110 +17,83 @@
         * { box-sizing: border-box; }
         body { font-family: 'Roboto', sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text-main); height: 100vh; overflow: hidden; }
         
-        /* --- PAGES / VIEWS --- */
-        .page {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; background: var(--bg);
-            transform: translateX(100%); transition: transform 0.3s ease-in-out; z-index: 100;
-        }
+        /* LAYOUT */
+        .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; background: var(--bg); transform: translateX(100%); transition: transform 0.3s; z-index: 100; }
         .page.active { transform: translateX(0); }
         .page.root-page { transform: translateX(0); z-index: 10; } 
 
-        /* --- HEADER --- */
-        .header {
-            background: #fff; height: 56px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 16px; border-bottom: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+        /* HEADER */
+        .header { background: #fff; height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .header h2 { margin: 0; font-size: 18px; color: var(--primary); font-weight: 700; }
         .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-sub); display: flex; align-items: center; }
-        .icon-btn.primary { color: var(--primary); }
         .icon-btn.success { color: var(--green); }
         .header-actions { display: flex; gap: 15px; }
 
-        /* --- CONTENT --- */
+        /* CONTENT */
         .content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
         .full-content { flex: 1; overflow-y: auto; padding: 15px; } 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* --- BOTTOM NAV --- */
-        .bottom-nav {
-            height: 60px; background: white; border-top: 1px solid #ddd;
-            display: flex; justify-content: space-around; align-items: center;
-            flex-shrink: 0; z-index: 200;
-        }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #999; width: 100%; height: 100%; font-size: 11px; font-weight: 500;
-        }
+        /* NAV */
+        .bottom-nav { height: 60px; background: white; border-top: 1px solid #ddd; display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 200; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; width: 100%; height: 100%; font-size: 11px; font-weight: 500; }
         .nav-item.active { color: var(--primary); }
         .nav-item .material-icons { font-size: 24px; margin-bottom: 2px; }
 
-        /* --- TASK CARDS --- */
-        .task-card {
-            background: white; border-radius: 12px; padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-left: 5px solid var(--primary); cursor: pointer;
-        }
-        .history-card {
-            background: white; border-radius: 8px; padding: 15px; margin-bottom: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #666;
-            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-        }
+        /* CARDS */
+        .task-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid var(--primary); cursor: pointer; }
+        .history-card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #666; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
 
-        /* --- PACKING ITEMS --- */
+        /* PACKING ITEMS */
         .search-bar { padding: 10px; background: #fff; border-bottom: 1px solid #eee; }
         .search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #f8f9fa; outline:none; }
-        .card { background: white; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid transparent; }
-        .card.has-data { border-color: #a5d6a7; background: #fdfefe; }
-        .card-header { padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        
+        .card { background: white; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid transparent; transition:0.3s; }
+        .card.packed { border-color: #a5d6a7; background: #f1f8e9; } /* Green tint when packed */
+        
+        .card-header { padding: 10px 15px; background: rgba(0,0,0,0.02); border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .item-name { font-weight: 700; font-size: 15px; color: #333; }
         .item-code { font-family: monospace; font-weight: 700; font-size: 13px; color: var(--text-sub); background: #eee; padding: 2px 6px; border-radius: 4px; }
-        .card-body { padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr 0.6fr; gap: 8px; align-items: end; }
+        
+        .card-body { padding: 12px; display: grid; grid-template-columns: 0.8fr 1fr 1fr 0.6fr; gap: 8px; align-items: end; }
         .input-group { display: flex; flex-direction: column; }
         .input-label { font-size: 10px; color: #888; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; text-align: center; }
         .val-box { background: #e8f0fe; color: var(--primary); padding: 10px 0; border-radius: 8px; font-weight: 700; text-align: center; height: 42px; line-height: 20px; border:1px solid #d2e3fc;}
+        
         input.qty-input { width: 100%; height: 42px; border: 1px solid #ccc; border-radius: 8px; font-size: 18px; text-align: center; font-weight: bold; background: #fff; padding:0; }
         input.qty-input:focus { border-color: var(--primary); outline: none; }
-        input.filled { border-color: var(--green); background: #f1f8e9; color: var(--green); }
+        input.qty-input:disabled { background: #e0e0e0; color: #555; border-color: transparent; }
+
         .cam-btn { height: 42px; border-radius: 8px; border: 1px solid #ccc; background: #f1f3f4; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; color:#5f6368; }
         .cam-btn.has-img { background: var(--primary); color: white; border-color: var(--primary); }
         .cam-input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; z-index: 2; }
 
-        /* --- NEW ATTENDANCE STYLES --- */
+        /* ITEM ACTIONS */
+        .card-footer { padding: 8px 12px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; background:white; }
+        .item-btn { padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; border: none; }
+        .btn-save { background: var(--primary); color: white; }
+        .btn-edit { background: #f1f3f4; color: var(--text-main); border: 1px solid #ddd; }
+        .btn-save:hover { background: #1557b0; }
+
+        /* ATTENDANCE */
         .att-header { background:white; padding:15px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-bottom:15px; }
         .emp-select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background: white; margin-bottom:10px; }
         .att-status-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
         .loc-badge { font-size:12px; padding:4px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; }
         .loc-ok { background:#e8f5e9; color:var(--green); }
         .loc-err { background:#ffebee; color:var(--red); }
-        
-        .clock-btn {
-            width: 100%; height: 50px; border-radius: 8px; border: none;
-            font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing:1px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px; transition:0.2s;
-        }
+        .clock-btn { width: 100%; height: 50px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing:1px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition:0.2s; }
         .clock-btn:active { transform:scale(0.98); }
         .btn-in { background: var(--green); color: white; }
         .btn-out { background: var(--red); color: white; }
         .btn-done { background: #f5f5f5; color: #aaa; border:1px solid #ddd; box-shadow:none; cursor:default; }
-
-        .history-section { margin-top:20px; }
-        .section-title { font-size:13px; font-weight:700; color:#555; text-transform:uppercase; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;}
-        .month-picker { padding:5px; border:1px solid #ccc; border-radius:4px; font-size:13px; }
         
-        .att-list { background:white; border-radius:12px; overflow:hidden; border:1px solid #eee; }
+        .att-list { background:white; border-radius:12px; overflow:hidden; border:1px solid #eee; margin-top:10px; }
         .att-row { display:grid; grid-template-columns: 0.8fr 1fr 1fr 0.8fr; padding:12px; border-bottom:1px solid #f0f0f0; font-size:13px; align-items:center; }
-        .att-row:last-child { border-bottom:none; }
         .att-row.head { background:#f9f9f9; font-weight:700; color:#666; font-size:11px; text-transform:uppercase; }
-        
-        .ot-val { font-weight:700; color:var(--orange); background:#fff3e0; padding:2px 6px; border-radius:4px; font-size:12px; display:inline-block; }
-        .ot-none { color:#ccc; }
+        .ot-val { font-weight:700; color:var(--orange); background:#fff3e0; padding:2px 6px; border-radius:4px; font-size:12px; }
 
-        /* HELPERS */
         .status-msg { text-align: center; margin-top: 50px; color: #666; }
         #img-modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
         #img-content { margin: auto; display: block; max-width: 90%; max-height: 80vh; margin-top: 10vh; }
@@ -130,7 +102,7 @@
 </head>
 <body>
 
-<!-- ================= DASHBOARD (ROOT PAGE) ================= -->
+<!-- DASHBOARD -->
 <div class="page root-page" id="page-dashboard">
     <div class="header">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -141,55 +113,36 @@
     </div>
 
     <div class="content">
-        <!-- TAB 1: AVAILABLE -->
+        <!-- TAB 1: TASKS -->
         <div id="tab-available" class="tab-content active">
-            <h4 style="margin:10px 0; color:#555; text-transform:uppercase; font-size:12px;">Pending Tasks</h4>
+            <h4 style="margin:10px 0; color:#555; text-transform:uppercase; font-size:12px;">Active Order</h4>
             <div id="available-container">
                 <div class="status-msg">Loading...</div>
             </div>
         </div>
 
-        <!-- TAB 2: ATTENDANCE (REVAMPED) -->
+        <!-- TAB 2: ATTENDANCE -->
         <div id="tab-attendance" class="tab-content">
             <h4 style="margin:10px 0; color:#555; text-transform:uppercase; font-size:12px;">Staff Attendance</h4>
-            
-            <!-- CONTROLS CARD -->
             <div class="att-header">
                 <select id="emp-select" class="emp-select" onchange="refreshAttendanceTab()">
                     <option value="RAJEEV">RAJEEV</option>
                     <option value="MOUSUM">MOUSUM</option>
                 </select>
-
                 <div class="att-status-row">
-                    <div id="loc-badge" class="loc-badge loc-err">
-                        <span class="material-icons" style="font-size:14px">gps_off</span> Checking...
-                    </div>
+                    <div id="loc-badge" class="loc-badge loc-err"><span class="material-icons" style="font-size:14px">gps_off</span> Checking...</div>
                     <div id="today-time" style="font-size:12px; color:#888; font-weight:500;">--:--</div>
                 </div>
-
-                <div id="att-action-area">
-                    <!-- Dynamic Button -->
-                </div>
+                <div id="att-action-area"></div>
             </div>
-
-            <!-- HISTORY LIST -->
-            <div class="history-section">
-                <div class="section-title">
-                    <span>Attendance Log</span>
-                    <input type="month" id="att-month-filter" class="month-picker" onchange="loadAttendanceHistory()">
-                </div>
-                
-                <div class="att-list">
-                    <div class="att-row head">
-                        <div>Date</div>
-                        <div>In</div>
-                        <div>Out</div>
-                        <div style="text-align:right">OT</div>
-                    </div>
-                    <div id="att-history-body">
-                        <!-- Rows injected here -->
-                    </div>
-                </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                <span style="font-weight:700; font-size:13px; color:#555;">HISTORY</span>
+                <input type="month" id="att-month-filter" style="padding:4px; border:1px solid #ccc; border-radius:4px;" onchange="loadAttendanceHistory()">
+            </div>
+            <div class="att-list">
+                <div class="att-row head"><div>Date</div><div>In</div><div>Out</div><div style="text-align:right">OT</div></div>
+                <div id="att-history-body"></div>
             </div>
         </div>
 
@@ -201,22 +154,13 @@
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('available', this)">
-            <span class="material-icons">assignment</span>
-            <span>Tasks</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('attendance', this)">
-            <span class="material-icons">fingerprint</span>
-            <span>Attendance</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('history', this)">
-            <span class="material-icons">history</span>
-            <span>History</span>
-        </div>
+        <div class="nav-item active" onclick="switchTab('available', this)"><span class="material-icons">assignment</span><span>Tasks</span></div>
+        <div class="nav-item" onclick="switchTab('attendance', this)"><span class="material-icons">fingerprint</span><span>Attendance</span></div>
+        <div class="nav-item" onclick="switchTab('history', this)"><span class="material-icons">history</span><span>History</span></div>
     </div>
 </div>
 
-<!-- ================= PACKING INTERFACE (OVERLAY) ================= -->
+<!-- PACKING INTERFACE -->
 <div class="page" id="page-packing">
     <div class="header">
         <button class="icon-btn" onclick="closePage('page-packing')">
@@ -224,11 +168,9 @@
         </button>
         <h2 id="packing-title" style="font-size:16px;">Packing...</h2>
         <div class="header-actions">
-            <button class="icon-btn primary" onclick="saveDraft(true)">
-                <span class="material-icons">save</span>
-            </button>
-            <button class="icon-btn success" onclick="submitToReview()">
-                <span class="material-icons">check_circle</span>
+            <!-- CHANGED ICON HERE to 'done_all' -->
+            <button class="icon-btn success" onclick="submitToReview()" title="Finish & Send">
+                <span class="material-icons">done_all</span>
             </button>
         </div>
     </div>
@@ -238,27 +180,20 @@
     <div class="full-content" id="packing-list-container"></div>
 </div>
 
-<!-- ================= HISTORY DETAIL (OVERLAY) ================= -->
+<!-- HISTORY DETAIL -->
 <div class="page" id="page-history-detail">
     <div class="header">
-        <button class="icon-btn" onclick="closePage('page-history-detail')">
-            <span class="material-icons">arrow_back</span>
-        </button>
-        <h2 style="font-size:16px;">Order Details</h2>
-        <div style="width:24px;"></div>
+        <button class="icon-btn" onclick="closePage('page-history-detail')"><span class="material-icons">arrow_back</span></button>
+        <h2 style="font-size:16px;">Details</h2><div style="width:24px;"></div>
     </div>
     <div class="full-content" id="history-detail-content"></div>
 </div>
 
-<!-- IMAGE MODAL -->
-<div id="img-modal" onclick="this.style.display='none'">
-    <span class="close-img">&times;</span>
-    <img id="img-content">
-</div>
+<div id="img-modal" onclick="this.style.display='none'"><span class="close-img">&times;</span><img id="img-content"></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, get, child, remove, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, get, child, remove, query, limitToLast, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB6OFRosamp5U5lKnAxl0wptGt5-eHL6ZQ",
@@ -273,103 +208,100 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     
-    // --- VARIABLES ---
+    // VARIABLES
     let activeIndent = null;
-    let localData = {};
     let fullItemsList = []; 
     let historyData = [];
     
-    // --- ATTENDANCE VARIABLES ---
-    // ⚠️ UPDATE THESE WITH YOUR SHOP LOCATION ⚠️
-    const SHOP_LAT = 11.932276447689077; 
-    const SHOP_LNG = 75.57773169123767; 
-    const ALLOWED_RADIUS_KM = 0.100; // 100 meters
-    const TEST_MODE = false; // Set to FALSE in production
-    let currentUserAtt = null;
+    // --- LOCATION CONFIG ---
+    const SHOP_LAT = 11.9796; 
+    const SHOP_LNG = 75.6696; 
+    const ALLOWED_RADIUS_KM = 0.100;
+    const TEST_MODE = false; // Set to true to bypass GPS check
 
     // --- INITIALIZATION ---
-    async function init() {
-        checkActiveTask();
-        // Set Month Picker to Current Month
+    function init() {
+        setupRealtimeListener();
+        
         const now = new Date();
         const m = String(now.getMonth() + 1).padStart(2, '0');
         const y = now.getFullYear();
         document.getElementById('att-month-filter').value = `${y}-${m}`;
     }
 
-    // --- DASHBOARD LOGIC ---
-    async function checkActiveTask() {
+    // --- REALTIME LISTENER (NEW) ---
+    function setupRealtimeListener() {
         const container = document.getElementById('available-container');
-        try {
-            const snapshot = await get(child(ref(db), 'active_indent'));
+        
+        onValue(ref(db, 'active_indent'), (snapshot) => {
             if (snapshot.exists()) {
                 activeIndent = snapshot.val();
+                renderDashboardCard();
                 
-                const savedDate = localStorage.getItem('swiggy_indent_date');
-                if (savedDate !== activeIndent.date) {
-                    localStorage.setItem('swiggy_indent_date', activeIndent.date);
-                    localStorage.removeItem('swiggy_packing_data');
-                    localData = {};
-                } else {
-                    localData = JSON.parse(localStorage.getItem('swiggy_packing_data') || '{}');
+                // If packing view is open, refresh the list but try to preserve focus
+                // Simple refresh for now:
+                if(document.getElementById('page-packing').classList.contains('active')) {
+                    // Only refresh if we aren't currently typing? 
+                    // For now, we refresh list to show sync status. 
+                    // User might lose focus, but data is safe.
+                    filterList(); 
                 }
-
-                // Progress
-                const itemCount = activeIndent.items ? activeIndent.items.length : 0;
-                let packedCount = 0;
-                
-                if (activeIndent.items) {
-                    activeIndent.items.forEach(item => {
-                        const local = localData[item.code];
-                        const hasLocalData = local && (local.qty !== undefined || local.kg !== undefined);
-                        const hasServerData = item.savedQty !== undefined || item.savedKg !== undefined;
-                        if (hasLocalData || hasServerData) packedCount++;
-                    });
-                }
-
-                const progressPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
-                let progressColor = 'var(--primary)';
-                if(progressPct === 100) progressColor = 'var(--green)';
-
-                container.innerHTML = `
-                    <div class="task-card" onclick="openPacking()">
-                        <div class="task-info" style="width:100%">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <h3>Order Date: ${activeIndent.date}</h3>
-                                <span style="font-size:12px; font-weight:bold; color:${progressColor}">${packedCount}/${itemCount} Done</span>
-                            </div>
-                            <div style="width:100%; height:6px; background:#eee; border-radius:3px; margin:8px 0; overflow:hidden;">
-                                <div style="width:${progressPct}%; height:100%; background:${progressColor}; transition:width 0.3s;"></div>
-                            </div>
-                            <p style="color:var(--primary); font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px;">
-                                <span>Tap to continue packing</span>
-                                <span class="material-icons" style="font-size:16px">arrow_forward</span>
-                            </p>
-                        </div>
-                    </div>
-                `;
             } else {
-                container.innerHTML = `<div class="status-msg"><span class="material-icons" style="font-size:48px; color:#ccc">assignment_turned_in</span><p>No new orders.</p></div>`;
                 activeIndent = null;
+                container.innerHTML = `<div class="status-msg"><span class="material-icons" style="font-size:48px; color:#ccc">assignment_turned_in</span><p>No new orders.</p></div>`;
+                if(document.getElementById('page-packing').classList.contains('active')) closePage('page-packing');
             }
-        } catch (error) { container.innerHTML = `<p class="status-msg" style="color:red">Error: ${error.message}</p>`; }
+        });
     }
 
+    function renderDashboardCard() {
+        if(!activeIndent) return;
+        const container = document.getElementById('available-container');
+        const itemCount = activeIndent.items ? activeIndent.items.length : 0;
+        let packedCount = 0;
+        
+        if (activeIndent.items) {
+            packedCount = activeIndent.items.filter(i => i.isPacked === true).length;
+        }
+
+        const progressPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
+        let progressColor = 'var(--primary)';
+        if(progressPct === 100) progressColor = 'var(--green)';
+
+        container.innerHTML = `
+            <div class="task-card" onclick="openPacking()">
+                <div class="task-info" style="width:100%">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>Order Date: ${activeIndent.date}</h3>
+                        <span style="font-size:12px; font-weight:bold; color:${progressColor}">${packedCount}/${itemCount} Done</span>
+                    </div>
+                    <div style="width:100%; height:6px; background:#eee; border-radius:3px; margin:8px 0; overflow:hidden;">
+                        <div style="width:${progressPct}%; height:100%; background:${progressColor}; transition:width 0.3s;"></div>
+                    </div>
+                    <p style="color:var(--primary); font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px; margin-top:10px;">
+                        <span>Tap to continue packing</span>
+                        <span class="material-icons" style="font-size:16px">arrow_forward</span>
+                    </p>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- NAVIGATION ---
     window.switchTab = function(tabName, el) {
         document.querySelectorAll('.tab-content').forEach(d => d.classList.remove('active'));
         document.getElementById(`tab-${tabName}`).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
         el.classList.add('active');
-
         if(tabName === 'history') loadHistory();
-        if(tabName === 'available') checkActiveTask();
-        if(tabName === 'attendance') { refreshAttendanceTab(); }
+        if(tabName === 'attendance') refreshAttendanceTab();
     }
 
     // --- PACKING INTERFACE ---
     window.openPacking = function() {
         if(!activeIndent) return;
         document.getElementById('packing-title').innerText = activeIndent.date;
+        // Sort items A-Z once
         fullItemsList = [...activeIndent.items].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         renderPackingList(fullItemsList);
         document.getElementById('page-packing').classList.add('active');
@@ -377,94 +309,198 @@
 
     window.closePage = function(pageId) {
         document.getElementById(pageId).classList.remove('active');
-        if(pageId === 'page-packing') checkActiveTask();
     }
 
     window.filterList = function() {
         const term = document.getElementById('searchBox').value.toLowerCase();
-        const filtered = fullItemsList.filter(item => item.name.toLowerCase().includes(term) || item.code.toString().includes(term));
+        // Since activeIndent might have updated via realtime, re-sort and filter
+        const sorted = [...activeIndent.items].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        const filtered = sorted.filter(item => item.name.toLowerCase().includes(term) || item.code.toString().includes(term));
         renderPackingList(filtered);
     }
 
     function renderPackingList(items) {
         const container = document.getElementById('packing-list-container');
+        // We use a map to preserve input values if user is typing
+        // But for simplicity in this version, we will re-render.
+        // To prevent focus loss, we could implement dom diffing, but let's stick to standard render for now.
+        
+        // Note: With Realtime Sync, re-rendering while typing is annoying. 
+        // Logic: If user is typing in a specific ID, don't update THAT specific input value from server yet.
+        // But here we rely on "Save" button to push changes.
+        
         container.innerHTML = '';
+        
         items.forEach((item) => {
-            let valQty, valKg, imgData;
-            const local = localData[item.code];
-            const hasLocal = local && local.qty !== undefined;
-            const hasServer = item.savedQty !== undefined;
+            const isPacked = item.isPacked === true;
+            const valQty = item.savedQty !== undefined ? item.savedQty : item.poQty;
+            const valKg = item.savedKg !== undefined ? item.savedKg : '';
+            const imgData = item.savedImg || null;
+
+            // Logic to disable inputs if packed
+            const disabledAttr = isPacked ? 'disabled' : '';
             
-            if (local) { valQty = local.qty; valKg = local.kg; imgData = local.img; } 
-            else { valQty = hasServer ? item.savedQty : item.poQty; valKg = item.savedKg !== undefined ? item.savedKg : ''; imgData = item.savedImg || null; }
-            
-            const isFilled = hasLocal || hasServer || (valKg && valKg !== '');
             const div = document.createElement('div');
-            div.className = `card ${isFilled ? 'has-data' : ''}`;
+            div.className = `card ${isPacked ? 'packed' : ''}`;
             div.innerHTML = `
-                <div class="card-header"><span class="item-name">${item.name}</span><span class="item-code">#${item.code}</span></div>
+                <div class="card-header">
+                    <span class="item-name">${item.name}</span>
+                    <span class="item-code">#${item.code}</span>
+                </div>
                 <div class="card-body">
-                    <div class="input-group"><span class="input-label">ORDER</span><div class="val-box">${item.poQty}</div></div>
-                    <div class="input-group"><span class="input-label">PACKED</span><input type="number" inputmode="numeric" id="qty-${item.code}" value="${valQty}" class="qty-input ${isFilled?'filled':''}" oninput="updateLocal(${item.code},'qty',this.value)" onfocus="this.select()"></div>
-                    <div class="input-group"><span class="input-label">KG/NOS</span><input type="number" inputmode="decimal" id="kg-${item.code}" placeholder="0.0" value="${valKg}" class="qty-input ${valKg?'filled':''}" oninput="updateLocal(${item.code},'kg',this.value)" onfocus="this.select()"></div>
-                    <div class="input-group"><span class="input-label">PHOTO</span><div class="cam-btn ${imgData?'has-img':''}" id="btn-cam-${item.code}"><span class="material-icons">${imgData?'visibility':'camera_alt'}</span>${!imgData ? `<input type="file" accept="image/*" capture="environment" class="cam-input" onchange="handleImage(this, ${item.code})">` : `<div style="position:absolute; width:100%; height:100%;" onclick="openModal('${imgData}')"></div><span style="position:absolute; right:-5px; top:-5px; background:white; color:red; border-radius:50%; padding:2px; font-size:12px; border:1px solid #ccc;" onclick="clearImage(${item.code}); event.stopPropagation();">X</span>`}</div></div>
-                </div>`;
+                    <div class="input-group">
+                        <span class="input-label">ORDER</span>
+                        <div class="val-box">${item.poQty}</div>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-label">PACKED</span>
+                        <input type="number" inputmode="numeric" id="qty-${item.code}" 
+                            value="${valQty}" class="qty-input" ${disabledAttr}>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-label">KG/NOS</span>
+                        <input type="number" inputmode="decimal" id="kg-${item.code}" 
+                            placeholder="0.0" value="${valKg}" class="qty-input" ${disabledAttr}>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-label">PHOTO</span>
+                        <div class="cam-btn ${imgData?'has-img':''}" id="btn-cam-${item.code}">
+                            <span class="material-icons">${imgData?'visibility':'camera_alt'}</span>
+                            ${!imgData && !isPacked ? `<input type="file" accept="image/*" capture="environment" class="cam-input" onchange="handleImage(this, ${item.code})">` : ``}
+                            ${imgData ? `<div style="position:absolute; width:100%; height:100%;" onclick="openModal('${imgData}')"></div>` : ``}
+                            ${imgData && !isPacked ? `<span style="position:absolute; right:-5px; top:-5px; background:white; color:red; border-radius:50%; padding:2px; font-size:12px; border:1px solid #ccc;" onclick="clearImage(${item.code}); event.stopPropagation();">X</span>` : ``}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    ${!isPacked ? 
+                        `<button class="item-btn btn-save" onclick="saveSingleItem(${item.code})">
+                            <span class="material-icons" style="font-size:16px">check</span> Save
+                         </button>` : 
+                        `<button class="item-btn btn-edit" onclick="enableEditItem(${item.code})">
+                            <span class="material-icons" style="font-size:16px">edit</span> Edit
+                         </button>`
+                    }
+                </div>
+            `;
             container.appendChild(div);
         });
     }
 
-    window.updateLocal = function(code, field, value) {
-        if (!localData[code]) localData[code] = {};
-        localData[code][field] = value;
-        localStorage.setItem('swiggy_packing_data', JSON.stringify(localData));
-        const input = document.getElementById(`${field}-${code}`);
-        if(input) { if(value && value !== "") input.classList.add('filled'); else input.classList.remove('filled'); }
+    // --- ITEM ACTIONS ---
+    
+    // Find index in Firebase array based on item code
+    function findItemIndex(code) {
+        if(!activeIndent || !activeIndent.items) return -1;
+        return activeIndent.items.findIndex(i => i.code == code);
     }
 
-    window.saveDraft = async function(showAlert = false) {
-        if(showAlert && !confirm("Save progress to server?")) return;
-        const updatedItems = activeIndent.items.map(item => {
-            const saved = localData[item.code] || {};
-            const newItem = { ...item };
-            if (saved.qty !== undefined) newItem.savedQty = parseFloat(saved.qty);
-            if (saved.kg !== undefined) newItem.savedKg = parseFloat(saved.kg);
-            if (saved.img) newItem.savedImg = saved.img;
-            return newItem;
-        });
+    window.saveSingleItem = async function(code) {
+        const idx = findItemIndex(code);
+        if(idx === -1) return;
+
+        const qtyInput = document.getElementById(`qty-${code}`);
+        const kgInput = document.getElementById(`kg-${code}`);
+        
+        const newQty = parseFloat(qtyInput.value) || 0;
+        const newKg = parseFloat(kgInput.value) || 0;
+        
+        // Get existing img if not changed
+        const existingImg = activeIndent.items[idx].savedImg || null;
+
+        const updates = {};
+        const path = `active_indent/items/${idx}`;
+        updates[`${path}/savedQty`] = newQty;
+        updates[`${path}/savedKg`] = newKg;
+        updates[`${path}/isPacked`] = true; // Mark as packed/locked
+        
         try {
-            await set(ref(db, 'active_indent'), { ...activeIndent, items: updatedItems });
-            if(showAlert) alert("Draft saved successfully.");
-            checkActiveTask();
-        } catch (e) { alert("Error: " + e.message); }
+            await update(ref(db), updates);
+            // No alert needed, UI updates automatically via onValue
+        } catch(e) { alert("Save failed: " + e.message); }
+    }
+
+    window.enableEditItem = async function(code) {
+        const idx = findItemIndex(code);
+        if(idx === -1) return;
+        
+        // Unlock on server (syncs to everyone)
+        const path = `active_indent/items/${idx}/isPacked`;
+        try {
+            await set(ref(db, path), false); 
+        } catch(e) { alert("Unlock failed: " + e.message); }
+    }
+
+    window.handleImage = function(input, code) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600; 
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                    
+                    // Save Image Immediately to Server Draft
+                    const idx = findItemIndex(code);
+                    if(idx !== -1) {
+                        await set(ref(db, `active_indent/items/${idx}/savedImg`), dataUrl);
+                    }
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    window.clearImage = async function(code) {
+        if(!confirm('Remove image?')) return;
+        const idx = findItemIndex(code);
+        if(idx !== -1) {
+            await set(ref(db, `active_indent/items/${idx}/savedImg`), null);
+        }
     }
 
     window.submitToReview = async function() {
-        if(!confirm("Are you sure you want to finish and send to Office?")) return;
+        if(!activeIndent) return;
+        
+        // Check if all items are packed
+        const pending = activeIndent.items.filter(i => !i.isPacked).length;
+        if(pending > 0) {
+            if(!confirm(`Warning: ${pending} items are not marked as Saved/Packed. Submit anyway?`)) return;
+        } else {
+            if(!confirm("All items packed. Submit to Office?")) return;
+        }
+
         try {
-            const reviewItems = activeIndent.items.map(item => {
-                const saved = localData[item.code] || {};
-                let finalQty = item.poQty;
-                if(saved.qty !== undefined) finalQty = parseFloat(saved.qty);
-                else if(item.savedQty !== undefined) finalQty = parseFloat(item.savedQty);
-                let finalKg = 0;
-                if(saved.kg !== undefined) finalKg = parseFloat(saved.kg);
-                else if(item.savedKg !== undefined) finalKg = parseFloat(item.savedKg);
-                return { ...item, qty: finalQty, actualKg: finalKg, poQty: item.poQty, img: saved.img || item.savedImg || null };
-            });
+            const reviewItems = activeIndent.items.map(item => ({
+                code: item.code,
+                name: item.name,
+                poQty: item.poQty,
+                poRate: item.poRate, // Preserve price
+                qty: item.savedQty !== undefined ? item.savedQty : item.poQty,
+                actualKg: item.savedKg || 0,
+                img: item.savedImg || null
+            }));
+
             const reviewData = { date: activeIndent.date, items: reviewItems, timestamp: Date.now() };
             await set(ref(db, 'completed_packing'), reviewData);
             await remove(ref(db, 'active_indent'));
-            localStorage.removeItem('swiggy_packing_data');
-            alert("Order Submitted!");
+            alert("Order Submitted Successfully!");
             closePage('page-packing');
-            checkActiveTask();
         } catch (e) { alert("Error: " + e.message); }
     }
 
-    // --- HISTORY LOGIC ---
+    // --- HISTORY VIEW ---
     window.loadHistory = async function() {
         const histContainer = document.getElementById('history-list');
-        histContainer.innerHTML = '<div class="status-msg">Loading history...</div>';
+        histContainer.innerHTML = '<div class="status-msg">Loading...</div>';
         try {
             const q = query(ref(db, 'indents'), limitToLast(20));
             const snapshot = await get(q);
@@ -476,11 +512,11 @@
                     const el = document.createElement('div');
                     el.className = 'history-card';
                     el.onclick = () => openHistoryDetail(idx);
-                    el.innerHTML = `<div><div style="font-weight:700; font-size:15px;">${rec.date}</div><div style="color:#666; font-size:13px;">${rec.items ? rec.items.length : 0} items packed</div></div><span class="material-icons" style="color:#ccc">chevron_right</span>`;
+                    el.innerHTML = `<div><div style="font-weight:700;">${rec.date}</div><div style="color:#666; font-size:12px;">${rec.items ? rec.items.length : 0} items</div></div><span class="material-icons">chevron_right</span>`;
                     histContainer.appendChild(el);
                 });
-            } else { histContainer.innerHTML = '<div class="status-msg">No history found.</div>'; }
-        } catch(e) { histContainer.innerHTML = `<div class="status-msg">Error: ${e.message}</div>`; }
+            } else { histContainer.innerHTML = '<div class="status-msg">No history.</div>'; }
+        } catch(e) { histContainer.innerHTML = `<div class="status-msg">Error</div>`; }
     }
 
     window.openHistoryDetail = function(idx) {
@@ -491,66 +527,30 @@
         if(displayItems) {
             displayItems.forEach(item => {
                 const hasImg = item.img ? true : false;
-                const el = document.createElement('div');
-                el.className = 'card';
-                el.style.background = "#f9f9f9"; 
-                el.innerHTML = `<div class="card-header"><span class="item-name">${item.name}</span>${hasImg ? `<span class="material-icons" style="color:var(--primary); cursor:pointer" onclick="openModal('${item.img}')">image</span>` : ''}</div><div class="card-body" style="grid-template-columns: 1fr 1fr 1fr;"><div class="input-group"><span class="input-label">Ordered</span><div class="val-box" style="background:#fff; color:#666; border-color:#eee">${item.originalQty || item.poQty || '-'}</div></div><div class="input-group"><span class="input-label">Packed</span><div class="val-box" style="background:#fff; color:#333; border-color:#ccc">${item.qty}</div></div><div class="input-group"><span class="input-label">KG/NOS</span><div class="val-box" style="background:${item.actualKg > 0 ? '#e8f0fe' : '#fff'}; color:#333; border-color:#ccc">${item.actualKg || '-'}</div></div></div>`;
-                container.appendChild(el);
+                container.innerHTML += `
+                    <div class="card" style="background:#f9f9f9;">
+                        <div class="card-header"><span class="item-name">${item.name}</span>${hasImg ? `<span class="material-icons" style="color:var(--primary); cursor:pointer" onclick="openModal('${item.img}')">image</span>` : ''}</div>
+                        <div class="card-body" style="grid-template-columns: 1fr 1fr 1fr;">
+                            <div class="input-group"><span class="input-label">Ord</span><div class="val-box" style="background:white; color:#666;">${item.originalQty||item.poQty}</div></div>
+                            <div class="input-group"><span class="input-label">Pck</span><div class="val-box" style="background:white; color:#333;">${item.qty}</div></div>
+                            <div class="input-group"><span class="input-label">Kg</span><div class="val-box" style="background:${item.actualKg>0?'#e8f0fe':'white'}; color:#333;">${item.actualKg||'-'}</div></div>
+                        </div>
+                    </div>`;
             });
         }
         document.getElementById('page-history-detail').classList.add('active');
     }
 
-    window.handleImage = function(input, code) {
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const reader = new FileReader();
-            const btn = document.getElementById(`btn-cam-${code}`);
-            btn.innerHTML = '<span class="material-icons">hourglass_empty</span>';
-            reader.onload = function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; 
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-                    updateLocal(code, 'img', dataUrl);
-                    btn.classList.add('has-img');
-                    btn.innerHTML = `<span class="material-icons">visibility</span>`;
-                    btn.onclick = () => openModal(dataUrl);
-                    const xBtn = document.createElement('span');
-                    xBtn.innerHTML = 'X';
-                    xBtn.style.cssText = "position:absolute; right:-5px; top:-5px; background:white; color:red; border-radius:50%; padding:2px; font-size:12px; border:1px solid #ccc;";
-                    xBtn.onclick = (ev) => { ev.stopPropagation(); clearImage(code); };
-                    btn.appendChild(xBtn);
-                }
-            }
-            reader.readAsDataURL(file);
-        }
-    }
-    window.clearImage = function(code) { if(confirm('Remove image?')) { updateLocal(code, 'img', null); filterList(); } }
     window.openModal = function(src) { document.getElementById('img-content').src = src; document.getElementById('img-modal').style.display = 'block'; }
 
-    // --- ATTENDANCE LOGIC (REVAMPED) ---
-    window.refreshAttendanceTab = function() {
-        checkLocation();
-        loadTodayStatus();
-        loadAttendanceHistory();
-    }
+    // --- ATTENDANCE ---
+    window.refreshAttendanceTab = function() { checkLocation(); loadTodayStatus(); loadAttendanceHistory(); }
 
     async function loadTodayStatus() {
         const empName = document.getElementById('emp-select').value;
         const today = new Date().toISOString().split('T')[0];
         const actionArea = document.getElementById('att-action-area');
-        const timeDisplay = document.getElementById('today-time');
-        
-        // Live Clock
-        timeDisplay.innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('today-time').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
         try {
             const snap = await get(child(ref(db), `attendance/${today}/${empName}`));
@@ -559,7 +559,7 @@
                 if (data.inTime && !data.outTime) {
                     actionArea.innerHTML = `<button class="clock-btn btn-out" onclick="confirmCheckOut()"><span class="material-icons">logout</span> CHECK OUT</button>`;
                 } else if (data.outTime) {
-                    actionArea.innerHTML = `<button class="clock-btn btn-done" disabled><span class="material-icons">check_circle</span> DONE TODAY</button>`;
+                    actionArea.innerHTML = `<button class="clock-btn btn-done" disabled><span class="material-icons">check_circle</span> DONE</button>`;
                 }
             } else {
                 actionArea.innerHTML = `<button class="clock-btn btn-in" onclick="confirmCheckIn()"><span class="material-icons">login</span> CHECK IN</button>`;
@@ -569,70 +569,38 @@
 
     window.loadAttendanceHistory = async function() {
         const empName = document.getElementById('emp-select').value;
-        const filterVal = document.getElementById('att-month-filter').value; // YYYY-MM
+        const filterVal = document.getElementById('att-month-filter').value;
         const tbody = document.getElementById('att-history-body');
-        tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Loading logs...</div>';
+        tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Loading...</div>';
 
         try {
             const snap = await get(ref(db, 'attendance'));
             if(snap.exists()) {
                 const allData = snap.val();
                 const rows = [];
-                
-                // Process Data
                 Object.keys(allData).forEach(date => {
-                    // Filter by Month
                     if (filterVal && date.substring(0, 7) !== filterVal) return;
-                    
                     const dayData = allData[date][empName];
                     if (dayData) {
-                        rows.push({
-                            date: date,
-                            in: dayData.inTime,
-                            out: dayData.outTime,
-                            ot: dayData.otMinutes || 0
-                        });
+                        rows.push({ date: date, in: dayData.inTime, out: dayData.outTime, ot: dayData.otMinutes || 0 });
                     }
                 });
-
-                // Sort Descending
                 rows.sort((a,b) => b.date.localeCompare(a.date));
-
-                // Render
                 tbody.innerHTML = '';
-                if(rows.length === 0) {
-                    tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No records found.</div>';
-                    return;
-                }
-
+                if(rows.length === 0) { tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No records.</div>'; return; }
                 rows.forEach(r => {
                     const day = r.date.split('-')[2];
                     const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
                     const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-                    
-                    let otDisplay = `<span class="ot-none">-</span>`;
-                    if (r.ot > 0) {
-                        const h = Math.floor(r.ot / 60);
-                        const m = r.ot % 60;
-                        otDisplay = `<span class="ot-val">${h}h ${m}m</span>`;
-                    }
-
-                    tbody.innerHTML += `
-                        <div class="att-row">
-                            <div style="font-weight:500">${day}</div>
-                            <div>${inT}</div>
-                            <div>${outT}</div>
-                            <div style="text-align:right">${otDisplay}</div>
-                        </div>
-                    `;
+                    let otDisplay = `<span style="color:#ccc">-</span>`;
+                    if (r.ot > 0) { const h = Math.floor(r.ot / 60); const m = r.ot % 60; otDisplay = `<span class="ot-val">${h}h ${m}m</span>`; }
+                    tbody.innerHTML += `<div class="att-row"><div style="font-weight:500">${day}</div><div>${inT}</div><div>${outT}</div><div style="text-align:right">${otDisplay}</div></div>`;
                 });
-            } else {
-                tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No data found.</div>';
-            }
+            } else { tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No data.</div>'; }
         } catch(e) { console.error(e); }
     }
 
-    // --- GEO-FENCING ---
+    // --- LOCATION ---
     window.checkLocation = function() {
         const badge = document.getElementById('loc-badge');
         if (!navigator.geolocation) { badge.innerHTML = 'No GPS'; return; }
@@ -640,55 +608,35 @@
             (pos) => {
                 const dist = getDistanceFromLatLonInKm(pos.coords.latitude, pos.coords.longitude, SHOP_LAT, SHOP_LNG);
                 if (dist <= ALLOWED_RADIUS_KM || TEST_MODE) {
-                    badge.className = 'loc-badge loc-ok';
-                    badge.innerHTML = '<span class="material-icons" style="font-size:14px">verified</span> Shop Location';
-                    window.isLocationValid = true;
+                    badge.className = 'loc-badge loc-ok'; badge.innerHTML = '<span class="material-icons" style="font-size:14px">verified</span> Shop'; window.isLocationValid = true;
                 } else {
-                    badge.className = 'loc-badge loc-err';
-                    badge.innerHTML = `<span class="material-icons" style="font-size:14px">error</span> Too Far (${dist.toFixed(2)}km)`;
-                    window.isLocationValid = false;
+                    badge.className = 'loc-badge loc-err'; badge.innerHTML = `<span class="material-icons" style="font-size:14px">error</span> Far (${dist.toFixed(2)}km)`; window.isLocationValid = false;
                 }
             },
             () => { badge.className = 'loc-badge loc-err'; badge.innerHTML = 'GPS Error'; window.isLocationValid = false; }
         );
     }
-
-    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-        var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); 
-        var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; 
-    }
+    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; }
     function deg2rad(deg) { return deg * (Math.PI/180); }
 
     window.confirmCheckIn = async function() {
-        if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop to check in!"); return; }
-        if (!confirm("Check In Now?")) return;
+        if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop!"); return; }
+        if (!confirm("Check In?")) return;
         const empName = document.getElementById('emp-select').value;
         const today = new Date().toISOString().split('T')[0];
-        try {
-            await set(ref(db, `attendance/${today}/${empName}`), { inTime: new Date().toISOString(), name: empName });
-            alert("Checked In!"); refreshAttendanceTab();
-        } catch(e) { alert(e.message); }
+        try { await set(ref(db, `attendance/${today}/${empName}`), { inTime: new Date().toISOString(), name: empName }); alert("Done!"); refreshAttendanceTab(); } catch(e) { alert(e.message); }
     }
 
     window.confirmCheckOut = async function() {
-        if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop to check out!"); return; }
-        if (!confirm("Check Out Now?")) return;
+        if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop!"); return; }
+        if (!confirm("Check Out?")) return;
         const empName = document.getElementById('emp-select').value;
         const today = new Date().toISOString().split('T')[0];
         const now = new Date();
-        
         let otMinutes = 0;
-        const standardEnd = new Date();
-        standardEnd.setHours(21, 0, 0, 0); // 9:00 PM
+        const standardEnd = new Date(); standardEnd.setHours(21, 0, 0, 0); 
         if (now > standardEnd) { otMinutes = Math.floor((now - standardEnd) / 60000); }
-
-        try {
-            await set(ref(db, `attendance/${today}/${empName}/outTime`), now.toISOString());
-            await set(ref(db, `attendance/${today}/${empName}/otMinutes`), otMinutes);
-            alert(`Checked Out! OT: ${Math.floor(otMinutes/60)}h ${otMinutes%60}m`);
-            refreshAttendanceTab();
-        } catch(e) { alert(e.message); }
+        try { await set(ref(db, `attendance/${today}/${empName}/outTime`), now.toISOString()); await set(ref(db, `attendance/${today}/${empName}/otMinutes`), otMinutes); alert("Done!"); refreshAttendanceTab(); } catch(e) { alert(e.message); }
     }
 
     init();
