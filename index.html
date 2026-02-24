@@ -746,6 +746,11 @@
         <button id="btn-hist-edit" class="btn btn-compact" onclick="toggleHistoryEdit()">
             <span class="material-icons">edit</span> Edit
         </button>
+            <!-- NEW BUTTON START -->
+    <button class="btn btn-compact" onclick="downloadWeightExcel()">
+        <span class="material-icons">scale</span> Weights
+    </button>
+    <!-- NEW BUTTON END -->
         <button class="btn btn-compact" onclick="downloadBillPDF()">
             <span class="material-icons">receipt_long</span> Bill
         </button>
@@ -2169,6 +2174,49 @@ function addToHistory(product, source, buy, sell) {
     refreshHistoryKPIs(); 
 }
 
+function downloadWeightExcel() {
+    if (!currentViewedHistory) return;
+
+    // 1. Define CSV Header (Added ERP Code)
+    let csvContent = "ERP Code,Item Code,Item Name,Indent Qty,Packed Qty,Weight (Kg)\n";
+
+    // 2. Loop through items
+    currentViewedHistory.items.forEach(item => {
+        if (item.qty > 0) {
+            
+            // Lookup Master Product for ERP Code
+            const masterItem = products.find(p => p.id === item.code);
+            const erpCode = masterItem ? masterItem.erpCode : "";
+
+            const cleanName = item.name ? `"${item.name.replace(/"/g, '""')}"` : "Unknown";
+            const indentQty = item.originalQty || item.poQty || 0;
+            const packedQty = item.qty;
+            const weight = (item.actualKg || 0).toFixed(3);
+
+            const row = [
+                erpCode,  // New Column
+                item.code,
+                cleanName,
+                indentQty,
+                packedQty,
+                weight
+            ].join(",");
+
+            csvContent += row + "\n";
+        }
+    });
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Weights_${currentViewedHistory.date}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
     // FIND THIS FUNCTION IN index.html AND REPLACE IT
 function renderHistoryDetailTable() {
     const tbody = document.getElementById('hist-detail-body');
@@ -2727,8 +2775,10 @@ function downloadBillPDF() {
     const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
     const rec = currentViewedHistory;
     
-    // 1. FILTER: Exclude 0 qty items
-    const validItems = (rec.items || []).filter(i => i.qty > 0);
+    // 1. FILTER & SORT: Exclude 0 qty items AND Sort Alphabetically
+    const validItems = (rec.items || [])
+        .filter(i => i.qty > 0)
+        .sort((a, b) => (a.name || "").localeCompare(b.name || "")); // <--- ADDED SORTING HERE
     
     // 2. DATA PREP
     const dateParts = rec.date.split('-'); 
@@ -2736,7 +2786,6 @@ function downloadBillPDF() {
     const month = dateParts[1];
     const day = dateParts[2];
     
-    // CHANGED: Added Year (YY) to end
     const invoiceNo = `MFB${day}${month}${year.slice(-2)}`;
     const displayDate = `${day}-${month}-${year}`;
 
