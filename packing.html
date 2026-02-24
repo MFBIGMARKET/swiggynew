@@ -45,12 +45,15 @@
         .task-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid var(--primary); cursor: pointer; }
         .history-card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #666; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
 
-        /* PACKING ITEMS */
-        .search-bar { padding: 10px; background: #fff; border-bottom: 1px solid #eee; }
-        .search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #f8f9fa; outline:none; }
-        
-        .card { background: white; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid transparent; transition:0.3s; }
-        .card.packed { border-color: #a5d6a7; background: #f1f8e9; } /* Green tint when packed */
+        /* --- PACKING ITEMS & FILTER --- */
+        .search-container { display: flex; gap: 10px; padding: 10px; background: #fff; border-bottom: 1px solid #eee; align-items: center; }
+        .search-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #f8f9fa; outline: none; font-size: 14px; }
+        .filter-btn { width: 42px; height: 42px; border-radius: 6px; border: 1px solid #ddd; background: white; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .filter-active { background: var(--primary); color: white; border-color: var(--primary); }
+        .filter-pending { background: #f57c00; color: white; border-color: #f57c00; }
+
+        /* --- ITEM CARD STYLES --- */
+        .card { background: white; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; transition:0.3s; }
         
         .card-header { padding: 10px 15px; background: rgba(0,0,0,0.02); border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .item-name { font-weight: 700; font-size: 15px; color: #333; }
@@ -69,8 +72,28 @@
         .cam-btn.has-img { background: var(--primary); color: white; border-color: var(--primary); }
         .cam-input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; z-index: 2; }
 
+        /* --- STRONG ACCENT COLORS --- */
+        
+        /* Green (Normal) */
+        .card.packed { border: 2px solid #2e7d32; background: #e8f5e9; }
+        .card.packed .val-box { background: #c8e6c9; color: #1b5e20; border-color: #a5d6a7; }
+        
+        /* Red (Overpacked) */
+        .card.overpacked { border: 2px solid #c62828; background: #ffebee; }
+        .card.overpacked .item-name { color: #c62828; }
+        .card.overpacked .val-box { background: #ffcdd2; color: #b71c1c; border-color: #ef9a9a; }
+        .card.overpacked input.qty-input { color: #c62828; font-weight: 800; }
+
         /* ITEM ACTIONS */
-        .card-footer { padding: 8px 12px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; background:white; }
+        /* ITEM ACTIONS & FOOTER */
+.card-footer { 
+    padding: 8px 12px; 
+    border-top: 1px solid #eee; 
+    display: flex; 
+    justify-content: space-between; /* Changed from flex-end */
+    align-items: center; 
+    background: white; 
+}
         .item-btn { padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; border: none; }
         .btn-save { background: var(--primary); color: white; }
         .btn-edit { background: #f1f3f4; color: var(--text-main); border: 1px solid #ddd; }
@@ -163,20 +186,24 @@
 <!-- PACKING INTERFACE -->
 <div class="page" id="page-packing">
     <div class="header">
-        <button class="icon-btn" onclick="closePage('page-packing')">
-            <span class="material-icons">arrow_back</span>
-        </button>
+        <button class="icon-btn" onclick="closePage('page-packing')"><span class="material-icons">arrow_back</span></button>
         <h2 id="packing-title" style="font-size:16px;">Packing...</h2>
         <div class="header-actions">
-            <!-- CHANGED ICON HERE to 'done_all' -->
+            <!-- Submit All Button -->
             <button class="icon-btn success" onclick="submitToReview()" title="Finish & Send">
                 <span class="material-icons">done_all</span>
             </button>
         </div>
     </div>
-    <div class="search-bar">
+    
+    <!-- SEARCH & FILTER -->
+    <div class="search-container">
         <input type="text" id="searchBox" class="search-input" placeholder="Search item..." onkeyup="filterList()">
+        <button id="btn-filter" class="filter-btn" onclick="toggleFilterMode()">
+            <span class="material-icons" id="icon-filter">filter_list</span>
+        </button>
     </div>
+
     <div class="full-content" id="packing-list-container"></div>
 </div>
 
@@ -195,6 +222,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, get, child, remove, query, limitToLast, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+    // --- ⚠️ PASTE FIREBASE CONFIG HERE ---
     const firebaseConfig = {
         apiKey: "AIzaSyB6OFRosamp5U5lKnAxl0wptGt5-eHL6ZQ",
         authDomain: "swiggymargin.firebaseapp.com",
@@ -210,18 +238,20 @@
     
     // VARIABLES
     let activeIndent = null;
-    let fullItemsList = []; 
     let historyData = [];
+    let currentFilterMode = 'all'; // all, packed, pending
+    let masterMap = {}; // Stores Product Data for Weight Check
     
     // --- LOCATION CONFIG ---
     const SHOP_LAT = 11.9796; 
     const SHOP_LNG = 75.6696; 
     const ALLOWED_RADIUS_KM = 0.100;
-    const TEST_MODE = false; // Set to true to bypass GPS check
+    const TEST_MODE = false; 
 
     // --- INITIALIZATION ---
     function init() {
         setupRealtimeListener();
+        loadMasterData(); // Fetch Products
         
         const now = new Date();
         const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -229,7 +259,18 @@
         document.getElementById('att-month-filter').value = `${y}-${m}`;
     }
 
-    // --- REALTIME LISTENER (NEW) ---
+    async function loadMasterData() {
+        try {
+            const snap = await get(child(ref(db), 'products'));
+            if (snap.exists()) {
+                const arr = snap.val();
+                arr.forEach(p => { if(p) masterMap[p.id] = p; });
+                if(activeIndent) filterList(); // Refresh visuals
+            }
+        } catch(e) { console.error("Master data error", e); }
+    }
+
+    // --- REALTIME LISTENER ---
     function setupRealtimeListener() {
         const container = document.getElementById('available-container');
         
@@ -237,13 +278,7 @@
             if (snapshot.exists()) {
                 activeIndent = snapshot.val();
                 renderDashboardCard();
-                
-                // If packing view is open, refresh the list but try to preserve focus
-                // Simple refresh for now:
                 if(document.getElementById('page-packing').classList.contains('active')) {
-                    // Only refresh if we aren't currently typing? 
-                    // For now, we refresh list to show sync status. 
-                    // User might lose focus, but data is safe.
                     filterList(); 
                 }
             } else {
@@ -273,12 +308,12 @@
                 <div class="task-info" style="width:100%">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h3>Order Date: ${activeIndent.date}</h3>
-                        <span style="font-size:12px; font-weight:bold; color:${progressColor}">${packedCount}/${itemCount} Done</span>
+                        <span style="font-size:14px; font-weight:bold; color:${progressColor}">${progressPct}% (${packedCount}/${itemCount})</span>
                     </div>
-                    <div style="width:100%; height:6px; background:#eee; border-radius:3px; margin:8px 0; overflow:hidden;">
+                    <div style="width:100%; height:8px; background:#eee; border-radius:4px; margin:10px 0; overflow:hidden;">
                         <div style="width:${progressPct}%; height:100%; background:${progressColor}; transition:width 0.3s;"></div>
                     </div>
-                    <p style="color:var(--primary); font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px; margin-top:10px;">
+                    <p style="color:var(--primary); font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px; margin-top:5px;">
                         <span>Tap to continue packing</span>
                         <span class="material-icons" style="font-size:16px">arrow_forward</span>
                     </p>
@@ -301,9 +336,7 @@
     window.openPacking = function() {
         if(!activeIndent) return;
         document.getElementById('packing-title').innerText = activeIndent.date;
-        // Sort items A-Z once
-        fullItemsList = [...activeIndent.items].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        renderPackingList(fullItemsList);
+        filterList(); 
         document.getElementById('page-packing').classList.add('active');
     }
 
@@ -311,37 +344,91 @@
         document.getElementById(pageId).classList.remove('active');
     }
 
+    // --- SEARCH & FILTER LOGIC ---
+    window.toggleFilterMode = function() {
+        const btn = document.getElementById('btn-filter');
+        const icon = document.getElementById('icon-filter');
+
+        if (currentFilterMode === 'all') {
+            currentFilterMode = 'pending';
+            btn.className = 'filter-btn filter-pending';
+            icon.innerText = 'check_box_outline_blank'; 
+        } else if (currentFilterMode === 'pending') {
+            currentFilterMode = 'packed';
+            btn.className = 'filter-btn filter-active';
+            icon.innerText = 'check_box'; 
+        } else {
+            currentFilterMode = 'all';
+            btn.className = 'filter-btn';
+            icon.innerText = 'filter_list'; 
+        }
+        filterList();
+    }
+
     window.filterList = function() {
         const term = document.getElementById('searchBox').value.toLowerCase();
-        // Since activeIndent might have updated via realtime, re-sort and filter
         const sorted = [...activeIndent.items].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        const filtered = sorted.filter(item => item.name.toLowerCase().includes(term) || item.code.toString().includes(term));
+        
+        const filtered = sorted.filter(item => {
+            const matchesText = item.name.toLowerCase().includes(term) || item.code.toString().includes(term);
+            let matchesMode = true;
+            if (currentFilterMode === 'packed') matchesMode = (item.isPacked === true);
+            if (currentFilterMode === 'pending') matchesMode = (!item.isPacked);
+            return matchesText && matchesMode;
+        });
+
         renderPackingList(filtered);
     }
 
     function renderPackingList(items) {
         const container = document.getElementById('packing-list-container');
-        // We use a map to preserve input values if user is typing
-        // But for simplicity in this version, we will re-render.
-        // To prevent focus loss, we could implement dom diffing, but let's stick to standard render for now.
-        
-        // Note: With Realtime Sync, re-rendering while typing is annoying. 
-        // Logic: If user is typing in a specific ID, don't update THAT specific input value from server yet.
-        // But here we rely on "Save" button to push changes.
-        
         container.innerHTML = '';
         
         items.forEach((item) => {
             const isPacked = item.isPacked === true;
-            const valQty = item.savedQty !== undefined ? item.savedQty : item.poQty;
-            const valKg = item.savedKg !== undefined ? item.savedKg : '';
+            const valQty = parseFloat(item.savedQty !== undefined ? item.savedQty : item.poQty) || 0;
+            const valKg = parseFloat(item.savedKg) || 0;
+            const dispKg = item.savedKg !== undefined ? item.savedKg : '';
             const imgData = item.savedImg || null;
-
-            // Logic to disable inputs if packed
             const disabledAttr = isPacked ? 'disabled' : '';
             
+            // --- WEIGHT CALC & COLOR LOGIC ---
+            let cardClass = 'card';
+            let weightInfoHTML = '<div></div>'; // Empty placeholder
+
+            // Fetch Master Data for Conversion
+            const master = masterMap[item.code];
+            
+            // 1. Prepare Weight Info Text
+            if (master && master.conv > 0) {
+                const oneUnitKg = master.conv;
+                const totalTargetKg = (item.poQty * oneUnitKg).toFixed(2); // e.g. 10 * 0.5 = 5.00
+                
+                weightInfoHTML = `
+                    <div style="font-size:11px; color:#5f6368; line-height:1.2;">
+                        <div>1 Qty = <strong>${oneUnitKg} kg</strong></div>
+                        <div>Target: <strong>${totalTargetKg} kg</strong></div>
+                    </div>
+                `;
+            }
+
+            // 2. Color Logic
+            if (isPacked) {
+                let isOver = false;
+                if (valQty > item.poQty) isOver = true; // Qty Over
+                
+                // Weight Over (Actual > Target + 50g buffer)
+                if (!isOver && master && master.conv > 0 && valKg > 0) {
+                    const stdWeight = valQty * master.conv;
+                    if (valKg > (stdWeight + 0.05)) isOver = true;
+                }
+                
+                if (isOver) cardClass += ' overpacked';
+                else cardClass += ' packed';
+            }
+
             const div = document.createElement('div');
-            div.className = `card ${isPacked ? 'packed' : ''}`;
+            div.className = cardClass;
             div.innerHTML = `
                 <div class="card-header">
                     <span class="item-name">${item.name}</span>
@@ -360,7 +447,7 @@
                     <div class="input-group">
                         <span class="input-label">KG/NOS</span>
                         <input type="number" inputmode="decimal" id="kg-${item.code}" 
-                            placeholder="0.0" value="${valKg}" class="qty-input" ${disabledAttr}>
+                            placeholder="0.0" value="${dispKg}" class="qty-input" ${disabledAttr}>
                     </div>
                     <div class="input-group">
                         <span class="input-label">PHOTO</span>
@@ -373,23 +460,20 @@
                     </div>
                 </div>
                 <div class="card-footer">
+                    <!-- Weight Info Left Side -->
+                    ${weightInfoHTML}
+
+                    <!-- Buttons Right Side -->
                     ${!isPacked ? 
-                        `<button class="item-btn btn-save" onclick="saveSingleItem(${item.code})">
-                            <span class="material-icons" style="font-size:16px">check</span> Save
-                         </button>` : 
-                        `<button class="item-btn btn-edit" onclick="enableEditItem(${item.code})">
-                            <span class="material-icons" style="font-size:16px">edit</span> Edit
-                         </button>`
+                        `<button class="item-btn btn-save" onclick="saveSingleItem(${item.code})"><span class="material-icons" style="font-size:16px">check</span> Save</button>` : 
+                        `<button class="item-btn btn-edit" onclick="enableEditItem(${item.code})"><span class="material-icons" style="font-size:16px">edit</span> Edit</button>`
                     }
-                </div>
-            `;
+                </div>`;
             container.appendChild(div);
         });
     }
 
-    // --- ITEM ACTIONS ---
-    
-    // Find index in Firebase array based on item code
+    // --- ITEM ACTIONS (REALTIME) ---
     function findItemIndex(code) {
         if(!activeIndent || !activeIndent.items) return -1;
         return activeIndent.items.findIndex(i => i.code == code);
@@ -401,34 +485,24 @@
 
         const qtyInput = document.getElementById(`qty-${code}`);
         const kgInput = document.getElementById(`kg-${code}`);
-        
         const newQty = parseFloat(qtyInput.value) || 0;
         const newKg = parseFloat(kgInput.value) || 0;
-        
-        // Get existing img if not changed
-        const existingImg = activeIndent.items[idx].savedImg || null;
 
         const updates = {};
         const path = `active_indent/items/${idx}`;
         updates[`${path}/savedQty`] = newQty;
         updates[`${path}/savedKg`] = newKg;
-        updates[`${path}/isPacked`] = true; // Mark as packed/locked
+        updates[`${path}/isPacked`] = true;
         
-        try {
-            await update(ref(db), updates);
-            // No alert needed, UI updates automatically via onValue
-        } catch(e) { alert("Save failed: " + e.message); }
+        try { await update(ref(db), updates); } 
+        catch(e) { alert("Save failed: " + e.message); }
     }
 
     window.enableEditItem = async function(code) {
         const idx = findItemIndex(code);
         if(idx === -1) return;
-        
-        // Unlock on server (syncs to everyone)
-        const path = `active_indent/items/${idx}/isPacked`;
-        try {
-            await set(ref(db, path), false); 
-        } catch(e) { alert("Unlock failed: " + e.message); }
+        try { await set(ref(db, `active_indent/items/${idx}/isPacked`), false); } 
+        catch(e) { alert("Unlock failed: " + e.message); }
     }
 
     window.handleImage = function(input, code) {
@@ -447,12 +521,8 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-                    
-                    // Save Image Immediately to Server Draft
                     const idx = findItemIndex(code);
-                    if(idx !== -1) {
-                        await set(ref(db, `active_indent/items/${idx}/savedImg`), dataUrl);
-                    }
+                    if(idx !== -1) { await set(ref(db, `active_indent/items/${idx}/savedImg`), dataUrl); }
                 }
             }
             reader.readAsDataURL(file);
@@ -462,37 +532,29 @@
     window.clearImage = async function(code) {
         if(!confirm('Remove image?')) return;
         const idx = findItemIndex(code);
-        if(idx !== -1) {
-            await set(ref(db, `active_indent/items/${idx}/savedImg`), null);
-        }
+        if(idx !== -1) { await set(ref(db, `active_indent/items/${idx}/savedImg`), null); }
     }
 
     window.submitToReview = async function() {
         if(!activeIndent) return;
-        
-        // Check if all items are packed
         const pending = activeIndent.items.filter(i => !i.isPacked).length;
-        if(pending > 0) {
-            if(!confirm(`Warning: ${pending} items are not marked as Saved/Packed. Submit anyway?`)) return;
-        } else {
-            if(!confirm("All items packed. Submit to Office?")) return;
-        }
+        if(pending > 0) { if(!confirm(`Warning: ${pending} items NOT saved. Submit anyway?`)) return; } 
+        else { if(!confirm("Submit Order to Office?")) return; }
 
         try {
             const reviewItems = activeIndent.items.map(item => ({
                 code: item.code,
                 name: item.name,
                 poQty: item.poQty,
-                poRate: item.poRate, // Preserve price
+                poRate: item.poRate,
                 qty: item.savedQty !== undefined ? item.savedQty : item.poQty,
                 actualKg: item.savedKg || 0,
                 img: item.savedImg || null
             }));
-
             const reviewData = { date: activeIndent.date, items: reviewItems, timestamp: Date.now() };
             await set(ref(db, 'completed_packing'), reviewData);
             await remove(ref(db, 'active_indent'));
-            alert("Order Submitted Successfully!");
+            alert("Order Submitted!");
             closePage('page-packing');
         } catch (e) { alert("Error: " + e.message); }
     }
