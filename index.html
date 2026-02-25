@@ -740,7 +740,11 @@
     </button>
     
     <div style="flex:1; margin-left:15px; font-weight:500; font-size:16px;" id="hist-detail-title">Bill Detail</div>
-    
+        <!-- NEW REVERT BUTTON START -->
+    <button class="btn btn-compact" onclick="revertBillToPacking()" style="border-color: #d93025; color: #d93025;" title="Send back to Packing App">
+        <span class="material-icons">undo</span> Revert
+    </button>
+    <!-- NEW REVERT BUTTON END -->
     <!-- COMPACT ACTION BUTTONS -->
     <div style="display:flex; gap:5px;">
         <button id="btn-hist-edit" class="btn btn-compact" onclick="toggleHistoryEdit()">
@@ -1704,6 +1708,76 @@ function closeReportModal() {
         document.getElementById('indent-upload-area').classList.add('hidden');
         document.getElementById('indent-preview').classList.remove('hidden');
     }
+    async function revertBillToPacking() {
+    if (!currentViewedHistory) return;
+    
+    if(!confirm("⚠️ REVERT WARNING:\n\n1. This will remove this bill from History.\n2. It will appear in the Packing App for editing.\n3. Existing 'Active Orders' in Packing App will be checked first.\n\nContinue?")) {
+        return;
+    }
+
+    const dbRef = window.dbRef(window.db);
+    
+    // 1. Safety Check: Is there already an active indent?
+    try {
+        const snap = await window.dbGet(window.dbChild(dbRef, 'active_indent'));
+        if (snap.exists()) {
+            alert("❌ Cannot Revert!\n\nThe Packing App currently has an active order pending. Please finish or delete the active order in the Packing App first.");
+            return;
+        }
+    } catch(e) {
+        alert("Connection Error: " + e.message);
+        return;
+    }
+
+    // 2. Map History Items -> Packing Draft Format
+    const restoredItems = currentViewedHistory.items.map(item => {
+        // LOGIC: Only mark as 'Packed' (Green) if quantity was actually entered (>0)
+        // If Qty is 0, it means it was Short/Skipped, so it reverts as 'Pending' (White)
+        const wasPacked = (item.qty > 0 || (item.actualKg && item.actualKg > 0));
+
+        return {
+            code: item.code,
+            name: item.name,
+            poRate: item.poRate,
+            // Restore Order Qty (fallback to poQty if originalQty missing)
+            poQty: item.originalQty !== undefined ? item.originalQty : item.poQty,
+            
+            // Restore Packed Data
+            savedQty: item.qty,         
+            savedKg: item.actualKg || 0,
+            savedImg: item.img || null, 
+            
+            // Smart Status
+            isPacked: wasPacked 
+        };
+    });
+
+    const activeData = {
+        date: currentViewedHistory.date,
+        // Recalculate total indent value based on restored poQty
+        totalIndentAmt: restoredItems.reduce((sum, i) => sum + (i.poQty * i.poRate), 0),
+        items: restoredItems
+    };
+
+    // 3. Perform Transaction (Save to Active -> Delete from History)
+    try {
+        // A. Send to Active Indent
+        await window.dbSet(window.dbRef(window.db, 'active_indent'), activeData);
+        
+        // B. Delete from History (indents)
+        // We filter out the current record from the local array and save the array
+        indents = indents.filter(x => x.id !== currentViewedHistory.id);
+        saveData('indents', indents);
+
+        // C. UI Cleanup
+        alert("✅ Success! Bill reverted to Packing App.");
+        closeHistoryDetail();
+        renderIndentHistory();
+        
+    } catch (e) {
+        alert("Error during revert: " + e.message);
+    }
+}
 
     function updateIndentQty(code, newQty) {
         const item = currentIndent.find(i => i.code == code);

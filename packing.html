@@ -9,13 +9,13 @@
     <meta name="theme-color" content="#1a73e8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <style>
-        :root { --primary: #1a73e8; --bg: #f0f2f5; --border: #dadce0; --green: #188038; --red: #d93025; --orange: #f57c00; --text-main: #202124; --text-sub: #5f6368; }
+        :root { --primary: #1a73e8; --bg: #f8f9fa; --surface: #ffffff; --border: #e0e0e0; --green: #188038; --red: #d93025; --orange: #f57c00; --text-main: #202124; --text-sub: #5f6368; }
         * { box-sizing: border-box; }
-        body { font-family: 'Roboto', sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text-main); height: 100vh; overflow: hidden; }
+        body { font-family: 'Roboto', sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text-main); height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent; }
         
         /* LAYOUT */
         .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; background: var(--bg); transform: translateX(100%); transition: transform 0.3s; z-index: 100; }
@@ -23,101 +23,124 @@
         .page.root-page { transform: translateX(0); z-index: 10; } 
 
         /* HEADER */
-        .header { background: #fff; height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .header { background: var(--surface); height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); }
         .header h2 { margin: 0; font-size: 18px; color: var(--primary); font-weight: 700; }
-        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-sub); display: flex; align-items: center; }
+        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-sub); display: flex; align-items: center; padding: 8px; border-radius: 50%; }
+        .icon-btn:active { background: #f1f3f4; }
         .icon-btn.success { color: var(--green); }
-        .header-actions { display: flex; gap: 15px; }
+        .header-actions { display: flex; gap: 10px; }
 
         /* CONTENT */
-        .content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
-        .full-content { flex: 1; overflow-y: auto; padding: 15px; } 
+        .content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; }
+        .full-content { flex: 1; overflow-y: auto; padding: 12px; } 
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* NAV */
-        .bottom-nav { height: 60px; background: white; border-top: 1px solid #ddd; display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 200; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; width: 100%; height: 100%; font-size: 11px; font-weight: 500; }
-        .nav-item.active { color: var(--primary); }
-        .nav-item .material-icons { font-size: 24px; margin-bottom: 2px; }
+        .bottom-nav { height: 60px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 200; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; width: 100%; height: 100%; font-size: 11px; font-weight: 500; transition: 0.2s; }
+        .nav-item.active { color: var(--primary); transform: translateY(-2px); }
+        .nav-item .material-icons { font-size: 24px; margin-bottom: 3px; }
 
-        /* CARDS */
-        .task-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 5px solid var(--primary); cursor: pointer; }
-        .history-card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #666; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-
-        /* --- PACKING ITEMS & FILTER --- */
-        .search-container { display: flex; gap: 10px; padding: 10px; background: #fff; border-bottom: 1px solid #eee; align-items: center; }
-        .search-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #f8f9fa; outline: none; font-size: 14px; }
-        .filter-btn { width: 42px; height: 42px; border-radius: 6px; border: 1px solid #ddd; background: white; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .filter-active { background: var(--primary); color: white; border-color: var(--primary); }
-        .filter-pending { background: #f57c00; color: white; border-color: #f57c00; }
-
-        /* --- ITEM CARD STYLES --- */
-        .card { background: white; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; transition:0.3s; }
+        /* --- CLEANER TASK CARD --- */
+        .task-card { background: white; border-radius: 16px; padding: 24px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); cursor: pointer; position: relative; overflow: hidden; }
+        .task-card:active { transform: scale(0.98); transition: 0.1s; }
+        .task-label { font-size: 11px; font-weight: 700; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+        .task-date { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .date-pill { background: #e3f2fd; color: var(--primary); padding: 4px 10px; border-radius: 6px; font-size: 14px; }
         
-        .card-header { padding: 10px 15px; background: rgba(0,0,0,0.02); border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .item-name { font-weight: 700; font-size: 15px; color: #333; }
-        .item-code { font-family: monospace; font-weight: 700; font-size: 13px; color: var(--text-sub); background: #eee; padding: 2px 6px; border-radius: 4px; }
+        .progress-track { height: 8px; background: #f1f3f4; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+        .progress-fill { height: 100%; transition: width 0.5s ease; border-radius: 4px; }
+        
+        .task-footer { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; color: var(--text-sub); }
+        .btn-start { color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 4px; }
+
+        /* --- HISTORY STYLES --- */
+        .hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .section-title { font-size: 14px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; }
+        .month-picker { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: white; font-family: inherit; font-size: 13px; outline: none; }
+        
+        .history-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .history-card:active { background: #f8f9fa; }
+        .hist-date { font-weight: 700; font-size: 15px; color: var(--text-main); }
+        .hist-sub { color: var(--text-sub); font-size: 12px; margin-top: 2px; }
+
+        /* --- PACKING ITEMS --- */
+        .search-container { display: flex; gap: 10px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border); align-items: center; }
+        .search-input { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); outline: none; font-size: 14px; }
+        .filter-btn { width: 42px; height: 42px; border-radius: 8px; border: 1px solid var(--border); background: white; color: #555; display: flex; align-items: center; justify-content: center; }
+        .filter-active { background: var(--primary); color: white; border-color: var(--primary); }
+        .filter-pending { background: var(--orange); color: white; border-color: var(--orange); }
+
+        .card { background: white; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); overflow: hidden; border: 1px solid var(--border); }
+        .card.packed { border: 2px solid var(--green); background: #f1f8e9; }
+        .card.overpacked { border: 2px solid var(--red); background: #ffebee; }
+        
+        .card-header { padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .item-name { font-weight: 700; font-size: 15px; color: #202124; }
+        .item-code { font-family: monospace; font-weight: 700; font-size: 12px; color: var(--text-sub); background: #eee; padding: 2px 6px; border-radius: 4px; }
         
         .card-body { padding: 12px; display: grid; grid-template-columns: 0.8fr 1fr 1fr 0.6fr; gap: 8px; align-items: end; }
         .input-group { display: flex; flex-direction: column; }
         .input-label { font-size: 10px; color: #888; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; text-align: center; }
-        .val-box { background: #e8f0fe; color: var(--primary); padding: 10px 0; border-radius: 8px; font-weight: 700; text-align: center; height: 42px; line-height: 20px; border:1px solid #d2e3fc;}
+        .val-box { background: #e8f0fe; color: var(--primary); padding: 10px 0; border-radius: 8px; font-weight: 700; text-align: center; height: 42px; line-height: 20px; border: 1px solid #d2e3fc;}
         
-        input.qty-input { width: 100%; height: 42px; border: 1px solid #ccc; border-radius: 8px; font-size: 18px; text-align: center; font-weight: bold; background: #fff; padding:0; }
-        input.qty-input:focus { border-color: var(--primary); outline: none; }
-        input.qty-input:disabled { background: #e0e0e0; color: #555; border-color: transparent; }
+        input.qty-input { width: 100%; height: 42px; border: 1px solid #ccc; border-radius: 8px; font-size: 18px; text-align: center; font-weight: bold; background: #fff; padding:0; outline:none; }
+        input.qty-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(26,115,232,0.1); }
+        input.qty-input:disabled { background: #f1f3f4; color: #555; border-color: transparent; }
 
         .cam-btn { height: 42px; border-radius: 8px; border: 1px solid #ccc; background: #f1f3f4; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; color:#5f6368; }
         .cam-btn.has-img { background: var(--primary); color: white; border-color: var(--primary); }
         .cam-input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; z-index: 2; }
 
-        /* --- STRONG ACCENT COLORS --- */
-        
-        /* Green (Normal) */
-        .card.packed { border: 2px solid #2e7d32; background: #e8f5e9; }
+        /* COLORS FOR OVERPACKED */
         .card.packed .val-box { background: #c8e6c9; color: #1b5e20; border-color: #a5d6a7; }
-        
-        /* Red (Overpacked) */
-        .card.overpacked { border: 2px solid #c62828; background: #ffebee; }
         .card.overpacked .item-name { color: #c62828; }
         .card.overpacked .val-box { background: #ffcdd2; color: #b71c1c; border-color: #ef9a9a; }
         .card.overpacked input.qty-input { color: #c62828; font-weight: 800; }
 
-        /* ITEM ACTIONS */
-        /* ITEM ACTIONS & FOOTER */
-.card-footer { 
-    padding: 8px 12px; 
-    border-top: 1px solid #eee; 
-    display: flex; 
-    justify-content: space-between; /* Changed from flex-end */
-    align-items: center; 
-    background: white; 
-}
+        /* FOOTER ACTIONS */
+        .card-footer { padding: 8px 12px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: white; }
         .item-btn { padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; border: none; }
         .btn-save { background: var(--primary); color: white; }
-        .btn-edit { background: #f1f3f4; color: var(--text-main); border: 1px solid #ddd; }
-        .btn-save:hover { background: #1557b0; }
+        .btn-edit { background: #fff; color: var(--text-main); border: 1px solid #ddd; }
+
+        /* MODAL */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; }
+        .modal-box { background: white; width: 90%; max-width: 350px; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popUp 0.3s ease-out; }
+        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #eee; margin: 15px 0; border: 1px solid #eee; }
+        .stat-item { background: white; padding: 15px 10px; text-align: center; }
+        .stat-label { font-size: 11px; color: #777; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        .stat-num { font-size: 18px; font-weight: 800; color: #333; margin-top: 5px; }
 
         /* ATTENDANCE */
-        .att-header { background:white; padding:15px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-bottom:15px; }
+        .att-header { background:white; padding:15px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-bottom:15px; border:1px solid var(--border); }
         .emp-select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background: white; margin-bottom:10px; }
         .att-status-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-        .loc-badge { font-size:12px; padding:4px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; }
+        .loc-badge { font-size:12px; padding:4px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; font-weight: 500; }
         .loc-ok { background:#e8f5e9; color:var(--green); }
         .loc-err { background:#ffebee; color:var(--red); }
         .clock-btn { width: 100%; height: 50px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing:1px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition:0.2s; }
-        .clock-btn:active { transform:scale(0.98); }
         .btn-in { background: var(--green); color: white; }
         .btn-out { background: var(--red); color: white; }
-        .btn-done { background: #f5f5f5; color: #aaa; border:1px solid #ddd; box-shadow:none; cursor:default; }
+        .btn-done { background: #f5f5f5; color: #aaa; cursor:default; box-shadow: none; }
         
         .att-list { background:white; border-radius:12px; overflow:hidden; border:1px solid #eee; margin-top:10px; }
         .att-row { display:grid; grid-template-columns: 0.8fr 1fr 1fr 0.8fr; padding:12px; border-bottom:1px solid #f0f0f0; font-size:13px; align-items:center; }
         .att-row.head { background:#f9f9f9; font-weight:700; color:#666; font-size:11px; text-transform:uppercase; }
         .ot-val { font-weight:700; color:var(--orange); background:#fff3e0; padding:2px 6px; border-radius:4px; font-size:12px; }
 
-        .status-msg { text-align: center; margin-top: 50px; color: #666; }
+        .status-msg { text-align: center; margin-top: 60px; color: #999; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .hidden { display: none !important; }
+        
+        /* Network Status */
+        .net-status { width: 8px; height: 8px; border-radius: 50%; background: #ccc; display: inline-block; margin-right: 10px; }
+        .net-online { background: #00e676; box-shadow: 0 0 5px #00e676; }
+        .net-offline { background: #ff1744; }
+
         #img-modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
         #img-content { margin: auto; display: block; max-width: 90%; max-height: 80vh; margin-top: 10vh; }
         .close-img { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
@@ -138,15 +161,16 @@
     <div class="content">
         <!-- TAB 1: TASKS -->
         <div id="tab-available" class="tab-content active">
-            <h4 style="margin:10px 0; color:#555; text-transform:uppercase; font-size:12px;">Active Order</h4>
             <div id="available-container">
-                <div class="status-msg">Loading...</div>
+                <div class="status-msg">
+                    <span class="material-icons" style="font-size:32px; animation: spin 1s infinite;">sync</span>
+                    Loading...
+                </div>
             </div>
         </div>
 
         <!-- TAB 2: ATTENDANCE -->
         <div id="tab-attendance" class="tab-content">
-            <h4 style="margin:10px 0; color:#555; text-transform:uppercase; font-size:12px;">Staff Attendance</h4>
             <div class="att-header">
                 <select id="emp-select" class="emp-select" onchange="refreshAttendanceTab()">
                     <option value="RAJEEV">RAJEEV</option>
@@ -159,9 +183,9 @@
                 <div id="att-action-area"></div>
             </div>
             
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-                <span style="font-weight:700; font-size:13px; color:#555;">HISTORY</span>
-                <input type="month" id="att-month-filter" style="padding:4px; border:1px solid #ccc; border-radius:4px;" onchange="loadAttendanceHistory()">
+            <div class="hist-header" style="margin-top:25px;">
+                <span class="section-title">Log History</span>
+                <input type="month" id="att-month-filter" class="month-picker" onchange="loadAttendanceHistory()">
             </div>
             <div class="att-list">
                 <div class="att-row head"><div>Date</div><div>In</div><div>Out</div><div style="text-align:right">OT</div></div>
@@ -171,7 +195,10 @@
 
         <!-- TAB 3: HISTORY -->
         <div id="tab-history" class="tab-content">
-            <h4 style="margin:10px 0; color:#555; text-transform:uppercase; font-size:12px;">Past Orders</h4>
+            <div class="hist-header">
+                <span class="section-title">Past Orders</span>
+                <input type="month" id="hist-month-filter" class="month-picker" onchange="loadHistory()">
+            </div>
             <div id="history-list"></div>
         </div>
     </div>
@@ -187,16 +214,13 @@
 <div class="page" id="page-packing">
     <div class="header">
         <button class="icon-btn" onclick="closePage('page-packing')"><span class="material-icons">arrow_back</span></button>
-        <h2 id="packing-title" style="font-size:16px;">Packing...</h2>
-        <div class="header-actions">
-            <!-- Submit All Button -->
-            <button class="icon-btn success" onclick="submitToReview()" title="Finish & Send">
-                <span class="material-icons">done_all</span>
-            </button>
+        <div style="display:flex; align-items:center;">
+            <div id="net-indicator" class="net-status" title="Connection Status"></div>
+            <h2 id="packing-title" style="font-size:16px;">Packing...</h2>
         </div>
+        <div style="width:24px"></div>
     </div>
     
-    <!-- SEARCH & FILTER -->
     <div class="search-container">
         <input type="text" id="searchBox" class="search-input" placeholder="Search item..." onkeyup="filterList()">
         <button id="btn-filter" class="filter-btn" onclick="toggleFilterMode()">
@@ -204,7 +228,9 @@
         </button>
     </div>
 
-    <div class="full-content" id="packing-list-container"></div>
+    <div class="full-content">
+        <div id="packing-list-container"></div>
+    </div>
 </div>
 
 <!-- HISTORY DETAIL -->
@@ -214,6 +240,32 @@
         <h2 style="font-size:16px;">Details</h2><div style="width:24px;"></div>
     </div>
     <div class="full-content" id="history-detail-content"></div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <div style="padding:20px 20px 0 20px;">
+            <h3 style="margin:0; color:var(--text-main); font-size:18px;">Finish Packing?</h3>
+            <p style="color:#666; font-size:13px; margin:5px 0 15px 0;">Order will be sent to the office.</p>
+        </div>
+        
+        <div class="stat-grid">
+            <div class="stat-item">
+                <div class="stat-label">Packed</div>
+                <div class="stat-num" style="color:var(--green)" id="conf-packed">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Pending</div>
+                <div class="stat-num" style="color:var(--red)" id="conf-pending">0</div>
+            </div>
+        </div>
+
+        <div style="padding:20px; display:flex; gap:10px;">
+            <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" style="flex:1; padding:12px; border-radius:8px; border:1px solid #ddd; background:white; font-weight:700; cursor:pointer; color:#555;">CANCEL</button>
+            <button onclick="executeFinalSubmit()" style="flex:1; padding:12px; border-radius:8px; border:none; background:var(--green); font-weight:700; cursor:pointer; color:white;">SEND</button>
+        </div>
+    </div>
 </div>
 
 <div id="img-modal" onclick="this.style.display='none'"><span class="close-img">&times;</span><img id="img-content"></div>
@@ -239,8 +291,8 @@
     // VARIABLES
     let activeIndent = null;
     let historyData = [];
-    let currentFilterMode = 'all'; // all, packed, pending
-    let masterMap = {}; // Stores Product Data for Weight Check
+    let currentFilterMode = 'all'; 
+    let masterMap = {}; 
     
     // --- LOCATION CONFIG ---
     const SHOP_LAT = 11.9796; 
@@ -248,15 +300,28 @@
     const ALLOWED_RADIUS_KM = 0.100;
     const TEST_MODE = false; 
 
+    // --- DATE FORMATTER ---
+    function formatDateDisplay(dateStr) {
+        if(!dateStr) return '';
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}/${y.slice(-2)}`;
+    }
+
     // --- INITIALIZATION ---
     function init() {
         setupRealtimeListener();
-        loadMasterData(); // Fetch Products
+        loadMasterData(); 
         
+        // Net Status
+        const netInd = document.getElementById('net-indicator');
+        const updateNet = () => { if(navigator.onLine) netInd.className='net-status net-online'; else netInd.className='net-status net-offline'; };
+        window.addEventListener('online', updateNet); window.addEventListener('offline', updateNet); updateNet();
+
         const now = new Date();
         const m = String(now.getMonth() + 1).padStart(2, '0');
         const y = now.getFullYear();
         document.getElementById('att-month-filter').value = `${y}-${m}`;
+        document.getElementById('hist-month-filter').value = `${y}-${m}`;
     }
 
     async function loadMasterData() {
@@ -265,7 +330,7 @@
             if (snap.exists()) {
                 const arr = snap.val();
                 arr.forEach(p => { if(p) masterMap[p.id] = p; });
-                if(activeIndent) filterList(); // Refresh visuals
+                if(activeIndent) filterList(); 
             }
         } catch(e) { console.error("Master data error", e); }
     }
@@ -273,14 +338,11 @@
     // --- REALTIME LISTENER ---
     function setupRealtimeListener() {
         const container = document.getElementById('available-container');
-        
         onValue(ref(db, 'active_indent'), (snapshot) => {
             if (snapshot.exists()) {
                 activeIndent = snapshot.val();
                 renderDashboardCard();
-                if(document.getElementById('page-packing').classList.contains('active')) {
-                    filterList(); 
-                }
+                if(document.getElementById('page-packing').classList.contains('active')) filterList(); 
             } else {
                 activeIndent = null;
                 container.innerHTML = `<div class="status-msg"><span class="material-icons" style="font-size:48px; color:#ccc">assignment_turned_in</span><p>No new orders.</p></div>`;
@@ -305,21 +367,20 @@
 
         container.innerHTML = `
             <div class="task-card" onclick="openPacking()">
-                <div class="task-info" style="width:100%">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>Order Date: ${activeIndent.date}</h3>
-                        <span style="font-size:14px; font-weight:bold; color:${progressColor}">${progressPct}% (${packedCount}/${itemCount})</span>
-                    </div>
-                    <div style="width:100%; height:8px; background:#eee; border-radius:4px; margin:10px 0; overflow:hidden;">
-                        <div style="width:${progressPct}%; height:100%; background:${progressColor}; transition:width 0.3s;"></div>
-                    </div>
-                    <p style="color:var(--primary); font-size:12px; font-weight:500; display:flex; align-items:center; gap:5px; margin-top:5px;">
-                        <span>Tap to continue packing</span>
-                        <span class="material-icons" style="font-size:16px">arrow_forward</span>
-                    </p>
+                <div class="task-label">Active Order</div>
+                <div class="task-date">
+                    <span class="date-pill">${formatDateDisplay(activeIndent.date)}</span>
                 </div>
-            </div>
-        `;
+                <div class="progress-track">
+                    <div class="progress-fill" style="width:${progressPct}%; background:${progressColor}"></div>
+                </div>
+                <div class="task-footer">
+                    <!-- ADDED PERCENTAGE HERE -->
+                    <span style="font-weight:700; color:#333;">${progressPct}%</span>
+                    <span>(${packedCount} / ${itemCount} Packed)</span>
+                    <span class="btn-start" style="margin-left:auto;">OPEN <span class="material-icons" style="font-size:16px">arrow_forward</span></span>
+                </div>
+            </div>`;
     }
 
     // --- NAVIGATION ---
@@ -335,7 +396,7 @@
     // --- PACKING INTERFACE ---
     window.openPacking = function() {
         if(!activeIndent) return;
-        document.getElementById('packing-title').innerText = activeIndent.date;
+        document.getElementById('packing-title').innerText = formatDateDisplay(activeIndent.date);
         filterList(); 
         document.getElementById('page-packing').classList.add('active');
     }
@@ -344,23 +405,16 @@
         document.getElementById(pageId).classList.remove('active');
     }
 
-    // --- SEARCH & FILTER LOGIC ---
+    // --- SEARCH & FILTER ---
     window.toggleFilterMode = function() {
         const btn = document.getElementById('btn-filter');
         const icon = document.getElementById('icon-filter');
-
         if (currentFilterMode === 'all') {
-            currentFilterMode = 'pending';
-            btn.className = 'filter-btn filter-pending';
-            icon.innerText = 'check_box_outline_blank'; 
+            currentFilterMode = 'pending'; btn.className = 'filter-btn filter-pending'; icon.innerText = 'check_box_outline_blank'; 
         } else if (currentFilterMode === 'pending') {
-            currentFilterMode = 'packed';
-            btn.className = 'filter-btn filter-active';
-            icon.innerText = 'check_box'; 
+            currentFilterMode = 'packed'; btn.className = 'filter-btn filter-active'; icon.innerText = 'check_box'; 
         } else {
-            currentFilterMode = 'all';
-            btn.className = 'filter-btn';
-            icon.innerText = 'filter_list'; 
+            currentFilterMode = 'all'; btn.className = 'filter-btn'; icon.innerText = 'filter_list'; 
         }
         filterList();
     }
@@ -368,7 +422,6 @@
     window.filterList = function() {
         const term = document.getElementById('searchBox').value.toLowerCase();
         const sorted = [...activeIndent.items].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        
         const filtered = sorted.filter(item => {
             const matchesText = item.name.toLowerCase().includes(term) || item.code.toString().includes(term);
             let matchesMode = true;
@@ -376,13 +429,15 @@
             if (currentFilterMode === 'pending') matchesMode = (!item.isPacked);
             return matchesText && matchesMode;
         });
-
         renderPackingList(filtered);
     }
 
     function renderPackingList(items) {
         const container = document.getElementById('packing-list-container');
         container.innerHTML = '';
+        
+        // Add Finish Button at the bottom if items exist
+        if(items.length === 0) container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">No items found.</div>';
         
         items.forEach((item) => {
             const isPacked = item.isPacked === true;
@@ -392,88 +447,50 @@
             const imgData = item.savedImg || null;
             const disabledAttr = isPacked ? 'disabled' : '';
             
-            // --- WEIGHT CALC & COLOR LOGIC ---
             let cardClass = 'card';
-            let weightInfoHTML = '<div></div>'; // Empty placeholder
-
-            // Fetch Master Data for Conversion
+            let weightInfoHTML = '<div></div>'; 
             const master = masterMap[item.code];
             
-            // 1. Prepare Weight Info Text
             if (master && master.conv > 0) {
                 const oneUnitKg = master.conv;
-                const totalTargetKg = (item.poQty * oneUnitKg).toFixed(2); // e.g. 10 * 0.5 = 5.00
-                
-                weightInfoHTML = `
-                    <div style="font-size:11px; color:#5f6368; line-height:1.2;">
-                        <div>1 Qty = <strong>${oneUnitKg} kg</strong></div>
-                        <div>Target: <strong>${totalTargetKg} kg</strong></div>
-                    </div>
-                `;
+                const totalTargetKg = (item.poQty * oneUnitKg).toFixed(2); 
+                weightInfoHTML = `<div style="font-size:11px; color:#5f6368; line-height:1.2;"><div>1 Qty = <strong>${oneUnitKg} kg</strong></div><div>Target: <strong>${totalTargetKg} kg</strong></div></div>`;
             }
 
-            // 2. Color Logic
             if (isPacked) {
                 let isOver = false;
-                if (valQty > item.poQty) isOver = true; // Qty Over
-                
-                // Weight Over (Actual > Target + 50g buffer)
+                if (valQty > item.poQty) isOver = true; 
                 if (!isOver && master && master.conv > 0 && valKg > 0) {
                     const stdWeight = valQty * master.conv;
                     if (valKg > (stdWeight + 0.05)) isOver = true;
                 }
-                
-                if (isOver) cardClass += ' overpacked';
-                else cardClass += ' packed';
+                if (isOver) cardClass += ' overpacked'; else cardClass += ' packed';
             }
 
             const div = document.createElement('div');
             div.className = cardClass;
             div.innerHTML = `
-                <div class="card-header">
-                    <span class="item-name">${item.name}</span>
-                    <span class="item-code">#${item.code}</span>
-                </div>
+                <div class="card-header"><span class="item-name">${item.name}</span><span class="item-code">#${item.code}</span></div>
                 <div class="card-body">
-                    <div class="input-group">
-                        <span class="input-label">ORDER</span>
-                        <div class="val-box">${item.poQty}</div>
-                    </div>
-                    <div class="input-group">
-                        <span class="input-label">PACKED</span>
-                        <input type="number" inputmode="numeric" id="qty-${item.code}" 
-                            value="${valQty}" class="qty-input" ${disabledAttr}>
-                    </div>
-                    <div class="input-group">
-                        <span class="input-label">KG/NOS</span>
-                        <input type="number" inputmode="decimal" id="kg-${item.code}" 
-                            placeholder="0.0" value="${dispKg}" class="qty-input" ${disabledAttr}>
-                    </div>
-                    <div class="input-group">
-                        <span class="input-label">PHOTO</span>
-                        <div class="cam-btn ${imgData?'has-img':''}" id="btn-cam-${item.code}">
-                            <span class="material-icons">${imgData?'visibility':'camera_alt'}</span>
-                            ${!imgData && !isPacked ? `<input type="file" accept="image/*" capture="environment" class="cam-input" onchange="handleImage(this, ${item.code})">` : ``}
-                            ${imgData ? `<div style="position:absolute; width:100%; height:100%;" onclick="openModal('${imgData}')"></div>` : ``}
-                            ${imgData && !isPacked ? `<span style="position:absolute; right:-5px; top:-5px; background:white; color:red; border-radius:50%; padding:2px; font-size:12px; border:1px solid #ccc;" onclick="clearImage(${item.code}); event.stopPropagation();">X</span>` : ``}
-                        </div>
-                    </div>
+                    <div class="input-group"><span class="input-label">ORDER</span><div class="val-box">${item.poQty}</div></div>
+                    <div class="input-group"><span class="input-label">PACKED</span><input type="number" inputmode="numeric" id="qty-${item.code}" value="${valQty}" class="qty-input" ${disabledAttr}></div>
+                    <div class="input-group"><span class="input-label">KG/NOS</span><input type="number" inputmode="decimal" id="kg-${item.code}" placeholder="0.0" value="${dispKg}" class="qty-input" ${disabledAttr}></div>
+                    <div class="input-group"><span class="input-label">PHOTO</span><div class="cam-btn ${imgData?'has-img':''}" id="btn-cam-${item.code}"><span class="material-icons">${imgData?'visibility':'camera_alt'}</span>${!imgData&&!isPacked?`<input type="file" accept="image/*" capture="environment" class="cam-input" onchange="handleImage(this,${item.code})">`:``}${imgData?`<div style="position:absolute;width:100%;height:100%;" onclick="openModal('${imgData}')"></div>`:``}${imgData&&!isPacked?`<span style="position:absolute;right:-5px;top:-5px;background:white;color:red;border-radius:50%;padding:2px;font-size:12px;border:1px solid #ccc;" onclick="clearImage(${item.code});event.stopPropagation();">X</span>`:``}</div></div>
                 </div>
-                <div class="card-footer">
-                    <!-- Weight Info Left Side -->
-                    ${weightInfoHTML}
-
-                    <!-- Buttons Right Side -->
-                    ${!isPacked ? 
-                        `<button class="item-btn btn-save" onclick="saveSingleItem(${item.code})"><span class="material-icons" style="font-size:16px">check</span> Save</button>` : 
-                        `<button class="item-btn btn-edit" onclick="enableEditItem(${item.code})"><span class="material-icons" style="font-size:16px">edit</span> Edit</button>`
-                    }
-                </div>`;
+                <div class="card-footer">${weightInfoHTML}${!isPacked?`<button class="item-btn btn-save" onclick="saveSingleItem(${item.code})"><span class="material-icons" style="font-size:16px">check</span> Save</button>`:`<button class="item-btn btn-edit" onclick="enableEditItem(${item.code})"><span class="material-icons" style="font-size:16px">edit</span> Edit</button>`}</div>`;
             container.appendChild(div);
         });
+
+        // Add Finish Button
+        if (items.length > 0 && currentFilterMode !== 'packed') {
+            const btnDiv = document.createElement('div');
+            btnDiv.className = 'submit-area';
+            btnDiv.innerHTML = `<button class="btn-finish" onclick="submitToReview()"><span class="material-icons">done_all</span> FINISH ORDER</button>`;
+            container.appendChild(btnDiv);
+        }
     }
 
-    // --- ITEM ACTIONS (REALTIME) ---
+    // --- ITEM ACTIONS ---
     function findItemIndex(code) {
         if(!activeIndent || !activeIndent.items) return -1;
         return activeIndent.items.findIndex(i => i.code == code);
@@ -482,27 +499,20 @@
     window.saveSingleItem = async function(code) {
         const idx = findItemIndex(code);
         if(idx === -1) return;
-
         const qtyInput = document.getElementById(`qty-${code}`);
         const kgInput = document.getElementById(`kg-${code}`);
-        const newQty = parseFloat(qtyInput.value) || 0;
-        const newKg = parseFloat(kgInput.value) || 0;
-
         const updates = {};
         const path = `active_indent/items/${idx}`;
-        updates[`${path}/savedQty`] = newQty;
-        updates[`${path}/savedKg`] = newKg;
+        updates[`${path}/savedQty`] = parseFloat(qtyInput.value) || 0;
+        updates[`${path}/savedKg`] = parseFloat(kgInput.value) || 0;
         updates[`${path}/isPacked`] = true;
-        
-        try { await update(ref(db), updates); } 
-        catch(e) { alert("Save failed: " + e.message); }
+        try { await update(ref(db), updates); } catch(e) { alert("Save failed: " + e.message); }
     }
 
     window.enableEditItem = async function(code) {
         const idx = findItemIndex(code);
         if(idx === -1) return;
-        try { await set(ref(db, `active_indent/items/${idx}/isPacked`), false); } 
-        catch(e) { alert("Unlock failed: " + e.message); }
+        try { await set(ref(db, `active_indent/items/${idx}/isPacked`), false); } catch(e) { alert("Error: " + e.message); }
     }
 
     window.handleImage = function(input, code) {
@@ -514,10 +524,8 @@
                 img.src = e.target.result;
                 img.onload = async function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; 
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
+                    const MAX_WIDTH = 600; const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
@@ -535,11 +543,22 @@
         if(idx !== -1) { await set(ref(db, `active_indent/items/${idx}/savedImg`), null); }
     }
 
-    window.submitToReview = async function() {
+    // --- SUBMIT LOGIC ---
+    window.submitToReview = function() {
         if(!activeIndent) return;
-        const pending = activeIndent.items.filter(i => !i.isPacked).length;
-        if(pending > 0) { if(!confirm(`Warning: ${pending} items NOT saved. Submit anyway?`)) return; } 
-        else { if(!confirm("Submit Order to Office?")) return; }
+        const total = activeIndent.items.length;
+        const packed = activeIndent.items.filter(i => i.isPacked === true).length;
+        const pending = total - packed;
+        
+        document.getElementById('conf-packed').innerText = packed;
+        document.getElementById('conf-pending').innerText = pending;
+        
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    window.executeFinalSubmit = async function() {
+        const btn = document.querySelector('#confirm-modal button[onclick*="executeFinalSubmit"]');
+        btn.innerHTML = 'SENDING...'; btn.disabled = true;
 
         try {
             const reviewItems = activeIndent.items.map(item => ({
@@ -554,35 +573,45 @@
             const reviewData = { date: activeIndent.date, items: reviewItems, timestamp: Date.now() };
             await set(ref(db, 'completed_packing'), reviewData);
             await remove(ref(db, 'active_indent'));
-            alert("Order Submitted!");
+            
+            document.getElementById('confirm-modal').classList.add('hidden');
+            alert("Order Submitted Successfully!");
             closePage('page-packing');
-        } catch (e) { alert("Error: " + e.message); }
+        } catch (e) { alert("Error: " + e.message); btn.innerHTML = 'SEND'; btn.disabled = false; }
     }
 
     // --- HISTORY VIEW ---
     window.loadHistory = async function() {
         const histContainer = document.getElementById('history-list');
+        const filterVal = document.getElementById('hist-month-filter').value;
         histContainer.innerHTML = '<div class="status-msg">Loading...</div>';
         try {
-            const q = query(ref(db, 'indents'), limitToLast(20));
+            const q = query(ref(db, 'indents'), limitToLast(100)); // Get more to allow filtering
             const snapshot = await get(q);
             if(snapshot.exists()) {
                 const rawData = snapshot.val();
-                historyData = Object.values(rawData).sort((a,b) => b.id - a.id);
+                let historyData = Object.values(rawData).sort((a,b) => b.id - a.id);
+                
+                // FILTER BY MONTH
+                if(filterVal) {
+                    historyData = historyData.filter(rec => rec.date.startsWith(filterVal));
+                }
+
                 histContainer.innerHTML = '';
+                if(historyData.length === 0) { histContainer.innerHTML = '<div class="status-msg">No history found for this month.</div>'; return; }
+
                 historyData.forEach((rec, idx) => {
                     const el = document.createElement('div');
                     el.className = 'history-card';
-                    el.onclick = () => openHistoryDetail(idx);
-                    el.innerHTML = `<div><div style="font-weight:700;">${rec.date}</div><div style="color:#666; font-size:12px;">${rec.items ? rec.items.length : 0} items</div></div><span class="material-icons">chevron_right</span>`;
+                    el.onclick = () => openHistoryDetail(rec); // Pass object
+                    el.innerHTML = `<div><div class="hist-date">${formatDateDisplay(rec.date)}</div><div class="hist-sub">${rec.items ? rec.items.length : 0} items packed</div></div><span class="material-icons" style="color:#ccc">chevron_right</span>`;
                     histContainer.appendChild(el);
                 });
-            } else { histContainer.innerHTML = '<div class="status-msg">No history.</div>'; }
+            } else { histContainer.innerHTML = '<div class="status-msg">No history found.</div>'; }
         } catch(e) { histContainer.innerHTML = `<div class="status-msg">Error</div>`; }
     }
 
-    window.openHistoryDetail = function(idx) {
-        const rec = historyData[idx];
+    window.openHistoryDetail = function(rec) {
         const container = document.getElementById('history-detail-content');
         container.innerHTML = '';
         const displayItems = rec.packingSnapshot || rec.items;
