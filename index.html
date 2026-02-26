@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swiggy Reports</title>
+    <!-- In index.html <head> -->
+<link rel="manifest" href="report-manifest.json">
+<meta name="theme-color" content="#1a73e8">
+<link rel="apple-touch-icon" href="report-icon.png"> <!-- For iPhone -->
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -194,166 +198,155 @@
         }
         .card-title { font-size: 16px; font-weight: 500; }
 
-            @media (max-width: 768px) {
+            
+/* --- LOGIN SCREEN --- */
+#login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+.login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+.login-title { font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 20px; }
+.login-input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline:none; }
+.login-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 700; cursor: pointer; }
+
+/* --- LOGOUT BUTTON (Header) --- */
+.btn-logout { background: #ffebee; color: var(--red); border: none; font-weight: 700; margin-left: 10px; }
+
+/* --- ROLE BASED VISIBILITY --- */
+/* Hide elements by default if role class is present on body */
+body.role-data-entry .tab[onclick*="view-indent"],
+body.role-data-entry .tab[onclick*="view-review"],
+body.role-data-entry .tab[onclick*="view-history"] { display: none !important; }
+
+body.role-admin .tab[onclick*="view-master"],
+body.role-admin .tab[onclick*="view-indent"],
+body.role-admin .tab[onclick*="view-review"],
+body.role-admin #header-actions-master { display: none !important; }
+
+/* --- MOBILE ADMIN OPTIMIZATION --- */
+.mobile-menu-btn { display: none; } /* Hidden on Desktop */
+.mobile-action-menu { 
+    position: absolute; top: 60px; right: 10px; background: white; 
+    border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+    border-radius: 8px; z-index: 2000; flex-direction: column; 
+    padding: 5px; min-width: 150px;
+}
+.mobile-action-menu button { width: 100%; text-align: left; border: none; margin-bottom: 2px; justify-content: flex-start; }
+/* --- MOBILE RESPONSIVE STYLES --- */
+    /* --- MOBILE RESPONSIVE STYLES (FINAL FIX) --- */
+    @media (max-width: 768px) {
         :root {
             --header-h: 56px;
             --toolbar-h: 48px;
         }
 
-        header { padding: 0 12px; }
+        /* 1. Header & Layout Spacing */
+        header { padding: 0 10px; }
         .brand span { font-size: 16px; }
-        .btn { padding: 0 8px; font-size: 12px; height: 32px; }
-        .btn span { font-size: 18px; }
-
+        .main { padding: 10px; margin-top: calc(var(--header-h) + var(--toolbar-h)); }
+        
+        /* 2. Scrollable Top Tabs */
         .toolbar { 
-            padding: 0 12px; 
+            padding: 0 5px; 
             overflow-x: auto; 
             justify-content: flex-start; 
             gap: 15px; 
         }
         .tabs { gap: 15px; flex-shrink: 0; }
-        .search-wrapper { display: none; } /* Hide search in toolbar on mobile to save space */
-        
-        /* Mobile KPI Grid */
-        .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .kpi-card { padding: 10px; }
-        .kpi-value { font-size: 16px; }
+        .search-wrapper { display: none; } /* Hide search bar on mobile to save space */
 
-        .margin-grid { 
-            display: flex; 
-            overflow-x: auto; 
-            gap: 10px; 
+        /* 3. KPI Grid (Force 2 Columns) */
+        .kpi-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important; /* 2 cols exactly */
+            gap: 8px !important;
+        }
+        .kpi-card { padding: 10px !important; }
+        .kpi-label { font-size: 10px !important; }
+        .kpi-value { font-size: 16px !important; }
+
+        /* 4. Margin Grid (Force Horizontal Scroll) */
+        .margin-grid {
+            display: flex !important;
+            overflow-x: auto !important;
+            gap: 10px !important;
             padding-bottom: 10px;
             scroll-snap-type: x mandatory;
+            grid-template-columns: none !important; /* Disable grid */
         }
-        .ma-card { 
-            min-width: 140px; 
-            flex-shrink: 0; 
-            scroll-snap-align: start; 
-        }
-
-        /* --- TABLE TO CARD TRANSFORMATION --- */
-        /* This makes the master list and indent list look like the packing app on mobile */
-        table, thead, tbody, th, td, tr { display: block; }
-        thead tr { position: absolute; top: -9999px; left: -9999px; }
-        
-        tr { 
-            border: 1px solid var(--border); 
-            margin-bottom: 10px; 
-            border-radius: 8px; 
-            background: white !important;
-            padding: 10px;
+        .ma-card {
+            min-width: 140px !important;
+            flex-shrink: 0;
+            scroll-snap-align: start;
         }
 
-        td { 
-            border: none; 
-            position: relative; 
-            padding-left: 45% !important; 
-            text-align: right !important;
-            white-space: normal;
-            height: auto;
-            min-height: 32px;
-            display: flex;
+        /* 5. Tables (Enable Scroll, Disable Card View) */
+        .card {
+            display: block;
+            width: 100%;
+            overflow-x: auto !important; /* Allow scroll */
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            display: table !important;
+            width: 100%;
+            min-width: 800px; /* Force width to trigger scroll */
+            table-layout: auto !important;
+        }
+
+        thead, tbody, tr { display: table-row-group !important; }
+        tr { display: table-row !important; border-bottom: 1px solid #eee !important; margin: 0 !important; box-shadow: none !important; background: transparent !important; }
+        th, td { display: table-cell !important; }
+
+        th {
+            position: sticky;
+            top: 0;
+            left: 0;
+            background: #fff;
+            z-index: 10;
+            white-space: nowrap;
+            padding: 10px 8px !important;
+        }
+
+        td {
+            padding: 8px !important;
+            font-size: 12px;
+            white-space: nowrap;
+            border: none !important;
+            border-bottom: 1px solid #f0f0f0 !important;
+            text-align: inherit !important; /* Restore Left/Right alignment */
+        }
+
+        /* Hide the "Card View" labels */
+        td:before { display: none !important; }
+
+        /* 6. History Detail Header (Fix layout issues) */
+        #hist-detail-header {
+            display: flex !important;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            padding: 8px 10px !important;
+        }
+        
+        /* Title truncation */
+        #hist-detail-title {
+            font-size: 13px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            margin: 0 10px !important;
         }
 
-        td:before { 
-            position: absolute; 
-            left: 10px; 
-            width: 40%; 
-            padding-right: 10px; 
-            white-space: nowrap; 
-            text-align: left;
-            font-weight: bold;
-            color: var(--text-sub);
-            content: attr(data-label); 
-        }
+        /* Hide Desktop Buttons */
+        .desktop-hist-actions { display: none !important; }
+        
+        /* Show 3-Dot Menu */
+        .mobile-menu-btn { display: flex !important; padding: 5px; }
 
-        /* Specific column width overrides for mobile */
-        .w-code, .w-name, .w-uom, .w-num, .w-calc, .w-stat, .w-action,
-        .h-date, .h-id, .h-items, .h-money, .h-profit, .h-margin, .h-action {
-            width: 100% !important;
-        }
-
-        .qty-edit, .cell-input {
-            width: 120px;
-            height: 36px;
-        }
-
-        /* Modals on mobile */
-        .modal { width: 95%; margin: 10px; }
-        .exp-grid { grid-template-columns: 1fr; }
+        /* Buttons & Inputs */
+        .btn { padding: 0 8px; font-size: 11px; height: 32px; }
+        .qty-edit, .cell-input { width: 60px; font-size: 12px; }
     }
-    @media (max-width: 768px) {
-    /* 1. Make the top tabs swipeable horizontally */
-    .toolbar { 
-        padding: 0 10px; 
-        justify-content: flex-start; 
-        overflow-x: auto; 
-    }
-    .tabs { 
-        gap: 15px; 
-        display: flex; 
-        flex-wrap: nowrap; 
-    }
-    .tab { font-size: 12px; white-space: nowrap; }
-
-    /* 2. Adjust Main Content Padding */
-    .main { padding: 10px; }
-
-    /* 3. Margin Distribution Grid to Carousel */
-    .margin-grid {
-        display: flex;
-        overflow-x: auto;
-        gap: 10px;
-        padding-bottom: 15px;
-        scroll-snap-type: x mandatory;
-    }
-    .ma-card {
-        min-width: 160px;
-        scroll-snap-align: start;
-        flex-shrink: 0;
-    }
-
-    /* 4. Table to Card Logic */
-    table, thead, tbody, th, td, tr { display: block; }
-    thead tr { display: none; } /* Hide headers */
-    tr { 
-        margin-bottom: 15px; 
-        border: 1px solid var(--border); 
-        border-radius: 8px; 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    td {
-        text-align: right !important;
-        padding-left: 50% !important;
-        position: relative;
-        border-bottom: 1px solid #f1f1f1;
-        height: auto;
-        min-height: 35px;
-    }
-    td:before {
-        content: attr(data-label);
-        position: absolute;
-        left: 12px;
-        width: 45%;
-        text-align: left;
-        font-weight: 700;
-        color: var(--text-sub);
-        font-size: 11px;
-        text-transform: uppercase;
-    }
-    td:last-child { border-bottom: none; }
-    
-    /* 5. Inputs on Mobile */
-    .qty-edit, .cell-input {
-        max-width: 100px;
-        height: 30px;
-        font-size: 14px;
-    }
-}
-
         /* --- KPI & MARGIN --- */
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
         .kpi-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border); }
@@ -482,14 +475,25 @@
 </head>
 <body>
 
+    <div id="login-overlay">
+    <div class="login-box">
+        <div class="login-title">Swiggy Reports</div>
+        <select id="login-role" class="login-input">
+            <option value="DEFAULT">Default</option>
+            <option value="DATA_ENTRY">Data Entry</option>
+            <option value="ADMIN">Admin (History Only)</option>
+        </select>
+        <input type="password" id="login-pass" class="login-input" placeholder="Password">
+        <button class="login-btn" onclick="handleLogin()">LOGIN</button>
+        <p id="login-error" style="color:red; margin-top:10px; font-size:12px;"></p>
+    </div>
+</div>
+
 <!-- TOOLTIPS -->
 <div id="price-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('price')" onmouseleave="hidePriceTooltip()"></div>
 <div id="margin-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('margin')" onmouseleave="hideMarginTooltip()"></div>
 <div id="expense-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('expense')" onmouseleave="hideExpenseTooltip()"></div>
 <div id="indent-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('indent')" onmouseleave="hideIndentTooltip()"></div>
-
-<!-- HEADER -->
-<!-- REPLACE YOUR EXISTING HEADER & TOOLBAR WITH THIS STRUCTURE -->
 
 <header>
     <div class="brand">
@@ -522,6 +526,7 @@
             <span class="material-icons">add</span> New Product
         </button>
     </div>
+    
 </header>
 
 <!-- UPDATE TOOLBAR -->
@@ -732,37 +737,60 @@
             </div>
         </div>
 
-        <!-- HISTORY DETAIL VIEW -->
         <div id="history-detail-view" class="hidden">
-             <div class="card-header" style="border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
-    <button class="btn btn-compact" onclick="closeHistoryDetail()">
-        <span class="material-icons">arrow_back</span> Back
-    </button>
+    <!-- UPDATED RESPONSIVE HEADER -->
+    <div id="hist-detail-header" class="card-header" style="border-radius:8px; border:1px solid var(--border); margin-bottom:15px; position:relative;">
+        <button class="btn btn-compact" onclick="closeHistoryDetail()">
+            <span class="material-icons">arrow_back</span> Back
+        </button>
+        
+        <div style="flex:1; margin-left:10px; font-weight:500; font-size:16px;" id="hist-detail-title">Bill Detail</div>
+        
+        <!-- DESKTOP ACTIONS (Hidden on Mobile) -->
+        <div class="desktop-hist-actions" style="display:flex; gap:5px;">
+            <button class="btn btn-compact" onclick="revertBillToPacking()" style="border-color: #d93025; color: #d93025;">
+                <span class="material-icons">undo</span> Revert
+            </button>
+            <button id="btn-hist-edit" class="btn btn-compact" onclick="toggleHistoryEdit()">
+                <span class="material-icons">edit</span> Edit
+            </button>
+            <button class="btn btn-compact" onclick="downloadWeightExcel()">
+                <span class="material-icons">scale</span> Weights
+            </button>
+            <button class="btn btn-compact" onclick="downloadBillPDF()">
+                <span class="material-icons">receipt_long</span> Bill
+            </button>
+            <button class="btn btn-filled btn-compact" onclick="downloadHistoryPDF()">
+                <span class="material-icons">picture_as_pdf</span> Report
+            </button>
+        </div>
+
+        <!-- MOBILE MENU BUTTON (Visible only on Mobile) -->
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+            <span class="material-icons">more_vert</span>
+        </button>
+
+        <!-- MOBILE POPUP MENU -->
+        <div id="mobile-actions-menu" class="mobile-action-menu hidden">
+            <button class="btn btn-compact" onclick="revertBillToPacking(); toggleMobileMenu();" style="color: #d93025;">
+                <span class="material-icons">undo</span> Revert Bill
+            </button>
+            <button id="btn-hist-edit-mobile" class="btn btn-compact" onclick="toggleHistoryEdit(); toggleMobileMenu();">
+                <span class="material-icons">edit</span> Edit Data
+            </button>
+            <button class="btn btn-compact" onclick="downloadWeightExcel(); toggleMobileMenu();">
+                <span class="material-icons">scale</span> Download Weights
+            </button>
+            <button class="btn btn-compact" onclick="downloadBillPDF(); toggleMobileMenu();">
+                <span class="material-icons">receipt_long</span> Download Invoice
+            </button>
+            <button class="btn btn-filled btn-compact" onclick="downloadHistoryPDF(); toggleMobileMenu();">
+                <span class="material-icons">picture_as_pdf</span> PDF Report
+            </button>
+        </div>
+    </div>
     
-    <div style="flex:1; margin-left:15px; font-weight:500; font-size:16px;" id="hist-detail-title">Bill Detail</div>
-        <!-- NEW REVERT BUTTON START -->
-    <button class="btn btn-compact" onclick="revertBillToPacking()" style="border-color: #d93025; color: #d93025;" title="Send back to Packing App">
-        <span class="material-icons">undo</span> Revert
-    </button>
-    <!-- NEW REVERT BUTTON END -->
-    <!-- COMPACT ACTION BUTTONS -->
-    <div style="display:flex; gap:5px;">
-        <button id="btn-hist-edit" class="btn btn-compact" onclick="toggleHistoryEdit()">
-            <span class="material-icons">edit</span> Edit
-        </button>
-            <!-- NEW BUTTON START -->
-    <button class="btn btn-compact" onclick="downloadWeightExcel()">
-        <span class="material-icons">scale</span> Weights
-    </button>
-    <!-- NEW BUTTON END -->
-        <button class="btn btn-compact" onclick="downloadBillPDF()">
-            <span class="material-icons">receipt_long</span> Bill
-        </button>
-        <button class="btn btn-filled btn-compact" onclick="downloadHistoryPDF()">
-            <span class="material-icons">picture_as_pdf</span> Report
-        </button>
-    </div>
-    </div>
+    <!-- REST OF HISTORY VIEW (KPIs, etc.) ... -->
             
             <!-- HIST KPI CARDS -->
             <div class="kpi-grid">
@@ -968,6 +996,7 @@ window.dbRemove = remove;
 
     // --- DATA HANDLING ---
     window.loadProductsGlobal = async function() {
+        checkAuth();
     setTimeout(async () => {
         if (!window.db) { console.warn("DB not ready"); return; }
         const dbRef = window.dbRef(window.db);
@@ -1001,7 +1030,19 @@ window.dbRemove = remove;
         }
     }, 1000);
 };
+window.toggleMobileMenu = function() {
+    const menu = document.getElementById('mobile-actions-menu');
+    menu.classList.toggle('hidden');
+}
 
+// Close menu when clicking outside
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('mobile-actions-menu');
+    const btn = document.querySelector('.mobile-menu-btn');
+    if (!menu.contains(event.target) && !btn.contains(event.target)) {
+        menu.classList.add('hidden');
+    }
+});
 // --- AUTOMATED PACKING PROCESSING ---
 
 function startIncomingPackingListener() {
@@ -1229,6 +1270,78 @@ function hidePriceTooltip() {
     tt.style.left = left + 'px';
     tt.style.top = top + 'px';
 }
+// --- AUTH CONFIG ---
+const CREDENTIALS = {
+    'DATA_ENTRY': '1234', // Simple example, change as needed
+    'ADMIN': 'Admin#098',
+    'DEFAULT': '123456' // Or blank if no pass needed for default
+};
+let currentUserRole = null;
+// --- AUTHENTICATION FUNCTIONS ---
+
+function checkAuth() {
+    const role = localStorage.getItem('swiggy_report_role');
+    
+    if (role) {
+        // Auto-Login: Role found in memory
+        applyRole(role);
+        const overlay = document.getElementById('login-overlay');
+        if(overlay) overlay.classList.add('hidden');
+    } else {
+        // No User: Show Login
+        const overlay = document.getElementById('login-overlay');
+        if(overlay) overlay.classList.remove('hidden');
+    }
+}
+
+window.handleLogin = function() {
+    const role = document.getElementById('login-role').value;
+    const pass = document.getElementById('login-pass').value;
+    const err = document.getElementById('login-error');
+
+    let isValid = false;
+
+    // --- CREDENTIALS CHECK ---
+    if (role === 'DATA_ENTRY' && pass === '1234') isValid = true;
+    else if (role === 'ADMIN' && pass === 'Admin#098') isValid = true;
+    else if (role === 'DEFAULT' && pass === 'default#098') isValid = true;
+
+    if (isValid) {
+        // Save to Memory
+        localStorage.setItem('swiggy_report_role', role);
+        applyRole(role);
+        document.getElementById('login-overlay').classList.add('hidden');
+        // Clear password field for security
+        document.getElementById('login-pass').value = '';
+        err.innerText = "";
+    } else {
+        err.innerText = "Invalid Password";
+    }
+}
+
+window.handleLogout = function() {
+    if(confirm("Are you sure you want to logout?")) {
+        localStorage.removeItem('swiggy_report_role');
+        location.reload(); // Reloads page, which triggers checkAuth -> Login Screen
+    }
+}
+function applyRole(role) {
+    currentUserRole = role;
+    document.body.className = ''; // Reset
+    
+    if (role === 'DATA_ENTRY') {
+        document.body.classList.add('role-data-entry');
+        switchTab('view-master'); // Force to Master tab
+    } 
+    else if (role === 'ADMIN') {
+        document.body.classList.add('role-admin');
+        switchTab('view-history'); // Force to History tab
+    } 
+    else {
+        // Default (Manager) - Access to everything
+        switchTab('view-master');
+    }
+}
 
     // --- SPECIFIC TOOLTIPS ---
     
@@ -1442,6 +1555,8 @@ function hidePriceTooltip() {
     }
 
     function switchTab(tabId) {
+            if (currentUserRole === 'DATA_ENTRY' && tabId !== 'view-master') return;
+    if (currentUserRole === 'ADMIN' && tabId !== 'view-history') return;
     currentTabId = tabId; // Update global state
 
     // 1. Show/Hide Views
@@ -2360,7 +2475,7 @@ function toggleHistoryEdit() {
         renderHistoryDetailTable();
     } else {
         // SAVE CHANGES
-        if(!confirm("Save changes to this bill? Financials will be recalculated.")) return;
+        if(!confirm("Save changes to this bill?")) return;
 
         // 1. Update Items
         let tBill=0, tStdCost=0, tDumpCost=0, tIndent=0;
@@ -2373,30 +2488,47 @@ function toggleHistoryEdit() {
                 const newQty = parseFloat(qtyInput.value) || 0;
                 const newKg = parseFloat(kgInput.value) || 0;
 
-                // Update Item
-                item.qty = newQty;
-                item.actualKg = newKg;
-
-                // Recalculate Item Metrics
-                // We need master data to get fresh cost/conv
-                const master = products.find(p => p.id === item.code);
-                const costPerKg = master ? (master.costKg || 0) : 0;
-                const conv = master ? (master.conv || 0) : 0;
+                // --- FIX: USE HISTORICAL COST, NOT CURRENT MASTER COST ---
                 
+                // 1. Get Conversion Factor (Assume constant from Master, or 0)
+                const master = products.find(p => p.id === item.code);
+                const conv = master ? (master.conv || 0) : 0;
+
+                // 2. Derive Historical Unit Cost (Cost per 1 Qty)
+                // Use 'myCost' if available, otherwise reverse calculate from frozenCost
+                let histUnitCost = item.myCost;
+                if (!histUnitCost && item.qty > 0) {
+                    histUnitCost = item.frozenCost / item.qty;
+                }
+                if (!histUnitCost) histUnitCost = 0; // Fallback
+
+                // 3. Derive Historical Cost Per Kg (For Dump Calculation)
+                let histCostPerKg = 0;
+                if (conv > 0) {
+                    histCostPerKg = histUnitCost / conv;
+                } else if (master) {
+                    // Fallback to master if conv is 0 or calculation fails
+                    histCostPerKg = master.costKg;
+                }
+
+                // --- RECALCULATE USING NEW QUANTITIES ---
+
                 // Financials
                 const standardKg = newQty * conv;
-                const standardCost = standardKg * costPerKg;
+                const standardCost = newQty * histUnitCost; // Keep original unit cost
                 const excessKg = Math.max(0, newKg - standardKg);
-                const dumpCost = excessKg * costPerKg;
+                const dumpCost = excessKg * histCostPerKg; // Keep original kg cost
                 
-                const lineRev = newQty * item.poRate;
+                const lineRev = newQty * item.poRate; // Keep original selling price
                 const lineProf = lineRev - standardCost;
                 
                 // Update Item Fields
+                item.qty = newQty;
+                item.actualKg = newKg;
                 item.frozenCost = standardCost;
                 item.itemDumpCost = dumpCost;
                 item.profit = lineProf;
-                item.myCost = newQty > 0 ? (standardCost / newQty) : 0;
+                item.myCost = histUnitCost; // Ensure this is preserved
                 item.marginPct = lineRev > 0 ? (lineProf/lineRev)*100 : 0;
 
                 // Accumulate Totals
