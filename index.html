@@ -501,32 +501,37 @@ body.role-admin #header-actions-master { display: none !important; }
         <span>Swiggy<strong> Reports</strong></span>
     </div>
     
-    <!-- WRAPPED BUTTONS IN A SPECIFIC DIV ID -->
-    <div id="header-actions-master" style="display:flex; gap:10px;">
-        <button class="btn btn-icon" onclick="toggleSettings()" title="Clear Data"><span class="material-icons">delete_sweep</span></button>
+    <div style="display:flex; gap:10px; align-items: center;">
         
-        <button class="btn" onclick="openExpenseModal()">
-            <span class="material-icons">account_balance_wallet</span> Expenses
-        </button>
-        
-        <!-- FIND THIS INPUT AND REPLACE IT -->
-<input type="file" id="erpUpload" accept=".xlsx, .xls" style="display:none" onchange="handleErpUpload(this)">
-        <button id="btn-erp-update" class="btn" onclick="document.getElementById('erpUpload').click()" 
-            style="border-color: #34a853; color: #34a853;"
-            onmouseenter="showErpLastUpdate(event)" onmouseleave="hidePriceTooltip()">
-            <span class="material-icons">currency_rupee</span> Update Costs (ERP)
-        </button>
+        <!-- Operations Group (Hidden for Admin) -->
+        <div id="header-actions-master" style="display:flex; gap:10px;">
+            <button class="btn btn-icon" onclick="toggleSettings()" title="Clear Data"><span class="material-icons">delete_sweep</span></button>
+            <button class="btn" onclick="openExpenseModal()">
+                <span class="material-icons">account_balance_wallet</span> Expenses
+            </button>
+            
+            <input type="file" id="erpUpload" accept=".xlsx, .xls" style="display:none" onchange="handleErpUpload(this)">
+            <button id="btn-erp-update" class="btn" onclick="document.getElementById('erpUpload').click()" 
+                style="border-color: #34a853; color: #34a853;"
+                onmouseenter="showErpLastUpdate(event)" onmouseleave="hidePriceTooltip()">
+                <span class="material-icons">currency_rupee</span> ERP Cost
+            </button>
 
-        <input type="file" id="masterUpload" accept=".csv" style="display:none" onchange="handleMasterUpload(this)">
-        <button class="btn" onclick="document.getElementById('masterUpload').click()">
-            <span class="material-icons">upload</span> Update Prices
-        </button>
-        
-        <button class="btn btn-filled" onclick="openAddModal()">
-            <span class="material-icons">add</span> New Product
+            <input type="file" id="masterUpload" accept=".csv" style="display:none" onchange="handleMasterUpload(this)">
+            <button class="btn" onclick="document.getElementById('masterUpload').click()">
+                <span class="material-icons">upload</span> Prices
+            </button>
+            
+            <button class="btn btn-filled" onclick="openAddModal()">
+                <span class="material-icons">add</span> New
+            </button>
+        </div>
+
+        <!-- Logout (Visible All) -->
+        <button class="btn btn-icon" onclick="handleLogout()" style="color:#d93025;" title="Logout">
+            <span class="material-icons">logout</span>
         </button>
     </div>
-    
 </header>
 
 <!-- UPDATE TOOLBAR -->
@@ -717,6 +722,7 @@ body.role-admin #header-actions-master { display: none !important; }
                     <span class="card-title">Saved Bills</span>
                     <input type="month" id="history-month-filter" class="month-picker" onchange="renderIndentHistory()">
                 </div>
+                <div style="overflow: auto; flex: 1;"></div>
                 <table>
                     <thead>
                         <tr>
