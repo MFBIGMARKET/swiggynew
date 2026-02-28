@@ -932,11 +932,12 @@ body.role-admin #header-actions-master { display: none !important; }
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     // REPLACE THE IMPORT LINE
-import { getDatabase, ref, set, get, child, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, set, get, child, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // ADD THESE TO WINDOW OBJECT (Below the imports)
 window.dbOnValue = onValue;
 window.dbRemove = remove;
+window.dbUpdate = update;
 
     // --- ⚠️ PASTE YOUR FIREBASE CONFIG HERE ---
     const firebaseConfig = {
@@ -1015,7 +1016,12 @@ window.dbRemove = remove;
             const tSnap = await window.dbGet(window.dbChild(dbRef, `settings/lastErpUpdate`));
 
             products = pSnap.exists() ? pSnap.val() : [];
-            indents = iSnap.exists() ? iSnap.val() : [];
+            
+            // UPDATED INDENT LOADING (Handles Map/Array safely)
+            const iVal = iSnap.exists() ? iSnap.val() : [];
+            indents = Object.values(iVal); // Force convert to array for UI
+            indents.sort((a,b) => b.id - a.id); // Sort Newest First
+
             if(eSnap.exists()) expenseSettings = eSnap.val();
             if(tSnap.exists()) lastErpUpdate = tSnap.val();
 
@@ -1064,7 +1070,7 @@ function startIncomingPackingListener() {
     });
 }
 
-function autoFinalizeBill(data) {
+async function autoFinalizeBill(data) {
     if (!data || !data.items) return;
 
     // 1. Calculate Financials
@@ -1142,21 +1148,67 @@ function autoFinalizeBill(data) {
         netProfit: netProfit
     };
 
-    // 3. Save & Clean
-    indents.unshift(historyRecord); 
-    saveData('indents', indents);   
-    window.dbRemove(window.dbRef(window.db, 'completed_packing'));
+    // 3. Save & Clean (INCREMENTAL SAVE FIX)
+    try {
+        // Save ONLY this specific record to indents/{id}
+        await window.dbSet(window.dbRef(window.db, `indents/${historyRecord.id}`), historyRecord);
+        
+        // Remove the pending node
+        await window.dbRemove(window.dbRef(window.db, 'completed_packing'));
+        
+        // Update local UI
+        indents.unshift(historyRecord);
+        alert(`New Bill Processed for ${data.date}!\nRevenue: ₹${totalBillAmt.toFixed(0)}\nProfit: ₹${netProfit.toFixed(0)}`);
+        
+        if (currentTabId === 'view-history') {
+            renderIndentHistory();
+        }
 
-    alert(`New Bill Processed for ${data.date}!\nRevenue: ₹${totalBillAmt.toFixed(0)}\nProfit: ₹${netProfit.toFixed(0)}`);
-    
-    if (currentTabId === 'view-history') {
-        renderIndentHistory();
+    } catch(e) {
+        console.error(e);
+        if(e.message.includes("too large")) {
+            if(confirm("CRITICAL ERROR: The bill data is too large (likely too many photos) and cannot be saved.\n\nDo you want to DISCARD this bill to unblock the app?")) {
+                 await window.dbRemove(window.dbRef(window.db, 'completed_packing'));
+                 location.reload();
+            }
+        } else {
+            alert("Error saving bill: " + e.message);
+        }
     }
 }
 
     function saveData(key, data) {
         if (!window.db) return;
         window.dbSet(window.dbRef(window.db, key), data);
+    }
+
+    // --- NEW BATCH UPLOAD HELPER (For large indents/reverts) ---
+    async function uploadBatchedData(nodePath, dataObj) {
+        const dbRef = window.dbRef(window.db);
+        const items = dataObj.items || [];
+        const metadata = { ...dataObj };
+        delete metadata.items; // Separate items from metadata to send header first
+
+        // 1. Set the Metadata (Date, Totals, etc) and clear old items
+        await window.dbSet(window.dbChild(dbRef, nodePath), metadata);
+
+        // 2. Upload items in Chunks (Batches of 200)
+        const CHUNK_SIZE = 200; 
+        const totalItems = items.length;
+
+        // Loop through data in chunks
+        for (let i = 0; i < totalItems; i += CHUNK_SIZE) {
+            const chunk = items.slice(i, i + CHUNK_SIZE);
+            const updates = {};
+            
+            chunk.forEach((item, idx) => {
+                // Construct path: node/items/0, node/items/1, etc.
+                updates[`${nodePath}/items/${i + idx}`] = item;
+            });
+
+            // Send this chunk
+            await window.dbUpdate(dbRef, updates);
+        }
     }
 
     // --- EXPENSE LOGIC ---
@@ -1843,17 +1895,14 @@ function closeReportModal() {
     async function revertBillToPacking() {
     if (!currentViewedHistory) return;
     
-    if(!confirm("⚠️ REVERT WARNING:\n\n1. This will remove this bill from History.\n2. It will appear in the Packing App for editing.\n3. Existing 'Active Orders' in Packing App will be checked first.\n\nContinue?")) {
-        return;
-    }
+    if(!confirm("⚠️ REVERT WARNING:\n\n1. This will remove this bill from History.\n2. It will appear in the Packing App.\n\nContinue?")) return;
 
     const dbRef = window.dbRef(window.db);
     
-    // 1. Safety Check: Is there already an active indent?
     try {
         const snap = await window.dbGet(window.dbChild(dbRef, 'active_indent'));
         if (snap.exists()) {
-            alert("❌ Cannot Revert!\n\nThe Packing App currently has an active order pending. Please finish or delete the active order in the Packing App first.");
+            alert("❌ Cannot Revert: Packing App has an active order pending.");
             return;
         }
     } catch(e) {
@@ -1861,48 +1910,37 @@ function closeReportModal() {
         return;
     }
 
-    // 2. Map History Items -> Packing Draft Format
     const restoredItems = currentViewedHistory.items.map(item => {
-        // LOGIC: Only mark as 'Packed' (Green) if quantity was actually entered (>0)
-        // If Qty is 0, it means it was Short/Skipped, so it reverts as 'Pending' (White)
         const wasPacked = (item.qty > 0 || (item.actualKg && item.actualKg > 0));
-
         return {
             code: item.code,
             name: item.name,
             poRate: item.poRate,
-            // Restore Order Qty (fallback to poQty if originalQty missing)
             poQty: item.originalQty !== undefined ? item.originalQty : item.poQty,
-            
-            // Restore Packed Data
             savedQty: item.qty,         
             savedKg: item.actualKg || 0,
-            savedImg: item.img || null, 
-            
-            // Smart Status
+            savedImg: item.img || null,
             isPacked: wasPacked 
         };
     });
 
     const activeData = {
         date: currentViewedHistory.date,
-        // Recalculate total indent value based on restored poQty
         totalIndentAmt: restoredItems.reduce((sum, i) => sum + (i.poQty * i.poRate), 0),
         items: restoredItems
     };
 
-    // 3. Perform Transaction (Save to Active -> Delete from History)
     try {
-        // A. Send to Active Indent
-        await window.dbSet(window.dbRef(window.db, 'active_indent'), activeData);
+        // Use Batch Upload for Safety
+        await uploadBatchedData('active_indent', activeData);
         
-        // B. Delete from History (indents)
-        // We filter out the current record from the local array and save the array
+        // --- KEY FIX: Delete ONLY this specific node ---
+        await window.dbRemove(window.dbRef(window.db, `indents/${currentViewedHistory.id}`));
+        
+        // Update local UI
         indents = indents.filter(x => x.id !== currentViewedHistory.id);
-        saveData('indents', indents);
-
-        // C. UI Cleanup
-        alert("✅ Success! Bill reverted to Packing App.");
+        
+        alert("✅ Success! Bill reverted.");
         closeHistoryDetail();
         renderIndentHistory();
         
@@ -2219,34 +2257,39 @@ function addToHistory(product, source, buy, sell) {
         }
     }
 
-    function sendIndentToPacking() {
+    async function sendIndentToPacking() {
         if(!currentIndentDate) { alert("Could not extract date from CSV"); return; }
         
-        // Calculate basic Indent Total for reference
         let totalIndentAmt = 0;
         currentIndent.forEach(i => { 
             totalIndentAmt += i.poRate * (i.originalQty || i.qty);
         });
 
-        // Create the staging object
         const stagingData = {
             date: currentIndentDate,
             totalIndentAmt: totalIndentAmt,
             items: currentIndent.map(i => ({
                 code: i.code,
                 name: i.name,
-                poQty: i.originalQty || i.qty, // This is the Indent Qty
+                poQty: i.originalQty || i.qty,
                 poRate: i.poRate
             }))
         };
 
-        // Save to 'active_indent' node
-        window.dbSet(window.dbRef(window.db, 'active_indent'), stagingData)
-            .then(() => {
-                alert("Sent to Packing App! Please open packing.html to enter weights.");
-                resetIndent(); // Clear screen
-            })
-            .catch(err => alert("Error: " + err.message));
+        const btn = document.querySelector('button[onclick="sendIndentToPacking()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "Sending..."; btn.disabled = true;
+
+        try {
+            // Use Batch Upload Helper
+            await uploadBatchedData('active_indent', stagingData);
+            alert("Sent to Packing App!");
+            resetIndent();
+        } catch (err) {
+            alert("Error: " + err.message);
+        } finally {
+            btn.innerHTML = originalText; btn.disabled = false;
+        }
     }
 
     function resetIndent() {
@@ -2321,10 +2364,15 @@ function addToHistory(product, source, buy, sell) {
     
     function deleteIndent(id) {
         if(!confirm("Delete this record permanently?")) return;
-        indents = indents.filter(x => x.id !== id);
-        saveData('indents', indents);
-        renderIndentHistory();
-        closeHistoryDetail(); // If open
+        
+        // --- KEY FIX: Delete Specific Node ---
+        window.dbRemove(window.dbRef(window.db, `indents/${id}`))
+            .then(() => {
+                indents = indents.filter(x => x.id !== id);
+                renderIndentHistory();
+                closeHistoryDetail(); // If open
+            })
+            .catch(err => alert("Error deleting: " + err.message));
     }
 
     function viewHistoryDetail(index) {
@@ -2481,7 +2529,7 @@ function renderHistoryDetailTable() {
         });
     }
 }
-function toggleHistoryEdit() {
+async function toggleHistoryEdit() {
     const btn = document.getElementById('btn-hist-edit');
     
     if (!isHistoryEditMode) {
@@ -2569,16 +2617,20 @@ function toggleHistoryEdit() {
         currentViewedHistory.netProfit = grossProfit - expenseObj.total;
         currentViewedHistory.totalIndentAmt = tIndent;
 
-        // 3. Save
-        saveData('indents', indents);
-
-        // 4. Exit Edit Mode
-        isHistoryEditMode = false;
-        btn.innerHTML = '<span class="material-icons">edit</span> Edit';
-        btn.classList.remove('btn-filled');
-        
-        refreshHistoryKPIs();
-        renderHistoryDetailTable();
+        // 3. Save (INCREMENTAL FIX)
+        try {
+            await window.dbSet(window.dbRef(window.db, `indents/${currentViewedHistory.id}`), currentViewedHistory);
+            
+            // 4. Exit Edit Mode
+            isHistoryEditMode = false;
+            btn.innerHTML = '<span class="material-icons">edit</span> Edit';
+            btn.classList.remove('btn-filled');
+            
+            refreshHistoryKPIs();
+            renderHistoryDetailTable();
+        } catch(e) {
+            alert("Error saving: " + e.message);
+        }
     }
 }
 function refreshHistoryKPIs() {
