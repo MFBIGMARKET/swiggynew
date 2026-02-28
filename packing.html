@@ -8,8 +8,9 @@
     <link rel="manifest" href="packing-manifest.json">
     <meta name="theme-color" content="#1a73e8">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="packing-icon.png">
     
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <style>
@@ -22,17 +23,23 @@
         .page.active { transform: translateX(0); }
         .page.root-page { transform: translateX(0); z-index: 10; } 
 
+        /* LOGIN SCREEN */
+        #page-login { z-index: 9999; background: white; justify-content: center; padding: 30px; }
+        .login-box { text-align: center; width: 100%; max-width: 320px; margin: auto; }
+        .login-logo { font-size: 64px; color: var(--primary); margin-bottom: 20px; }
+        .login-title { font-size: 24px; font-weight: 900; color: #333; margin-bottom: 30px; }
+        .login-input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; font-size: 16px; background: #fafafa; outline: none; }
+        .login-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(26,115,232,0.3); }
+        
         /* HEADER */
         .header { background: var(--surface); height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); z-index: 20; }
         .header h2 { margin: 0; font-size: 18px; color: var(--primary); font-weight: 700; }
         .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-sub); display: flex; align-items: center; padding: 8px; border-radius: 50%; }
-        .icon-btn:active { background: #f1f3f4; }
         .header-actions { display: flex; gap: 10px; align-items: center; }
 
-        /* NEW FINISH BUTTON */
+        /* HEADER BUTTONS */
         .btn-finish-header { background: var(--green); color: white; border: none; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
         .btn-finish-header:active { transform: scale(0.95); background: #146c2e; }
-        .btn-finish-header .material-icons { font-size: 18px; }
 
         /* CONTENT */
         .content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; }
@@ -42,14 +49,13 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* NAV */
-        .bottom-nav { height: 60px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 200; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; width: 100%; height: 100%; font-size: 11px; font-weight: 500; transition: 0.2s; }
+        .bottom-nav { height: 65px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 200; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; width: 100%; height: 100%; font-size: 10px; font-weight: 500; transition: 0.2s; }
         .nav-item.active { color: var(--primary); transform: translateY(-2px); }
         .nav-item .material-icons { font-size: 24px; margin-bottom: 3px; }
 
         /* TASK CARD */
         .task-card { background: white; border-radius: 16px; padding: 24px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); cursor: pointer; position: relative; overflow: hidden; }
-        .task-card:active { transform: scale(0.98); transition: 0.1s; }
         .task-label { font-size: 11px; font-weight: 700; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
         .task-date { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .date-pill { background: #e3f2fd; color: var(--primary); padding: 4px 10px; border-radius: 6px; font-size: 14px; }
@@ -65,6 +71,19 @@
         .history-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
         .hist-date { font-weight: 700; font-size: 15px; color: var(--text-main); }
         .hist-sub { color: var(--text-sub); font-size: 12px; margin-top: 2px; }
+        /* Add inside <style> */
+
+/* New Weight & User Info Styles */
+.info-row { font-size: 11px; color: #5f6368; margin-top: 4px; line-height: 1.4; }
+.user-line { font-size: 10px; margin-top: 2px; font-weight: 500; color: #1a73e8; display: flex; gap: 8px; }
+.user-line .edited { color: #e65100; }
+
+/* History Image Icon */
+.img-icon-btn { color: var(--primary); cursor: pointer; padding: 5px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s; }
+.img-icon-btn:active { background: #e8f0fe; }
+
+/* Hidden Finish Button (default state) */
+.btn-finish-header.restricted { display: none !important; }
 
         /* PACKING ITEMS */
         .search-container { display: flex; gap: 10px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border); align-items: center; }
@@ -99,39 +118,43 @@
         .card.overpacked .val-box { background: #ffcdd2; color: #b71c1c; border-color: #ef9a9a; }
         .card.overpacked input.qty-input { color: #c62828; font-weight: 800; }
 
-        /* FOOTER ACTIONS */
         .card-footer { padding: 8px 12px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: white; }
         .item-btn { padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; border: none; }
         .btn-save { background: var(--primary); color: white; }
         .btn-edit { background: #fff; color: var(--text-main); border: 1px solid #ddd; }
+        .packer-badge { font-size: 10px; color: #555; background: #eee; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; }
 
-        /* MODAL */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; }
-        .modal-box { background: white; width: 90%; max-width: 350px; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popUp 0.3s ease-out; }
-        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #eee; margin: 15px 0; border: 1px solid #eee; }
-        .stat-item { background: white; padding: 15px 10px; text-align: center; }
-        .stat-label { font-size: 11px; color: #777; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-        .stat-num { font-size: 18px; font-weight: 800; color: #333; margin-top: 5px; }
-
-        /* ATTENDANCE */
-        .att-header { background:white; padding:15px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-bottom:15px; border:1px solid var(--border); }
-        .emp-select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background: white; margin-bottom:10px; }
-        .att-status-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-        .loc-badge { font-size:12px; padding:4px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; font-weight: 500; }
+        /* ATTENDANCE & PROFILE */
+        .att-header { background:white; padding:20px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-bottom:15px; border:1px solid var(--border); text-align: center; }
+        .att-status-row { margin-bottom:20px; display: flex; justify-content: center; gap: 10px; align-items: center; }
+        .loc-badge { font-size:13px; padding:6px 12px; border-radius:20px; display:inline-flex; align-items:center; gap:6px; font-weight: 600; }
         .loc-ok { background:#e8f5e9; color:var(--green); }
         .loc-err { background:#ffebee; color:var(--red); }
-        .clock-btn { width: 100%; height: 50px; border-radius: 8px; border: none; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing:1px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition:0.2s; }
+        .clock-btn { width: 100%; height: 55px; border-radius: 12px; border: none; font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing:1px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition:0.2s; }
         .btn-in { background: var(--green); color: white; }
         .btn-out { background: var(--red); color: white; }
         .btn-done { background: #f5f5f5; color: #aaa; cursor:default; box-shadow: none; }
-        
+
+        /* PROFILE */
+        .profile-header { background: white; padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; }
+        .user-info h3 { margin: 0; font-size: 18px; }
+        .user-info p { margin: 4px 0 0 0; color: #666; font-size: 13px; }
+        .logout-btn { background: #ffebee; color: var(--red); border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px; margin-left: auto; }
+
+        .hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .att-list { background:white; border-radius:12px; overflow:hidden; border:1px solid #eee; margin-top:10px; }
         .att-row { display:grid; grid-template-columns: 0.8fr 1fr 1fr 0.8fr; padding:12px; border-bottom:1px solid #f0f0f0; font-size:13px; align-items:center; }
         .att-row.head { background:#f9f9f9; font-weight:700; color:#666; font-size:11px; text-transform:uppercase; }
         .ot-val { font-weight:700; color:var(--orange); background:#fff3e0; padding:2px 6px; border-radius:4px; font-size:12px; }
 
+        /* ADMIN DASHBOARD */
+        .admin-att-card { background: white; padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .admin-status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; margin-right: 5px; display: inline-block; }
+        .status-in { background: var(--green); box-shadow: 0 0 5px var(--green); }
+        .status-out { background: var(--red); }
+
+        /* HELPERS */
         .status-msg { text-align: center; margin-top: 60px; color: #999; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .hidden { display: none !important; }
         .net-status { width: 8px; height: 8px; border-radius: 50%; background: #ccc; display: inline-block; margin-right: 10px; }
@@ -145,8 +168,29 @@
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="page-login" class="page active" style="z-index: 10000;">
+    <div class="login-box">
+        <div class="login-logo"><span class="material-icons" style="font-size:64px">lock</span></div>
+        <div class="login-title">Staff Login</div>
+        
+        <select id="login-user" class="login-input">
+            <option value="" disabled selected>Select User</option>
+            <option value="VISHAKH">VISHAKH</option>
+            <option value="RAJEEV">RAJEEV</option>
+            <option value="MOUSUM">MOUSUM</option>
+            <option value="YADHU">YADHU</option>
+            <option value="ADMIN">ADMIN</option>
+        </select>
+        
+        <input type="password" id="login-pass" class="login-input" placeholder="Password">
+        <button class="login-btn" onclick="handleLogin()">LOGIN</button>
+        <p id="login-error" style="color:red; margin-top:15px; font-size:13px;"></p>
+    </div>
+</div>
+
 <!-- DASHBOARD -->
-<div class="page root-page" id="page-dashboard">
+<div class="page root-page hidden" id="page-dashboard">
     <div class="header">
         <div style="display:flex; align-items:center; gap:10px;">
             <span class="material-icons" style="color:var(--primary)">inventory_2</span>
@@ -159,34 +203,33 @@
         <!-- TAB 1: TASKS -->
         <div id="tab-available" class="tab-content active">
             <div id="available-container">
-                <div class="status-msg">
-                    <span class="material-icons" style="font-size:32px; animation: spin 1s infinite;">sync</span>
-                    Loading...
-                </div>
+                <div class="status-msg"><span class="material-icons" style="font-size:32px; animation: spin 1s infinite;">sync</span>Loading...</div>
             </div>
         </div>
 
         <!-- TAB 2: ATTENDANCE -->
         <div id="tab-attendance" class="tab-content">
-            <div class="att-header">
-                <select id="emp-select" class="emp-select" onchange="refreshAttendanceTab()">
-                    <option value="RAJEEV">RAJEEV</option>
-                    <option value="MOUSUM">MOUSUM</option>
-                </select>
-                <div class="att-status-row">
-                    <div id="loc-badge" class="loc-badge loc-err"><span class="material-icons" style="font-size:14px">gps_off</span> Checking...</div>
-                    <div id="today-time" style="font-size:12px; color:#888; font-weight:500;">--:--</div>
+            <!-- STAFF VIEW -->
+            <div id="staff-att-view">
+                <div class="att-header">
+                    <h3 style="margin:0 0 15px 0; color:#333;">Today's Check-In</h3>
+                    <div class="att-status-row">
+                        <div id="loc-badge" class="loc-badge loc-err"><span class="material-icons" style="font-size:14px">gps_off</span> Checking...</div>
+                        <div id="today-time" style="font-size:14px; color:#555; font-weight:700;">--:--</div>
+                    </div>
+                    <div id="att-action-area"></div>
                 </div>
-                <div id="att-action-area"></div>
             </div>
-            
-            <div class="hist-header" style="margin-top:25px;">
-                <span class="section-title">Log History</span>
-                <input type="month" id="att-month-filter" class="month-picker" onchange="loadAttendanceHistory()">
-            </div>
-            <div class="att-list">
-                <div class="att-row head"><div>Date</div><div>In</div><div>Out</div><div style="text-align:right">OT</div></div>
-                <div id="att-history-body"></div>
+
+            <!-- ADMIN VIEW -->
+            <div id="admin-att-view" class="hidden">
+                <div class="hist-header">
+                    <span class="section-title">Staff Status Today</span>
+                    <span style="font-size:12px; color:#666;" id="admin-date"></span>
+                </div>
+                <div id="admin-status-list" style="background:white; border-radius:12px; overflow:hidden; border:1px solid #eee;">
+                    <!-- Injected by JS -->
+                </div>
             </div>
         </div>
 
@@ -198,12 +241,45 @@
             </div>
             <div id="history-list"></div>
         </div>
+
+        <!-- TAB 4: PROFILE -->
+        <div id="tab-profile" class="tab-content">
+            <div class="profile-header">
+                <div class="avatar" id="prof-avatar">U</div>
+                <div class="user-info">
+                    <h3 id="prof-name">User</h3>
+                    <p id="prof-role">Staff Member</p>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">LOGOUT</button>
+            </div>
+            
+            <div style="padding:20px 0;">
+                <div class="hist-header">
+                    <span class="section-title">Log History</span>
+                    <div style="display:flex; gap:5px;">
+                        <!-- ADMIN ONLY SELECTOR -->
+                        <select id="admin-user-filter" class="month-picker hidden" onchange="loadAttendanceHistory()">
+                            <option value="VISHAKH">VISHAKH</option>
+                            <option value="RAJEEV">RAJEEV</option>
+                            <option value="MOUSUM">MOUSUM</option>
+                            <option value="YADHU">YADHU</option>
+                        </select>
+                        <input type="month" id="prof-month-filter" class="month-picker" onchange="loadAttendanceHistory()">
+                    </div>
+                </div>
+                <div class="att-list">
+                    <div class="att-row head"><div>Date</div><div>In</div><div>Out</div><div style="text-align:right">OT</div></div>
+                    <div id="att-history-body"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('available', this)"><span class="material-icons">assignment</span><span>Tasks</span></div>
-        <div class="nav-item" onclick="switchTab('attendance', this)"><span class="material-icons">fingerprint</span><span>Attendance</span></div>
+        <div class="nav-item" onclick="switchTab('attendance', this)"><span class="material-icons">fingerprint</span><span>Attend</span></div>
         <div class="nav-item" onclick="switchTab('history', this)"><span class="material-icons">history</span><span>History</span></div>
+        <div class="nav-item" onclick="switchTab('profile', this)"><span class="material-icons">person</span><span>Profile</span></div>
     </div>
 </div>
 
@@ -215,22 +291,14 @@
             <div id="net-indicator" class="net-status" title="Connection Status"></div>
             <h2 id="packing-title" style="font-size:16px;">Packing...</h2>
         </div>
-        
         <div class="header-actions">
-            <!-- NEW HEADER BUTTON -->
-            <button class="btn-finish-header" onclick="submitToReview()">
-                <span class="material-icons">done_all</span> Finish
-            </button>
+            <button class="btn-finish-header" onclick="submitToReview()"><span class="material-icons">done_all</span> Finish</button>
         </div>
     </div>
-    
     <div class="search-container">
         <input type="text" id="searchBox" class="search-input" placeholder="Search item..." onkeyup="filterList()">
-        <button id="btn-filter" class="filter-btn" onclick="toggleFilterMode()">
-            <span class="material-icons" id="icon-filter">filter_list</span>
-        </button>
+        <button id="btn-filter" class="filter-btn" onclick="toggleFilterMode()"><span class="material-icons" id="icon-filter">filter_list</span></button>
     </div>
-
     <div class="full-content">
         <div id="packing-list-container"></div>
     </div>
@@ -242,6 +310,12 @@
         <button class="icon-btn" onclick="closePage('page-history-detail')"><span class="material-icons">arrow_back</span></button>
         <h2 style="font-size:16px;">Details</h2><div style="width:24px;"></div>
     </div>
+    <div class="search-container">
+        <input type="text" id="histSearchBox" class="search-input" placeholder="Search item..." onkeyup="filterHistoryList()">
+        <button id="btn-hist-filter" class="filter-btn" onclick="toggleHistoryFilterMode()">
+            <span class="material-icons" id="icon-hist-filter">filter_list</span>
+        </button>
+    </div>
     <div class="full-content" id="history-detail-content"></div>
 </div>
 
@@ -252,18 +326,10 @@
             <h3 style="margin:0; color:var(--text-main); font-size:18px;">Finish Packing?</h3>
             <p style="color:#666; font-size:13px; margin:5px 0 15px 0;">Order will be sent to the office.</p>
         </div>
-        
         <div class="stat-grid">
-            <div class="stat-item">
-                <div class="stat-label">Packed</div>
-                <div class="stat-num" style="color:var(--green)" id="conf-packed">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Pending</div>
-                <div class="stat-num" style="color:var(--red)" id="conf-pending">0</div>
-            </div>
+            <div class="stat-item"><div class="stat-label">Packed</div><div class="stat-num" style="color:var(--green)" id="conf-packed">0</div></div>
+            <div class="stat-item"><div class="stat-label">Pending</div><div class="stat-num" style="color:var(--red)" id="conf-pending">0</div></div>
         </div>
-
         <div style="padding:20px; display:flex; gap:10px;">
             <button onclick="document.getElementById('confirm-modal').classList.add('hidden')" style="flex:1; padding:12px; border-radius:8px; border:1px solid #ddd; background:white; font-weight:700; cursor:pointer; color:#555;">CANCEL</button>
             <button onclick="executeFinalSubmit()" style="flex:1; padding:12px; border-radius:8px; border:none; background:var(--green); font-weight:700; cursor:pointer; color:white;">SEND</button>
@@ -291,19 +357,30 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     
-    // VARIABLES
+    // --- VARIABLES ---
     let activeIndent = null;
-    let historyData = [];
     let currentFilterMode = 'all'; 
     let masterMap = {}; 
+    let currentUser = null;
+    let historyData = [];
+    let currentHistoryRec = null;
+    let histFilterMode = 'all';
+
+    // --- USER CREDENTIALS ---
+    const USERS = {
+        'VISHAKH': 'Vish@123',
+        'RAJEEV': 'Raj@345',
+        'MOUSUM': 'Mou@789',
+        'YADHU': 'Yad@234',
+        'ADMIN': 'Admin#098'
+    };
     
     // --- LOCATION CONFIG ---
-    const SHOP_LAT = 11.9796; 
-    const SHOP_LNG = 75.6696; 
+    const SHOP_LAT = 11.9322032684928;
+    const SHOP_LNG = 75.57772362536731; 
     const ALLOWED_RADIUS_KM = 0.100;
     const TEST_MODE = false; 
 
-    // --- DATE FORMATTER ---
     function formatDateDisplay(dateStr) {
         if(!dateStr) return '';
         const [y, m, d] = dateStr.split('-');
@@ -312,21 +389,89 @@
 
     // --- INITIALIZATION ---
     function init() {
+        checkAuth(); 
         setupRealtimeListener();
         loadMasterData(); 
         
-        // Net Status
         const netInd = document.getElementById('net-indicator');
-        const updateNet = () => { if(navigator.onLine) netInd.className='net-status net-online'; else netInd.className='net-status net-offline'; };
-        window.addEventListener('online', updateNet); window.addEventListener('offline', updateNet); updateNet();
+        if(netInd) {
+            const updateNet = () => { if(navigator.onLine) netInd.className='net-status net-online'; else netInd.className='net-status net-offline'; };
+            window.addEventListener('online', updateNet); window.addEventListener('offline', updateNet); updateNet();
+        }
 
         const now = new Date();
         const m = String(now.getMonth() + 1).padStart(2, '0');
         const y = now.getFullYear();
-        document.getElementById('att-month-filter').value = `${y}-${m}`;
+        document.getElementById('prof-month-filter').value = `${y}-${m}`;
         document.getElementById('hist-month-filter').value = `${y}-${m}`;
     }
 
+    // --- AUTHENTICATION ---
+    function checkAuth() {
+        const storedUser = localStorage.getItem('swiggy_user');
+        if (storedUser && USERS[storedUser]) {
+            currentUser = storedUser;
+            showDashboard();
+        } else {
+            document.getElementById('page-login').classList.remove('hidden');
+            document.getElementById('page-dashboard').classList.add('hidden');
+        }
+    }
+
+    function handleLogin() {
+        const user = document.getElementById('login-user').value;
+        const pass = document.getElementById('login-pass').value;
+        const errorMsg = document.getElementById('login-error');
+
+        if (!user) { errorMsg.innerText = "Please select a user."; return; }
+        if (USERS[user] === pass) {
+            localStorage.setItem('swiggy_user', user);
+            currentUser = user;
+            showDashboard();
+        } else {
+            errorMsg.innerText = "Invalid Password.";
+        }
+    }
+
+    function showDashboard() {
+        document.getElementById('page-login').classList.add('hidden');
+        document.getElementById('page-dashboard').classList.remove('hidden');
+        
+        document.getElementById('prof-avatar').innerText = currentUser.charAt(0);
+        document.getElementById('prof-name').innerText = currentUser;
+        
+        // --- CHANGE 5: Access Control for Finish Button ---
+        const finishBtn = document.querySelector('.btn-finish-header');
+        // Only ADMIN and VISHAKH can see the finish button
+        if (currentUser === 'ADMIN' || currentUser === 'VISHAKH') {
+            finishBtn.classList.remove('restricted');
+            finishBtn.style.display = 'flex'; // Ensure it's visible
+        } else {
+            finishBtn.classList.add('restricted');
+            finishBtn.style.display = 'none'; // Ensure it's hidden
+        }
+
+        if (currentUser === 'ADMIN') {
+            document.getElementById('prof-role').innerText = 'Administrator';
+            document.getElementById('staff-att-view').classList.add('hidden');
+            document.getElementById('admin-att-view').classList.remove('hidden');
+            document.getElementById('admin-user-filter').classList.remove('hidden'); 
+            loadAdminDashboard();
+        } else {
+            document.getElementById('prof-role').innerText = 'Staff Member';
+            document.getElementById('staff-att-view').classList.remove('hidden');
+            document.getElementById('admin-att-view').classList.add('hidden');
+            document.getElementById('admin-user-filter').classList.add('hidden');
+        }
+    }
+
+    function handleLogout() {
+        if(!confirm("Logout?")) return;
+        localStorage.removeItem('swiggy_user');
+        location.reload();
+    }
+
+    // --- MASTER DATA ---
     async function loadMasterData() {
         try {
             const snap = await get(child(ref(db), 'products'));
@@ -368,12 +513,8 @@
         container.innerHTML = `
             <div class="task-card" onclick="openPacking()">
                 <div class="task-label">Active Order</div>
-                <div class="task-date">
-                    <span class="date-pill">${formatDateDisplay(activeIndent.date)}</span>
-                </div>
-                <div class="progress-track">
-                    <div class="progress-fill" style="width:${progressPct}%; background:${progressColor}"></div>
-                </div>
+                <div class="task-date"><span class="date-pill">${formatDateDisplay(activeIndent.date)}</span></div>
+                <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%; background:${progressColor}"></div></div>
                 <div class="task-footer">
                     <span style="font-weight:700; color:#333;">${progressPct}%</span>
                     <span>(${packedCount} / ${itemCount} Packed)</span>
@@ -383,42 +524,40 @@
     }
 
     // --- NAVIGATION ---
-    window.switchTab = function(tabName, el) {
+    function switchTab(tabName, el) {
         document.querySelectorAll('.tab-content').forEach(d => d.classList.remove('active'));
         document.getElementById(`tab-${tabName}`).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
         el.classList.add('active');
+        if(tabName === 'attendance') {
+            if(currentUser === 'ADMIN') loadAdminDashboard(); else refreshAttendanceTab();
+        }
         if(tabName === 'history') loadHistory();
-        if(tabName === 'attendance') refreshAttendanceTab();
+        if(tabName === 'profile') loadAttendanceHistory();
     }
 
     // --- PACKING INTERFACE ---
-    window.openPacking = function() {
+    function openPacking() {
         if(!activeIndent) return;
         document.getElementById('packing-title').innerText = formatDateDisplay(activeIndent.date);
         filterList(); 
         document.getElementById('page-packing').classList.add('active');
     }
 
-    window.closePage = function(pageId) {
+    function closePage(pageId) {
         document.getElementById(pageId).classList.remove('active');
     }
 
-    // --- SEARCH & FILTER ---
-    window.toggleFilterMode = function() {
+    function toggleFilterMode() {
         const btn = document.getElementById('btn-filter');
         const icon = document.getElementById('icon-filter');
-        if (currentFilterMode === 'all') {
-            currentFilterMode = 'pending'; btn.className = 'filter-btn filter-pending'; icon.innerText = 'check_box_outline_blank'; 
-        } else if (currentFilterMode === 'pending') {
-            currentFilterMode = 'packed'; btn.className = 'filter-btn filter-active'; icon.innerText = 'check_box'; 
-        } else {
-            currentFilterMode = 'all'; btn.className = 'filter-btn'; icon.innerText = 'filter_list'; 
-        }
+        if (currentFilterMode === 'all') { currentFilterMode = 'pending'; btn.className = 'filter-btn filter-pending'; icon.innerText = 'check_box_outline_blank'; } 
+        else if (currentFilterMode === 'pending') { currentFilterMode = 'packed'; btn.className = 'filter-btn filter-active'; icon.innerText = 'check_box'; } 
+        else { currentFilterMode = 'all'; btn.className = 'filter-btn'; icon.innerText = 'filter_list'; }
         filterList();
     }
 
-    window.filterList = function() {
+    function filterList() {
         const term = document.getElementById('searchBox').value.toLowerCase();
         const sorted = [...activeIndent.items].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         const filtered = sorted.filter(item => {
@@ -434,7 +573,6 @@
     function renderPackingList(items) {
         const container = document.getElementById('packing-list-container');
         container.innerHTML = '';
-        
         if(items.length === 0) { container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">No items found.</div>'; return; }
         
         items.forEach((item) => {
@@ -445,14 +583,36 @@
             const imgData = item.savedImg || null;
             const disabledAttr = isPacked ? 'disabled' : '';
             
+            // --- PERMISSION CHECK FOR EDIT BUTTON ---
+            let showEditBtn = false;
+            
+            if (isPacked) {
+                if (currentUser === 'ADMIN') {
+                    // Admin can always edit
+                    showEditBtn = true;
+                } else if (currentUser === 'VISHAKH') {
+                    // Vishakh can edit only if count < 1
+                    const edits = item.editCount || 0;
+                    if (edits < 1) showEditBtn = true;
+                }
+                // Other Staff: showEditBtn remains false
+            }
+
+            // --- WEIGHT & COLOR LOGIC (Unchanged) ---
             let cardClass = 'card';
-            let weightInfoHTML = '<div></div>'; 
+            let weightInfoHTML = ''; 
             const master = masterMap[item.code];
             
             if (master && master.conv > 0) {
                 const oneUnitKg = master.conv;
                 const totalTargetKg = (item.poQty * oneUnitKg).toFixed(2); 
-                weightInfoHTML = `<div style="font-size:11px; color:#5f6368; line-height:1.2;"><div>1 Qty = <strong>${oneUnitKg} kg</strong></div><div>Target: <strong>${totalTargetKg} kg</strong></div></div>`;
+                weightInfoHTML = `<div style="font-size:11px; color:#5f6368;">1 Qty=${oneUnitKg}kg, Target=${totalTargetKg}kg</div>`;
+            }
+
+            let userInfoHTML = '';
+            if (isPacked) {
+                if (item.editedBy) userInfoHTML = `<div style="font-size:10px; color:#d93025;">Edited by: ${item.editedBy}</div>`;
+                else if (item.packedBy) userInfoHTML = `<div style="font-size:10px; color:#188038;">Packed by: ${item.packedBy}</div>`;
             }
 
             if (isPacked) {
@@ -475,37 +635,59 @@
                     <div class="input-group"><span class="input-label">KG/NOS</span><input type="number" inputmode="decimal" id="kg-${item.code}" placeholder="0.0" value="${dispKg}" class="qty-input" ${disabledAttr}></div>
                     <div class="input-group"><span class="input-label">PHOTO</span><div class="cam-btn ${imgData?'has-img':''}" id="btn-cam-${item.code}"><span class="material-icons">${imgData?'visibility':'camera_alt'}</span>${!imgData&&!isPacked?`<input type="file" accept="image/*" capture="environment" class="cam-input" onchange="handleImage(this,${item.code})">`:``}${imgData?`<div style="position:absolute;width:100%;height:100%;" onclick="openModal('${imgData}')"></div>`:``}${imgData&&!isPacked?`<span style="position:absolute;right:-5px;top:-5px;background:white;color:red;border-radius:50%;padding:2px;font-size:12px;border:1px solid #ccc;" onclick="clearImage(${item.code});event.stopPropagation();">X</span>`:``}</div></div>
                 </div>
-                <div class="card-footer">${weightInfoHTML}${!isPacked?`<button class="item-btn btn-save" onclick="saveSingleItem(${item.code})"><span class="material-icons" style="font-size:16px">check</span> Save</button>`:`<button class="item-btn btn-edit" onclick="enableEditItem(${item.code})"><span class="material-icons" style="font-size:16px">edit</span> Edit</button>`}</div>`;
+                <div class="card-footer">
+                    <div style="display:flex; flex-direction:column;">${weightInfoHTML}${userInfoHTML}</div>
+                    
+                    <!-- BUTTON LOGIC -->
+                    ${!isPacked ? 
+                        `<button class="item-btn btn-save" onclick="saveSingleItem(${item.code})"><span class="material-icons" style="font-size:16px">check</span> Save</button>` : 
+                        (showEditBtn ? `<button class="item-btn btn-edit" onclick="enableEditItem(${item.code})"><span class="material-icons" style="font-size:16px">edit</span> Edit</button>` : `<span style="font-size:11px; color:#888; font-style:italic;">Locked</span>`)
+                    }
+                </div>`;
             container.appendChild(div);
         });
     }
 
-    // --- ITEM ACTIONS ---
     function findItemIndex(code) {
         if(!activeIndent || !activeIndent.items) return -1;
         return activeIndent.items.findIndex(i => i.code == code);
     }
 
-    window.saveSingleItem = async function(code) {
+    async function saveSingleItem(code) {
         const idx = findItemIndex(code);
         if(idx === -1) return;
+
         const qtyInput = document.getElementById(`qty-${code}`);
         const kgInput = document.getElementById(`kg-${code}`);
         const updates = {};
         const path = `active_indent/items/${idx}`;
+        
+        // Check if this is an Edit
+        const wasPackedBefore = activeIndent.items[idx].isPacked === true;
+        let currentEditCount = activeIndent.items[idx].editCount || 0;
+
         updates[`${path}/savedQty`] = parseFloat(qtyInput.value) || 0;
         updates[`${path}/savedKg`] = parseFloat(kgInput.value) || 0;
         updates[`${path}/isPacked`] = true;
+        
+        if (wasPackedBefore) {
+            updates[`${path}/editedBy`] = currentUser;
+            updates[`${path}/editCount`] = currentEditCount + 1; // Increment Count
+        } else {
+            updates[`${path}/packedBy`] = currentUser;
+            updates[`${path}/editCount`] = 0; // Initialize
+        }
+        
         try { await update(ref(db), updates); } catch(e) { alert("Save failed: " + e.message); }
     }
 
-    window.enableEditItem = async function(code) {
+    async function enableEditItem(code) {
         const idx = findItemIndex(code);
         if(idx === -1) return;
         try { await set(ref(db, `active_indent/items/${idx}/isPacked`), false); } catch(e) { alert("Error: " + e.message); }
     }
 
-    window.handleImage = function(input, code) {
+    function handleImage(input, code) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
             const reader = new FileReader();
@@ -527,29 +709,25 @@
         }
     }
 
-    window.clearImage = async function(code) {
+    async function clearImage(code) {
         if(!confirm('Remove image?')) return;
         const idx = findItemIndex(code);
         if(idx !== -1) { await set(ref(db, `active_indent/items/${idx}/savedImg`), null); }
     }
 
-    // --- SUBMIT LOGIC ---
-    window.submitToReview = function() {
+    function submitToReview() {
         if(!activeIndent) return;
         const total = activeIndent.items.length;
         const packed = activeIndent.items.filter(i => i.isPacked === true).length;
         const pending = total - packed;
-        
         document.getElementById('conf-packed').innerText = packed;
         document.getElementById('conf-pending').innerText = pending;
-        
         document.getElementById('confirm-modal').classList.remove('hidden');
     }
 
-    window.executeFinalSubmit = async function() {
+    async function executeFinalSubmit() {
         const btn = document.querySelector('#confirm-modal button[onclick*="executeFinalSubmit"]');
         btn.innerHTML = 'SENDING...'; btn.disabled = true;
-
         try {
             const reviewItems = activeIndent.items.map(item => ({
                 code: item.code,
@@ -558,12 +736,12 @@
                 poRate: item.poRate,
                 qty: item.savedQty !== undefined ? item.savedQty : item.poQty,
                 actualKg: item.savedKg || 0,
-                img: item.savedImg || null
+                img: item.savedImg || null,
+                packedBy: item.packedBy || ''
             }));
             const reviewData = { date: activeIndent.date, items: reviewItems, timestamp: Date.now() };
             await set(ref(db, 'completed_packing'), reviewData);
             await remove(ref(db, 'active_indent'));
-            
             document.getElementById('confirm-modal').classList.add('hidden');
             alert("Order Submitted Successfully!");
             closePage('page-packing');
@@ -571,29 +749,25 @@
     }
 
     // --- HISTORY VIEW ---
-    window.loadHistory = async function() {
+    async function loadHistory() {
         const histContainer = document.getElementById('history-list');
         const filterVal = document.getElementById('hist-month-filter').value;
         histContainer.innerHTML = '<div class="status-msg">Loading...</div>';
         try {
-            const q = query(ref(db, 'indents'), limitToLast(100)); // Get more to allow filtering
+            const q = query(ref(db, 'indents'), limitToLast(100));
             const snapshot = await get(q);
             if(snapshot.exists()) {
                 const rawData = snapshot.val();
-                let historyData = Object.values(rawData).sort((a,b) => b.id - a.id);
-                
-                // FILTER BY MONTH
+                let historyDataLocal = Object.values(rawData).sort((a,b) => b.id - a.id);
                 if(filterVal) {
-                    historyData = historyData.filter(rec => rec.date.startsWith(filterVal));
+                    historyDataLocal = historyDataLocal.filter(rec => rec.date.startsWith(filterVal));
                 }
-
                 histContainer.innerHTML = '';
-                if(historyData.length === 0) { histContainer.innerHTML = '<div class="status-msg">No history found for this month.</div>'; return; }
-
-                historyData.forEach((rec, idx) => {
+                if(historyDataLocal.length === 0) { histContainer.innerHTML = '<div class="status-msg">No history found for this month.</div>'; return; }
+                historyDataLocal.forEach((rec, idx) => {
                     const el = document.createElement('div');
                     el.className = 'history-card';
-                    el.onclick = () => openHistoryDetail(rec); // Pass object
+                    el.onclick = () => openHistoryDetail(rec); 
                     el.innerHTML = `<div><div class="hist-date">${formatDateDisplay(rec.date)}</div><div class="hist-sub">${rec.items ? rec.items.length : 0} items packed</div></div><span class="material-icons" style="color:#ccc">chevron_right</span>`;
                     histContainer.appendChild(el);
                 });
@@ -601,46 +775,99 @@
         } catch(e) { histContainer.innerHTML = `<div class="status-msg">Error</div>`; }
     }
 
-    window.openHistoryDetail = function(rec) {
-        const container = document.getElementById('history-detail-content');
-        container.innerHTML = '';
-        const displayItems = rec.packingSnapshot || rec.items;
-        if(displayItems) {
-            displayItems.forEach(item => {
-                const hasImg = item.img ? true : false;
-                container.innerHTML += `
-                    <div class="card" style="background:#f9f9f9;">
-                        <div class="card-header"><span class="item-name">${item.name}</span>${hasImg ? `<span class="material-icons" style="color:var(--primary); cursor:pointer" onclick="openModal('${item.img}')">image</span>` : ''}</div>
-                        <div class="card-body" style="grid-template-columns: 1fr 1fr 1fr;">
-                            <div class="input-group"><span class="input-label">Ord</span><div class="val-box" style="background:white; color:#666;">${item.originalQty||item.poQty}</div></div>
-                            <div class="input-group"><span class="input-label">Pck</span><div class="val-box" style="background:white; color:#333;">${item.qty}</div></div>
-                            <div class="input-group"><span class="input-label">Kg</span><div class="val-box" style="background:${item.actualKg>0?'#e8f0fe':'white'}; color:#333;">${item.actualKg||'-'}</div></div>
-                        </div>
-                    </div>`;
-            });
+    function openHistoryDetail(rec) {
+        currentHistoryRec = rec;
+        if(currentHistoryRec.items) {
+            currentHistoryRec.items.sort((a,b) => (a.name || "").localeCompare(b.name || ""));
         }
+        histFilterMode = 'all';
+        updateHistoryFilterBtn();
+        filterHistoryList();
         document.getElementById('page-history-detail').classList.add('active');
     }
 
-    window.openModal = function(src) { document.getElementById('img-content').src = src; document.getElementById('img-modal').style.display = 'block'; }
+    function toggleHistoryFilterMode() {
+        const btn = document.getElementById('btn-hist-filter');
+        if (histFilterMode === 'all') histFilterMode = 'overpacked'; else histFilterMode = 'all';
+        updateHistoryFilterBtn(); filterHistoryList();
+    }
+
+    function updateHistoryFilterBtn() {
+        const btn = document.getElementById('btn-hist-filter');
+        const icon = document.getElementById('icon-hist-filter');
+        if (histFilterMode === 'overpacked') { btn.className = 'filter-btn filter-alert'; icon.innerText = 'warning'; } 
+        else { btn.className = 'filter-btn'; icon.innerText = 'filter_list'; }
+    }
+
+    function filterHistoryList() {
+        const term = document.getElementById('histSearchBox').value.toLowerCase();
+        const container = document.getElementById('history-detail-content');
+        container.innerHTML = '';
+        const displayItems = currentHistoryRec.packingSnapshot || currentHistoryRec.items;
+        if(!displayItems) { container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">No Items.</div>'; return; }
+
+        const filtered = displayItems.filter(item => {
+            const matchesText = item.name.toLowerCase().includes(term) || item.code.toString().includes(term);
+            let isOver = false;
+            const valQty = parseFloat(item.qty) || 0; 
+            const valKg = parseFloat(item.actualKg) || 0;
+            const ordQty = parseFloat(item.originalQty || item.poQty) || 0;
+            if (valQty > ordQty) isOver = true;
+            const master = masterMap[item.code];
+            if (!isOver && master && master.conv > 0 && valKg > 0) {
+                const stdWeight = valQty * master.conv;
+                if (valKg > (stdWeight + 0.05)) isOver = true;
+            }
+            item._isOver = isOver; 
+            let matchesMode = true;
+            if (histFilterMode === 'overpacked') matchesMode = isOver;
+            return matchesText && matchesMode;
+        });
+
+        if(filtered.length === 0) { container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">No items found.</div>'; return; }
+
+        filtered.forEach(item => {
+            const hasImg = item.img ? true : false;
+            const cardClass = item._isOver ? 'card overpacked' : 'card';
+            // Simple packer badge for history
+            const packer = item.packedBy ? `<div class="packer-badge"><span class="material-icons" style="font-size:10px">person</span>${item.packedBy}</div>` : '';
+            
+            // --- CHANGE 4: Icon for Image ---
+            const imgBtn = hasImg ? `<span class="material-icons img-icon-btn" onclick="openModal('${item.img}')">image</span>` : '';
+
+            container.innerHTML += `
+                <div class="${cardClass}">
+                    <div class="card-header">
+                        <span class="item-name">${item.name}</span>
+                        <div style="text-align:right">
+                            <span class="item-code">#${item.code}</span><br>${packer}
+                        </div>
+                    </div>
+                    <div class="card-body" style="grid-template-columns: 1fr 1fr 1fr auto;">
+                        <div class="input-group"><span class="input-label">Ord</span><div class="val-box" style="background:white; color:#666;">${item.originalQty||item.poQty}</div></div>
+                        <div class="input-group"><span class="input-label">Pck</span><div class="val-box" style="background:white; color:#333;">${item.qty}</div></div>
+                        <div class="input-group"><span class="input-label">Kg</span><div class="val-box" style="background:${item.actualKg>0?'#e8f0fe':'white'}; color:#333;">${item.actualKg||'-'}</div></div>
+                        <div style="display:flex; align-items:center; justify-content:center;">${imgBtn}</div>
+                    </div>
+                </div>`;
+        });
+    }
 
     // --- ATTENDANCE ---
-    window.refreshAttendanceTab = function() { checkLocation(); loadTodayStatus(); loadAttendanceHistory(); }
+    function refreshAttendanceTab() { checkLocation(); loadTodayStatus(); }
 
     async function loadTodayStatus() {
-        const empName = document.getElementById('emp-select').value;
         const today = new Date().toISOString().split('T')[0];
         const actionArea = document.getElementById('att-action-area');
         document.getElementById('today-time').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-
         try {
-            const snap = await get(child(ref(db), `attendance/${today}/${empName}`));
+            const snap = await get(child(ref(db), `attendance/${today}/${currentUser}`));
             if (snap.exists()) {
                 const data = snap.val();
                 if (data.inTime && !data.outTime) {
                     actionArea.innerHTML = `<button class="clock-btn btn-out" onclick="confirmCheckOut()"><span class="material-icons">logout</span> CHECK OUT</button>`;
                 } else if (data.outTime) {
-                    actionArea.innerHTML = `<button class="clock-btn btn-done" disabled><span class="material-icons">check_circle</span> DONE</button>`;
+                    actionArea.innerHTML = `<button class="clock-btn btn-done" disabled><span class="material-icons">check_circle</span> DONE TODAY</button>`;
                 }
             } else {
                 actionArea.innerHTML = `<button class="clock-btn btn-in" onclick="confirmCheckIn()"><span class="material-icons">login</span> CHECK IN</button>`;
@@ -648,12 +875,43 @@
         } catch (e) { console.error(e); }
     }
 
-    window.loadAttendanceHistory = async function() {
-        const empName = document.getElementById('emp-select').value;
-        const filterVal = document.getElementById('att-month-filter').value;
+    async function loadAdminDashboard() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('admin-date').innerText = today;
+        const list = document.getElementById('admin-status-list');
+        list.innerHTML = '<div style="padding:10px;text-align:center;">Loading...</div>';
+        try {
+            const snap = await get(child(ref(db), `attendance/${today}`));
+            if(snap.exists()) {
+                const data = snap.val();
+                let html = '';
+                const staffList = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU'];
+                staffList.forEach(name => {
+                    const userLog = data[name];
+                    let status = '<span style="color:#ccc">Absent</span>';
+                    let dotClass = 'admin-status-dot';
+                    if(userLog) {
+                        if(userLog.inTime && !userLog.outTime) {
+                            status = `<span style="color:var(--green); font-weight:700;">In: ${new Date(userLog.inTime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>`;
+                            dotClass += ' status-in';
+                        } else if(userLog.outTime) {
+                            status = `<span style="color:#555">Done (${new Date(userLog.outTime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})})</span>`;
+                            dotClass += ' status-out';
+                        }
+                    }
+                    html += `<div class="admin-att-card"><div style="font-weight:700; display:flex; align-items:center;"><div class="${dotClass}"></div> ${name}</div><div style="font-size:13px;">${status}</div></div>`;
+                });
+                list.innerHTML = html;
+            } else { list.innerHTML = '<div style="padding:15px; text-align:center; color:#ccc">No staff checked in yet.</div>'; }
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadAttendanceHistory() {
+        let targetUser = currentUser;
+        if (currentUser === 'ADMIN') targetUser = document.getElementById('admin-user-filter').value;
+        const filterVal = document.getElementById('prof-month-filter').value;
         const tbody = document.getElementById('att-history-body');
         tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Loading...</div>';
-
         try {
             const snap = await get(ref(db, 'attendance'));
             if(snap.exists()) {
@@ -661,10 +919,8 @@
                 const rows = [];
                 Object.keys(allData).forEach(date => {
                     if (filterVal && date.substring(0, 7) !== filterVal) return;
-                    const dayData = allData[date][empName];
-                    if (dayData) {
-                        rows.push({ date: date, in: dayData.inTime, out: dayData.outTime, ot: dayData.otMinutes || 0 });
-                    }
+                    const dayData = allData[date][targetUser];
+                    if (dayData) { rows.push({ date: date, in: dayData.inTime, out: dayData.outTime, ot: dayData.otMinutes || 0 }); }
                 });
                 rows.sort((a,b) => b.date.localeCompare(a.date));
                 tbody.innerHTML = '';
@@ -681,18 +937,15 @@
         } catch(e) { console.error(e); }
     }
 
-    // --- LOCATION ---
-    window.checkLocation = function() {
+    // --- LOCATION & ACTIONS ---
+    function checkLocation() {
         const badge = document.getElementById('loc-badge');
         if (!navigator.geolocation) { badge.innerHTML = 'No GPS'; return; }
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const dist = getDistanceFromLatLonInKm(pos.coords.latitude, pos.coords.longitude, SHOP_LAT, SHOP_LNG);
-                if (dist <= ALLOWED_RADIUS_KM || TEST_MODE) {
-                    badge.className = 'loc-badge loc-ok'; badge.innerHTML = '<span class="material-icons" style="font-size:14px">verified</span> Shop'; window.isLocationValid = true;
-                } else {
-                    badge.className = 'loc-badge loc-err'; badge.innerHTML = `<span class="material-icons" style="font-size:14px">error</span> Far (${dist.toFixed(2)}km)`; window.isLocationValid = false;
-                }
+                if (dist <= ALLOWED_RADIUS_KM || TEST_MODE) { badge.className = 'loc-badge loc-ok'; badge.innerHTML = '<span class="material-icons" style="font-size:14px">verified</span> Shop'; window.isLocationValid = true; } 
+                else { badge.className = 'loc-badge loc-err'; badge.innerHTML = `<span class="material-icons" style="font-size:14px">error</span> Far (${dist.toFixed(2)}km)`; window.isLocationValid = false; }
             },
             () => { badge.className = 'loc-badge loc-err'; badge.innerHTML = 'GPS Error'; window.isLocationValid = false; }
         );
@@ -700,25 +953,49 @@
     function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; }
     function deg2rad(deg) { return deg * (Math.PI/180); }
 
-    window.confirmCheckIn = async function() {
+    async function confirmCheckIn() {
         if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop!"); return; }
         if (!confirm("Check In?")) return;
-        const empName = document.getElementById('emp-select').value;
         const today = new Date().toISOString().split('T')[0];
-        try { await set(ref(db, `attendance/${today}/${empName}`), { inTime: new Date().toISOString(), name: empName }); alert("Done!"); refreshAttendanceTab(); } catch(e) { alert(e.message); }
+        try { await set(ref(db, `attendance/${today}/${currentUser}`), { inTime: new Date().toISOString(), name: currentUser }); alert("Done!"); refreshAttendanceTab(); } catch(e) { alert(e.message); }
     }
 
-    window.confirmCheckOut = async function() {
+    async function confirmCheckOut() {
         if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop!"); return; }
         if (!confirm("Check Out?")) return;
-        const empName = document.getElementById('emp-select').value;
         const today = new Date().toISOString().split('T')[0];
         const now = new Date();
         let otMinutes = 0;
         const standardEnd = new Date(); standardEnd.setHours(21, 0, 0, 0); 
         if (now > standardEnd) { otMinutes = Math.floor((now - standardEnd) / 60000); }
-        try { await set(ref(db, `attendance/${today}/${empName}/outTime`), now.toISOString()); await set(ref(db, `attendance/${today}/${empName}/otMinutes`), otMinutes); alert("Done!"); refreshAttendanceTab(); } catch(e) { alert(e.message); }
+        try { await set(ref(db, `attendance/${today}/${currentUser}/outTime`), now.toISOString()); await set(ref(db, `attendance/${today}/${currentUser}/otMinutes`), otMinutes); alert("Done!"); refreshAttendanceTab(); } catch(e) { alert(e.message); }
     }
+
+    function openModal(src) { document.getElementById('img-content').src = src; document.getElementById('img-modal').style.display = 'block'; }
+
+    // EXPORT TO WINDOW (Fix Reference Errors)
+    window.handleLogin = handleLogin;
+    window.handleLogout = handleLogout;
+    window.switchTab = switchTab;
+    window.openPacking = openPacking;
+    window.closePage = closePage;
+    window.toggleFilterMode = toggleFilterMode;
+    window.filterList = filterList;
+    window.saveSingleItem = saveSingleItem;
+    window.enableEditItem = enableEditItem;
+    window.handleImage = handleImage;
+    window.clearImage = clearImage;
+    window.submitToReview = submitToReview;
+    window.executeFinalSubmit = executeFinalSubmit;
+    window.refreshAttendanceTab = refreshAttendanceTab;
+    window.confirmCheckIn = confirmCheckIn;
+    window.confirmCheckOut = confirmCheckOut;
+    window.loadHistory = loadHistory;
+    window.openHistoryDetail = openHistoryDetail;
+    window.toggleHistoryFilterMode = toggleHistoryFilterMode;
+    window.filterHistoryList = filterHistoryList;
+    window.loadAttendanceHistory = loadAttendanceHistory;
+    window.openModal = openModal;
 
     init();
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(console.error); }

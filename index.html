@@ -153,6 +153,7 @@
         .h-profit { width: 85px; text-align: right; font-weight: 700; }
         .h-margin { width: 90px; text-align: right; } 
         .h-action { width: 60px; text-align: center; }
+        
 
         /* Add this inside your <style> tag */
 .review-input {
@@ -1066,9 +1067,9 @@ function startIncomingPackingListener() {
 function autoFinalizeBill(data) {
     if (!data || !data.items) return;
 
-    // 1. Calculate Financials (Same logic as old finalizeBill)
+    // 1. Calculate Financials
     let totalBillAmt = 0;
-    let totalStandardCost = 0;
+    let totalRealCost = 0; // Renamed from totalStandardCost
     let totalDumpCost = 0;
     let totalIndentAmt = 0;
     
@@ -1079,50 +1080,61 @@ function autoFinalizeBill(data) {
         const costPerKg = master ? (master.costKg || 0) : 0;
         const conv = master ? (master.conv || 0) : 0;
         
-        // Standard Calculations
+        // A. Standard Weight (Theoretical)
         const standardKg = i.qty * conv;
-        const standardCost = standardKg * costPerKg;
         
-        // Dump Calculations
-        const excessKg = Math.max(0, i.actualKg - standardKg);
+        // B. Actual Weight (Used for Costing)
+        // If actualKg exists and is > 0, use it. Otherwise fallback to standard.
+        const usedKg = (i.actualKg && i.actualKg > 0) ? i.actualKg : standardKg;
+
+        // --- CORE CHANGE: Cost is based on Used Kg ---
+        const lineCost = usedKg * costPerKg;
+        
+        // C. Dump Calculation (For Report Only)
+        // Excess weight compared to standard
+        const excessKg = Math.max(0, usedKg - standardKg);
         const dumpCost = excessKg * costPerKg;
 
         const lineRev = i.qty * i.poRate;
-        const lineProf = lineRev - standardCost;
+        const lineProf = lineRev - lineCost;
         
-        // Indent Total
+        // Totals
         totalIndentAmt += ((i.poQty || 0) * i.poRate);
         totalBillAmt += lineRev;
-        totalStandardCost += standardCost;
+        totalRealCost += lineCost;
         totalDumpCost += dumpCost;
 
         return {
             ...i,
-            frozenCost: standardCost,
-            itemDumpCost: dumpCost,
+            frozenCost: lineCost,     // Cost = Actual Weight * Cost/Kg
+            itemDumpCost: dumpCost,   // Just for reporting
             profit: lineProf,
-            myCost: i.qty > 0 ? (standardCost / i.qty) : 0, 
+            // Unit cost derived from total actual cost divided by qty
+            myCost: i.qty > 0 ? (lineCost / i.qty) : 0, 
             marginPct: lineRev > 0 ? (lineProf/lineRev)*100 : 0,
             originalQty: i.poQty
         };
     });
     
-    const grossProfit = totalBillAmt - totalStandardCost;
+    // Gross Profit = Revenue - Actual Material Cost
+    const grossProfit = totalBillAmt - totalRealCost;
     const grossMargin = totalBillAmt > 0 ? (grossProfit/totalBillAmt)*100 : 0;
     
-    // Calculate Expenses
-    const expenseObj = calculateTotalExpense(data.date, totalBillAmt, totalStandardCost, totalDumpCost);
+    // Calculate Expenses (Dump is NOT added to expense total)
+    const expenseObj = calculateTotalExpense(data.date, totalBillAmt, totalRealCost, totalDumpCost);
+    
+    // Net Profit
     const netProfit = grossProfit - expenseObj.total;
 
     // 2. Create History Record
     const historyRecord = {
-        id: Date.now(), // timestamp ID
+        id: Date.now(),
         date: data.date,
         itemsCount: processedItems.length,
         items: processedItems,
         totalIndentAmt: totalIndentAmt, 
         totalBillAmt: totalBillAmt,
-        totalCost: totalStandardCost,
+        totalCost: totalRealCost,
         profit: grossProfit,
         margin: grossMargin,
         totalExpenses: expenseObj.total,
@@ -1130,17 +1142,13 @@ function autoFinalizeBill(data) {
         netProfit: netProfit
     };
 
-    // 3. Save to History
-    indents.unshift(historyRecord); // Add to local array
-    saveData('indents', indents);   // Save to DB
-
-    // 4. Delete from Processing Queue (completed_packing)
+    // 3. Save & Clean
+    indents.unshift(historyRecord); 
+    saveData('indents', indents);   
     window.dbRemove(window.dbRef(window.db, 'completed_packing'));
 
-    // 5. Notify & Refresh
     alert(`New Bill Processed for ${data.date}!\nRevenue: ₹${totalBillAmt.toFixed(0)}\nProfit: ₹${netProfit.toFixed(0)}`);
     
-    // If currently on history tab, refresh it
     if (currentTabId === 'view-history') {
         renderIndentHistory();
     }
@@ -1228,6 +1236,7 @@ function hidePriceTooltip() {
     }
 
     // UPDATED: Accepts specific dump amount calculated from weight difference
+    // UPDATED: Calculates expense but EXCLUDES dump from the financial total
     function calculateTotalExpense(dateStr, billAmount, billStandardCost, realDumpCost) {
         if (!dateStr) return { total:0, wage:0, transport:0, packing:0, dump:0, misc:0 };
         const dateObj = new Date(dateStr);
@@ -1240,13 +1249,15 @@ function hidePriceTooltip() {
         // Packing: per 1000 rupees of Bill Amount
         const packing = (billAmount / 1000) * (expenseSettings.packingRate || 0);
         
-        // Dump: Now passed directly from the item calculation
-        const dump = realDumpCost || 0;
-
         // Misc: % of Standard Bill Cost
         const misc = (billStandardCost * (expenseSettings.miscPercent || 0)) / 100;
+
+        // Dump: We record it, but we DO NOT add it to the total expense
+        const dump = realDumpCost || 0;
         
-        const total = wage + transport + packing + dump + misc;
+        // TOTAL = Wage + Transport + Packing + Misc (Dump is excluded from Financials)
+        const total = wage + transport + packing + misc;
+        
         return { total, wage, transport, packing, dump, misc };
     }
 
@@ -2483,8 +2494,7 @@ function toggleHistoryEdit() {
         // SAVE CHANGES
         if(!confirm("Save changes to this bill?")) return;
 
-        // 1. Update Items
-        let tBill=0, tStdCost=0, tDumpCost=0, tIndent=0;
+        let tBill=0, tRealCost=0, tDumpCost=0, tIndent=0;
 
         currentViewedHistory.items.forEach((item, idx) => {
             const qtyInput = document.getElementById(`edit-qty-${idx}`);
@@ -2494,64 +2504,64 @@ function toggleHistoryEdit() {
                 const newQty = parseFloat(qtyInput.value) || 0;
                 const newKg = parseFloat(kgInput.value) || 0;
 
-                // --- FIX: USE HISTORICAL COST, NOT CURRENT MASTER COST ---
-                
-                // 1. Get Conversion Factor (Assume constant from Master, or 0)
+                // 1. Get Master Data for Costing
                 const master = products.find(p => p.id === item.code);
                 const conv = master ? (master.conv || 0) : 0;
-
-                // 2. Derive Historical Unit Cost (Cost per 1 Qty)
-                // Use 'myCost' if available, otherwise reverse calculate from frozenCost
-                let histUnitCost = item.myCost;
-                if (!histUnitCost && item.qty > 0) {
-                    histUnitCost = item.frozenCost / item.qty;
-                }
-                if (!histUnitCost) histUnitCost = 0; // Fallback
-
-                // 3. Derive Historical Cost Per Kg (For Dump Calculation)
+                
+                // Use historical cost if available, else current master cost
+                // We need Cost Per Kg specifically
                 let histCostPerKg = 0;
-                if (conv > 0) {
-                    histCostPerKg = histUnitCost / conv;
+                
+                // Attempt to reverse engineer historical cost per kg from saved data
+                if (item.myCost && conv > 0) {
+                    histCostPerKg = item.myCost / conv;
                 } else if (master) {
-                    // Fallback to master if conv is 0 or calculation fails
                     histCostPerKg = master.costKg;
                 }
 
-                // --- RECALCULATE USING NEW QUANTITIES ---
-
-                // Financials
-                const standardKg = newQty * conv;
-                const standardCost = newQty * histUnitCost; // Keep original unit cost
-                const excessKg = Math.max(0, newKg - standardKg);
-                const dumpCost = excessKg * histCostPerKg; // Keep original kg cost
+                // --- RECALCULATE BASED ON ACTUAL KG ---
                 
-                const lineRev = newQty * item.poRate; // Keep original selling price
-                const lineProf = lineRev - standardCost;
+                // Standard (Theoretical)
+                const standardKg = newQty * conv;
+                
+                // Actual (Used for Costing)
+                // Use newKg if entered, else fallback to standard
+                const usedKg = (newKg > 0) ? newKg : standardKg;
+
+                const lineCost = usedKg * histCostPerKg;
+                
+                // Dump (Excess)
+                const excessKg = Math.max(0, usedKg - standardKg);
+                const dumpCost = excessKg * histCostPerKg;
+                
+                const lineRev = newQty * item.poRate;
+                const lineProf = lineRev - lineCost;
                 
                 // Update Item Fields
                 item.qty = newQty;
                 item.actualKg = newKg;
-                item.frozenCost = standardCost;
+                item.frozenCost = lineCost; // Store Actual Cost
                 item.itemDumpCost = dumpCost;
                 item.profit = lineProf;
-                item.myCost = histUnitCost; // Ensure this is preserved
+                // Unit cost = Total Line Cost / Qty
+                item.myCost = newQty > 0 ? (lineCost / newQty) : 0;
                 item.marginPct = lineRev > 0 ? (lineProf/lineRev)*100 : 0;
 
                 // Accumulate Totals
                 tBill += lineRev;
-                tStdCost += standardCost;
+                tRealCost += lineCost;
                 tDumpCost += dumpCost;
                 tIndent += ((item.originalQty||0) * item.poRate);
             }
         });
 
         // 2. Recalculate Record Totals
-        const expenseObj = calculateTotalExpense(currentViewedHistory.date, tBill, tStdCost, tDumpCost);
-        const grossProfit = tBill - tStdCost;
+        const expenseObj = calculateTotalExpense(currentViewedHistory.date, tBill, tRealCost, tDumpCost);
+        const grossProfit = tBill - tRealCost;
         
         currentViewedHistory.totalBillAmt = tBill;
-        currentViewedHistory.totalRev = tBill; // Legacy support
-        currentViewedHistory.totalCost = tStdCost;
+        currentViewedHistory.totalRev = tBill; 
+        currentViewedHistory.totalCost = tRealCost;
         currentViewedHistory.profit = grossProfit;
         currentViewedHistory.margin = tBill > 0 ? (grossProfit/tBill)*100 : 0;
         currentViewedHistory.totalExpenses = expenseObj.total;
@@ -2559,7 +2569,7 @@ function toggleHistoryEdit() {
         currentViewedHistory.netProfit = grossProfit - expenseObj.total;
         currentViewedHistory.totalIndentAmt = tIndent;
 
-        // 3. Save to Firebase
+        // 3. Save
         saveData('indents', indents);
 
         // 4. Exit Edit Mode
@@ -2567,7 +2577,6 @@ function toggleHistoryEdit() {
         btn.innerHTML = '<span class="material-icons">edit</span> Edit';
         btn.classList.remove('btn-filled');
         
-        // 5. Refresh UI
         refreshHistoryKPIs();
         renderHistoryDetailTable();
     }
@@ -2676,7 +2685,7 @@ function downloadHistoryPDF() {
     const splitH = 80;
     const leftW = (contentW * 0.45); 
     const rightW = (contentW * 0.53); 
-    const gapWaterfall = contentW - leftW - rightW; // RENAMED TO AVOID CONFLICT
+    const gapWaterfall = contentW - leftW - rightW;
 
     doc.setDrawColor(...c.borderDark); doc.setLineWidth(0.2);
     doc.roundedRect(margin, y, leftW, splitH, 4, 4, 'S');
@@ -2747,6 +2756,9 @@ function downloadHistoryPDF() {
     ];
 
     rec.items.forEach(i => {
+        // Exclude 0 qty items from margin calc display to avoid clutter
+        if(i.qty <= 0) return;
+
         const m = i.marginPct;
         const s = i.poRate * i.qty;
         const p = i.profit;
@@ -2771,19 +2783,21 @@ function downloadHistoryPDF() {
 
     y += splitH + 8;
 
-    // --- EXPENSES ---
-    const expH = 30;
+    // --- EXPENSES (MODERN PILL LOOK) ---
+        const expH = 30;
     doc.setDrawColor(...c.borderDark); doc.setLineWidth(0.2);
     doc.roundedRect(margin, y, contentW, expH, 4, 4, 'S');
     doc.setFontSize(10); doc.setTextColor(0); doc.setFont("helvetica", "bold");
     doc.text("Expense Composition", margin + 6, y + 8);
 
     const totalExpReal = expD.total || 1;
+    
+    // UPDATED: Removed Dump from this visualization since it's not in Total Expenses
     const segs = [
         { l: 'Wages', v: expD.wage, c: [66, 133, 244] }, 
         { l: 'Transport', v: expD.transport, c: [251, 188, 4] },
         { l: 'Packing', v: expD.packing, c: [52, 168, 83] }, 
-        { l: 'Dump/Misc', v: expD.dump + expD.misc, c: [234, 67, 53] } 
+        { l: 'Misc', v: expD.misc, c: [234, 67, 53] } 
     ];
 
     let bx = margin + 10;
@@ -2791,33 +2805,41 @@ function downloadHistoryPDF() {
     const barW = contentW - 20;
     const barHeight = 8; 
 
+    // Draw Modern Segmented Bar
     segs.forEach(s => {
         const w = (s.v / totalExpReal) * barW;
         if (w > 0) {
-            doc.setFillColor(...s.c); doc.rect(bx, by, w, barHeight, 'F');
-            if(w > 12) { doc.setTextColor(255); doc.setFontSize(7); doc.text(s.v.toFixed(0), bx+(w/2), by+5, {align:'center'}); }
+            doc.setFillColor(...s.c); 
+            // Draw rounded segment with a small gap
+            doc.roundedRect(bx, by, w - 0.5, barHeight, 2, 2, 'F'); 
+            
+            if(w > 12) { 
+                doc.setTextColor(255); doc.setFontSize(7); 
+                doc.text(s.v.toFixed(0), bx+(w/2), by+5, {align:'center'}); 
+            }
             bx += w;
         }
     });
-    doc.setDrawColor(200); doc.rect(margin + 10, by, barW, barHeight, 'S');
-
+    
+    // Draw Legend
     let lx = margin + 10;
     let ly = by + 14; 
     segs.forEach(s => {
         if(s.v > 0) {
-            doc.setFillColor(...s.c); doc.circle(lx, ly-1, 2, 'F');
+            doc.setFillColor(...s.c); doc.roundedRect(lx, ly-2, 3, 3, 1, 1, 'F');
             doc.setFontSize(8); doc.setTextColor(...c.textLight);
-            doc.text(`${s.l}`, lx + 4, ly);
+            doc.text(`${s.l}`, lx + 5, ly);
             lx += 38;
         }
     });
     y += expH + 10;
 
-    // --- PAGE 1: LISTS ---
+    // --- PAGE 1: LISTS (Filtered Qty > 0) ---
     const remainingH = pageH - y - margin; 
-    const lossItems = rec.items.filter(i => i.marginPct < 0).sort((a,b) => a.profit - b.profit); 
-    const lowItems = rec.items.filter(i => i.marginPct >= 0 && i.marginPct < 10).sort((a,b) => a.marginPct - b.marginPct);
-    const midItems = rec.items.filter(i => i.marginPct >= 10 && i.marginPct < 20).sort((a,b) => a.marginPct - b.marginPct);
+    // FIXED: Filter out 0 qty items
+    const lossItems = rec.items.filter(i => i.qty > 0 && i.marginPct < 0).sort((a,b) => a.profit - b.profit); 
+    const lowItems = rec.items.filter(i => i.qty > 0 && i.marginPct >= 0 && i.marginPct < 10).sort((a,b) => a.marginPct - b.marginPct);
+    const midItems = rec.items.filter(i => i.qty > 0 && i.marginPct >= 10 && i.marginPct < 20).sort((a,b) => a.marginPct - b.marginPct);
 
     const colGap = 5;
     const colWidth = (contentW - (colGap*2)) / 3;
@@ -2857,6 +2879,7 @@ function downloadHistoryPDF() {
 
 
     // ================= PAGE 2: SPLIT REPORT =================
+    // ================= PAGE 2: SPLIT REPORT =================
     doc.addPage();
     let y2 = 15;
 
@@ -2870,16 +2893,30 @@ function downloadHistoryPDF() {
         return ordered > i.qty;
     }).sort((a,b) => (b.originalQty||0) - (b.qty));
 
+    // EXCESS PREP: Calculate Dump Amount & Sort by Amount
     const dumpItems = rec.items.filter(i => {
         const master = products.find(p => p.id === i.code);
         const conv = master ? master.conv : 0;
         const std = i.qty * conv;
         return (i.actualKg > std + 0.02); 
-    }).sort((a,b) => (b.actualKg - (b.qty * (products.find(p=>p.id===b.code)?.conv||0))) - (a.actualKg - (a.qty * (products.find(p=>p.id===a.code)?.conv||0))));
+    }).map(i => {
+        const master = products.find(p => p.id === i.code);
+        const conv = master ? master.conv : 0;
+        const costPerKg = master ? (master.costKg || 0) : 0;
+        const stdKg = i.qty * conv;
+        const dumpKg = Math.max(0, i.actualKg - stdKg);
+        const dumpAmt = dumpKg * costPerKg;
+        return { ...i, _dumpAmt: dumpAmt, _dumpKg: dumpKg };
+    }).sort((a,b) => b._dumpAmt - a._dumpAmt); 
 
-    // --- LAYOUT SETUP (RESIZED & RENAMED) ---
-    const gapSplit = 10; // RENAMED TO AVOID CONFLICT
-    const wLeft = 65; 
+    // --- NEW: CALCULATE TOTAL DUMP COST ---
+    const totalDumpAmt = dumpItems.reduce((sum, item) => sum + item._dumpAmt, 0);
+
+    // --- LAYOUT SETUP (ADJUSTED WIDTHS) ---
+    const gapSplit = 10;
+    
+    // INCREASED wLeft to 80 (was 65) to give Shortage Name more space
+    const wLeft = 80; 
     const wRight = contentW - wLeft - gapSplit; 
     
     const leftX = margin;
@@ -2896,18 +2933,21 @@ function downloadHistoryPDF() {
     doc.text("ITEM NAME", leftX + 2, y2 + 10);
     doc.text("SHORT", leftX + wLeft - 2, y2 + 10, {align:'right'});
 
-    // -- RIGHT HEADER (EXCESS) --
+    // -- RIGHT HEADER (EXCESS - NOW WITH TOTAL COST) --
     doc.setFillColor(255, 248, 225); // Light Orange
     doc.rect(rightX, y2, wRight, 6, 'F');
-    doc.setTextColor(...c.orange); doc.setFontSize(9);
-    doc.text(`EXCESS WEIGHT (${dumpItems.length})`, rightX + 2, y2 + 4.5);
+    doc.setTextColor(...c.orange); doc.setFontSize(9); doc.setFont("helvetica", "bold");
+    
+    // Display Total Cost in Header
+    doc.text(`EXCESS WEIGHT (${dumpItems.length}) - Rs ${fmt(totalDumpAmt)}`, rightX + 2, y2 + 4.5);
 
-    // Right Columns
-    doc.setFontSize(8); doc.setTextColor(...c.textLight);
+    // Right Columns (Compressed Amt Column)
+    // TIGHTENED offsets to make AMT smaller and give Name more room
+    doc.setFontSize(8); doc.setTextColor(...c.textLight); doc.setFont("helvetica", "normal");
     doc.text("ITEM NAME", rightX + 2, y2 + 10);
-    doc.text("SOLD", rightX + wRight - 55, y2 + 10, {align:'right'});
-    doc.text("EXCESS", rightX + wRight - 35, y2 + 10, {align:'right'});
-    doc.text("AMT", rightX + wRight - 2, y2 + 10, {align:'right'}); // New Amount Column
+    doc.text("SOLD", rightX + wRight - 45, y2 + 10, {align:'right'});
+    doc.text("EXCESS", rightX + wRight - 28, y2 + 10, {align:'right'});
+    doc.text("AMT", rightX + wRight - 2, y2 + 10, {align:'right'}); 
 
     y2 += 13; // Start rows
 
@@ -2936,7 +2976,8 @@ function downloadHistoryPDF() {
             if(i % 2 === 0) { doc.setFillColor(252, 252, 252); doc.rect(leftX, y2, wLeft, rowH, 'F'); }
             
             doc.setTextColor(...c.textMain);
-            doc.text(item.name.substring(0,25), leftX + 2, y2 + 4); 
+            // Allow more characters for name now that width is 80
+            doc.text(item.name.substring(0,35), leftX + 2, y2 + 4); 
             
             doc.setTextColor(...c.red); doc.setFont("helvetica", "bold");
             doc.text(diff.toString(), leftX + wLeft - 2, y2 + 4, {align:'right'});
@@ -2946,26 +2987,25 @@ function downloadHistoryPDF() {
         // --- RIGHT ITEM (Excess) ---
         if(i < dumpItems.length) {
             const item = dumpItems[i];
-            const master = products.find(p => p.id === item.code);
-            const conv = master ? master.conv : 0;
-            const costPerKg = master ? (master.costKg || 0) : 0;
-            const stdKg = item.qty * conv;
-            const dumpKg = Math.max(0, item.actualKg - stdKg);
-            const dumpAmt = dumpKg * costPerKg; // Calculate Cost of Excess
+            const dumpKg = item._dumpKg; 
+            const dumpAmt = item._dumpAmt; 
 
             if(i % 2 === 0) { doc.setFillColor(252, 252, 252); doc.rect(rightX, y2, wRight, rowH, 'F'); }
 
             doc.setTextColor(...c.textMain);
-            doc.text(item.name.substring(0,25), rightX + 2, y2 + 4);
+            // Slightly shorter substring allowance as this table is narrower than left
+            doc.text(item.name.substring(0,22), rightX + 2, y2 + 4);
             
-            doc.text(item.qty.toString(), rightX + wRight - 55, y2 + 4, {align:'right'});
+            // Matches header offset -45
+            doc.text(item.qty.toString(), rightX + wRight - 45, y2 + 4, {align:'right'});
             
+            // Matches header offset -28
             doc.setTextColor(...c.orange); doc.setFont("helvetica", "bold");
-            doc.text("+" + dumpKg.toFixed(2), rightX + wRight - 35, y2 + 4, {align:'right'});
+            doc.text("+" + dumpKg.toFixed(2), rightX + wRight - 28, y2 + 4, {align:'right'});
             
-            // New Amount Column
+            // Matches header offset -2 (Amt Column)
             doc.setTextColor(...c.red);
-            doc.text(fmt(dumpAmt), rightX + wRight - 2, y2 + 4, {align:'right'});
+            doc.text(fmt(dumpAmt).replace(/Rs\s?/,''), rightX + wRight - 2, y2 + 4, {align:'right'});
             
             doc.setFont("helvetica", "normal");
         }
