@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Swiggy Admin</title>
+    
+    <link rel="manifest" href="admin-manifest.json">
+    <meta name="theme-color" content="#1a73e8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="admin-icon.png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        :root { --primary: #1a73e8; --bg: #f0f2f5; --surface: #ffffff; --border: #dadce0; --text-main: #202124; --text-sub: #5f6368; --green: #188038; --red: #d93025; --orange: #f57c00; --purple: #9334e6; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text-main); height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+
+        /* --- LAYOUT UTILS --- */
+        .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; background: var(--bg); transform: translateX(100%); transition: transform 0.3s; z-index: 100; }
+        .page.active { transform: translateX(0); }
+        .page.root-page { transform: translateX(0); z-index: 10; }
+        .hidden { display: none !important; }
+
+        /* --- HEADER --- */
+        .header { height: 56px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50; }
+        .header h2 { font-size: 18px; margin: 0; color: var(--primary); }
+        .icon-btn { background: none; border: none; padding: 8px; color: var(--text-sub); border-radius: 50%; }
+
+        /* --- CONTENT --- */
+        .content { flex: 1; overflow-y: hidden; display: flex; flex-direction: column; }
+        .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+        .tab-content.active { display: flex; }
+
+        /* --- FILTERS --- */
+        .filter-bar { padding: 10px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        .date-input { border: 1px solid var(--border); border-radius: 6px; padding: 6px; font-family: 'Roboto'; font-size: 13px; width: 45%; background: var(--bg); }
+        
+        /* --- KPI GRID --- */
+        .kpi-container { padding: 10px; overflow-x: auto; flex-shrink: 0; }
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        
+        /* Special Grid for Finance (5 items) */
+        .kpi-grid-fin { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .kpi-grid-fin .kpi-card:last-child { grid-column: span 2; } /* Make last item full width */
+
+        .kpi-card { background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; }
+        .kpi-label { font-size: 10px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; margin-bottom: 4px; }
+        .kpi-val { font-size: 18px; font-weight: 900; color: var(--text-main); }
+        .kpi-click { cursor: pointer; border-bottom: 3px solid var(--primary); } /* Interactive Indicator */
+        
+        .val-pos { color: var(--green); } .val-neg { color: var(--red); } .val-warn { color: var(--orange); } .val-net { color: var(--purple); }
+
+                /* --- MARGIN DISTRIBUTION (Horizontal Scroll) --- */
+        .margin-dist-container { 
+            padding: 5px 12px 15px 12px; /* Bottom padding for scrollbar space */
+            display: flex; 
+            gap: 12px; 
+            overflow-x: auto; 
+            flex-shrink: 0; 
+            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+        }
+        
+        /* Hide scrollbar visually but allow scroll (Optional) */
+        .margin-dist-container::-webkit-scrollbar { height: 4px; }
+        .margin-dist-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+        /* CARD STYLE (Match Main App) */
+        .ma-card { 
+            min-width: 130px; 
+            background: white; 
+            border: 1px solid #dadce0; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            display: flex; flex-direction: column;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .ma-card:active { transform: scale(0.98); }
+
+        /* Header Colors */
+        .bd-loss { border-top: 4px solid var(--red); } 
+        .bd-loss .ma-header { background: #ffebee; color: #c62828; } 
+        .bd-loss .ma-prof { color: var(--red); }
+
+        .bd-low { border-top: 4px solid var(--orange); } 
+        .bd-low .ma-header { background: #fff3e0; color: #ef6c00; } 
+        .bd-low .ma-prof { color: var(--orange); }
+
+        .bd-mid { border-top: 4px solid #fdd835; } 
+        .bd-mid .ma-header { background: #fffde7; color: #f9a825; } 
+        .bd-mid .ma-prof { color: #f9a825; }
+
+        .bd-ok { border-top: 4px solid #29b6f6; } 
+        .bd-ok .ma-header { background: #e1f5fe; color: #0277bd; } 
+        .bd-ok .ma-prof { color: #0288d1; }
+
+        .bd-good { border-top: 4px solid var(--primary); } 
+        .bd-good .ma-header { background: #e3f2fd; color: #1565c0; } 
+        .bd-good .ma-prof { color: var(--primary); }
+
+        .bd-great { border-top: 4px solid var(--green); } 
+        .bd-great .ma-header { background: #e8f5e9; color: #2e7d32; } 
+        .bd-great .ma-prof { color: var(--green); }
+
+        /* Card Internals */
+        .ma-header { padding: 8px 4px; font-size: 11px; font-weight: 900; text-align: center; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .ma-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .ma-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #5f6368; font-weight: 500; }
+        .ma-val { font-weight: 700; color: #202124; font-size: 13px; }
+        .ma-sep { border-top: 1px dashed #ddd; margin: 4px 0; }
+        .ma-prof { font-size: 15px; font-weight: 900; text-align: right; }
+        
+        /* --- TABLE --- */
+        .table-wrapper { flex: 1; overflow: auto; position: relative; background: var(--surface); }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        
+        th { 
+            position: sticky; top: 0; z-index: 20; 
+            background: #f8f9fa; color: var(--text-sub); 
+            font-size: 11px; font-weight: 700; text-transform: uppercase; 
+            padding: 10px 8px; border-bottom: 1px solid var(--border); 
+            white-space: nowrap;
+        }
+        td { 
+            padding: 10px 8px; border-bottom: 1px solid #f1f3f4; 
+            font-size: 12px; color: var(--text-main); 
+            white-space: nowrap; vertical-align: middle;
+        }
+        tr:active { background-color: #e8f0fe; }
+
+        .sticky-col { position: sticky; left: 0; background: var(--surface); z-index: 15; border-right: 1px solid #eee; width: 50vw; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+        th.sticky-col { z-index: 25; background: #f8f9fa; }
+
+        .w-num { text-align: right; min-width: 80px; }
+        .w-date { min-width: 80px; font-size: 11px; color: var(--text-sub); }
+
+        /* --- POPUP MODAL --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .modal-box { background: white; width: 90%; max-width: 350px; max-height: 80vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .modal-head { padding: 15px; border-bottom: 1px solid #eee; font-weight: 700; font-size: 16px; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; }
+        .modal-body { padding: 0; overflow-y: auto; flex: 1; }
+        .modal-row { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #f1f3f4; font-size: 13px; }
+        .modal-row:last-child { border-bottom: none; }
+        .modal-row.total { background: #f8f9fa; font-weight: 700; border-top: 1px solid #ddd; }
+
+        /* --- BOTTOM NAV & LOGIN --- */
+        .bottom-nav { height: 56px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; width: 100%; height: 100%; font-size: 10px; font-weight: 500; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item .material-icons { font-size: 22px; margin-bottom: 2px; }
+
+        #page-login { background: white; align-items: center; justify-content: center; z-index: 5000; }
+        .login-box { width: 80%; max-width: 300px; text-align: center; }
+        .login-inp { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 15px; font-size: 16px; outline:none; }
+        .login-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN -->
+    <div id="page-login" class="page active">
+        <div class="login-box">
+            <span class="material-icons" style="font-size:64px; color:var(--primary); margin-bottom:20px;">admin_panel_settings</span>
+            <h2 style="margin-top:0; margin-bottom:30px;">Admin Login</h2>
+            <input type="password" id="login-pass" class="login-inp" placeholder="Enter Password">
+            <button class="login-btn" onclick="handleLogin()">LOGIN</button>
+            <p id="login-err" style="color:red; font-size:12px; margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="page-main" class="page root-page hidden">
+        <div class="header">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="material-icons" style="color:var(--primary)">analytics</span>
+                <h2>Swiggy Admin</h2>
+            </div>
+            <button class="icon-btn" onclick="handleLogout()"><span class="material-icons">logout</span></button>
+        </div>
+
+        <div class="content">
+            <!-- TAB 1: REPORTS -->
+            <div id="tab-report" class="tab-content active">
+                <div class="filter-bar">
+                    <input type="date" id="rep-from" class="date-input" onchange="renderReport()">
+                    <span style="color:#999; font-weight:bold;">-</span>
+                    <input type="date" id="rep-to" class="date-input" onchange="renderReport()">
+                </div>
+                
+                <div class="kpi-container">
+                    <div class="kpi-grid">
+                        <div class="kpi-card"><div class="kpi-label">Revenue</div><div class="kpi-val" id="kpi-rep-rev">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Profit</div><div class="kpi-val val-pos" id="kpi-rep-prof">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Net Profit</div><div class="kpi-val val-net" id="kpi-rep-net">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Expenses</div><div class="kpi-val val-warn" id="kpi-rep-exp">₹0</div></div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sticky-col">Bill No</th>
+                                <th class="w-date">Date</th>
+                                <th class="w-num">Total</th>
+                                <th class="w-num">Cost</th>
+                                <th class="w-num">Exp</th>
+                                <th class="w-num">Net</th>
+                                <th class="w-num">Mgn%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2: FINANCE -->
+            <div id="tab-finance" class="tab-content">
+                <div class="filter-bar">
+                    <input type="date" id="fin-from" class="date-input" onchange="renderFinance()">
+                    <span style="color:#999; font-weight:bold;">-</span>
+                    <input type="date" id="fin-to" class="date-input" onchange="renderFinance()">
+                </div>
+
+                <div class="kpi-container">
+                    <div class="kpi-grid-fin">
+                        <div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-val" id="kpi-fin-total">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Received</div><div class="kpi-val val-pos" id="kpi-fin-rcvd">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Pending Amt</div><div class="kpi-val val-neg" id="kpi-fin-pend">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Pending Bills</div><div class="kpi-val" id="kpi-fin-count">0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Avg Credit Days</div><div class="kpi-val" id="kpi-fin-days">0</div></div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sticky-col">Bill No</th>
+                                <th class="w-date">Date</th>
+                                <th class="w-num">Amount</th>
+                                <th class="w-date">Rcvd Date</th>
+                                <th class="w-num">Days</th>
+                                <th style="min-width:150px; padding-left:10px;">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="finance-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('report', this)">
+                <span class="material-icons">assessment</span><span>Report</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('finance', this)">
+                <span class="material-icons">account_balance</span><span>Finance</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL PAGE (Overlay) -->
+    <div id="page-detail" class="page">
+        <div class="header">
+            <button class="icon-btn" onclick="closeDetail()"><span class="material-icons">arrow_back</span></button>
+            <h2 id="detail-title">Bill Detail</h2>
+            <div style="width:40px"></div>
+        </div>
+        
+        <div class="content">
+            <!-- 8 KPIs GRID WITH CLICKS -->
+            <div class="kpi-container">
+                <div class="kpi-grid">
+                    <div class="kpi-card kpi-click" onclick="showShortage()"><div class="kpi-label">Indent Amt (Short)</div><div class="kpi-val" id="det-indent">₹0</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Bill Amount</div><div class="kpi-val" id="det-bill">₹0</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Bill Cost</div><div class="kpi-val" id="det-cost">₹0</div></div>
+                    <div class="kpi-card kpi-click" onclick="showExpenses()"><div class="kpi-label">Expenses (View)</div><div class="kpi-val val-warn" id="det-exp">₹0</div></div>
+                    
+                    <div class="kpi-card"><div class="kpi-label">Gross Profit</div><div class="kpi-val val-pos" id="det-gross">₹0</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Gross Margin</div><div class="kpi-val val-pos" id="det-margin">0%</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Net Profit</div><div class="kpi-val val-net" id="det-net">₹0</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Net Margin</div><div class="kpi-val val-net" id="det-net-margin">0%</div></div>
+                </div>
+            </div>
+
+            <!-- MARGIN DISTRIBUTION SCROLL -->
+            <div id="margin-container" class="margin-dist-container"></div>
+                <!-- Injected by JS -->
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="sticky-col">Item Name</th>
+                            <th class="w-num">Qty</th>
+                            <th class="w-num">Weight</th>
+                            <th class="w-num">Sell Price</th>
+                            <th class="w-num">Total</th>
+                            <th class="w-num">Cost</th>
+                            <th class="w-num">Profit</th>
+                            <th class="w-num">Mgn%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detail-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- INFO MODAL -->
+    <div id="info-modal" class="hidden modal-overlay" onclick="closeModal(event)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="modal-head">
+                <span id="modal-title">Details</span>
+                <span class="material-icons" onclick="document.getElementById('info-modal').classList.add('hidden')" style="cursor:pointer">close</span>
+            </div>
+            <div id="modal-content" class="modal-body"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // --- PASTE FIREBASE CONFIG HERE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6OFRosamp5U5lKnAxl0wptGt5-eHL6ZQ",
+            authDomain: "swiggymargin.firebaseapp.com",
+            projectId: "swiggymargin",
+            storageBucket: "swiggymargin.firebasestorage.app",
+            messagingSenderId: "531917441854",
+            appId: "1:531917441854:web:c48880dfe0638ad901fa6f",
+            databaseURL: "https://swiggymargin-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        let allIndents = [];
+        let expenseSettings = null; // To store global settings if needed
+        let currentRec = null;
+        const ADMIN_PASS = "Admin#098"; 
+
+        // --- AUTH ---
+        window.handleLogin = function() {
+            const pass = document.getElementById('login-pass').value;
+            if(pass === ADMIN_PASS) {
+                localStorage.setItem('swiggy_admin_auth', 'true');
+                startApp();
+            } else {
+                document.getElementById('login-err').innerText = "Invalid Password";
+            }
+        }
+
+        window.handleLogout = function() {
+            if(confirm("Logout?")) {
+                localStorage.removeItem('swiggy_admin_auth');
+                location.reload();
+            }
+        }
+
+        function checkAuth() {
+            if(localStorage.getItem('swiggy_admin_auth') === 'true') startApp();
+        }
+
+        // --- APP LOGIC ---
+        function startApp() {
+            document.getElementById('page-login').classList.add('hidden');
+            document.getElementById('page-main').classList.remove('hidden');
+            
+            // Set Default Date (Current Month)
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+            
+            const from = `${y}-${m}-01`;
+            const to = `${y}-${m}-${lastDay}`;
+
+            ['rep-from', 'rep-to', 'fin-from', 'fin-to'].forEach(id => {
+                document.getElementById(id).value = id.includes('from') ? from : to;
+            });
+
+            loadData();
+        }
+
+        async function loadData() {
+            try {
+                // Load Indents
+                const snap = await get(ref(db, 'indents'));
+                if(snap.exists()) {
+                    allIndents = Object.values(snap.val()).sort((a,b) => b.id - a.id);
+                }
+                // Load Settings for expenses fallback
+                const expSnap = await get(ref(db, 'settings/expenses'));
+                if(expSnap.exists()) expenseSettings = expSnap.val();
+
+                renderReport();
+                renderFinance();
+            } catch(e) { console.error(e); alert("Error loading data"); }
+        }
+
+        window.switchTab = function(tabName, el) {
+            document.querySelectorAll('.tab-content').forEach(d => d.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // --- REPORT TAB ---
+        window.renderReport = function() {
+            const from = document.getElementById('rep-from').value;
+            const to = document.getElementById('rep-to').value;
+            const tbody = document.getElementById('report-body');
+            tbody.innerHTML = '';
+
+            let kpiRev = 0, kpiProf = 0, kpiNet = 0, kpiExp = 0;
+
+            allIndents.forEach((rec) => {
+                if (rec.date < from || rec.date > to) return;
+
+                const billNo = getBillNo(rec);
+                const tBill = rec.totalBillAmt || rec.totalRev || 0;
+                const tCost = rec.totalCost || 0;
+                const tExp = rec.totalExpenses || 0;
+                const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
+                const netMgn = tBill > 0 ? (tNet/tBill)*100 : 0;
+
+                kpiRev += tBill; kpiProf += rec.profit; kpiNet += tNet; kpiExp += tExp;
+
+                const tr = document.createElement('tr');
+                tr.onclick = () => openDetail(rec);
+                tr.innerHTML = `
+                    <td class="sticky-col" style="font-weight:700; color:var(--primary);">${billNo}</td>
+                    <td class="w-date">${formatDate(rec.date)}</td>
+                    <td class="w-num">₹${tBill.toFixed(0)}</td>
+                    <td class="w-num" style="color:#777">₹${tCost.toFixed(0)}</td>
+                    <td class="w-num" style="color:var(--orange)">₹${tExp.toFixed(0)}</td>
+                    <td class="w-num" style="color:${tNet>=0?'var(--purple)':'var(--red)'}; font-weight:700;">₹${tNet.toFixed(0)}</td>
+                    <td class="w-num">${netMgn.toFixed(0)}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('kpi-rep-rev').innerText = `₹${kpiRev.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-rep-prof').innerText = `₹${kpiProf.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-rep-net').innerText = `₹${kpiNet.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-rep-exp').innerText = `₹${kpiExp.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+        }
+
+        // --- DETAIL PAGE ---
+        window.openDetail = function(rec) {
+            currentRec = rec;
+            const billNo = getBillNo(rec);
+            document.getElementById('detail-title').innerText = `Bill: ${formatDateFull(rec.date)}`;
+            
+            const tIndent = rec.totalIndentAmt || 0;
+            const tBill = rec.totalBillAmt || rec.totalRev || 0;
+            const tCost = rec.totalCost || 0;
+            const tExp = rec.totalExpenses || 0;
+            const tGross = rec.profit || 0;
+            const tNet = rec.netProfit !== undefined ? rec.netProfit : (tGross - tExp);
+            
+            const grossM = tBill > 0 ? (tGross / tBill) * 100 : 0;
+            const netM = tBill > 0 ? (tNet / tBill) * 100 : 0;
+
+            // Fill 8 KPIs
+            document.getElementById('det-indent').innerText = `₹${tIndent.toFixed(0)}`;
+            document.getElementById('det-bill').innerText = `₹${tBill.toFixed(0)}`;
+            document.getElementById('det-cost').innerText = `₹${tCost.toFixed(0)}`;
+            document.getElementById('det-exp').innerText = `₹${tExp.toFixed(0)}`;
+            document.getElementById('det-gross').innerText = `₹${tGross.toFixed(0)}`;
+            document.getElementById('det-margin').innerText = `${grossM.toFixed(1)}%`;
+            document.getElementById('det-net').innerText = `₹${tNet.toFixed(0)}`;
+            document.getElementById('det-net-margin').innerText = `${netM.toFixed(1)}%`;
+
+            // Calculate & Render Margin Buckets
+            renderMarginBuckets(rec.items || []);
+
+            // Render Table
+            const tbody = document.getElementById('detail-body');
+            tbody.innerHTML = '';
+            (rec.items || []).filter(i => i.qty > 0).forEach(item => {
+                const total = item.qty * item.poRate;
+                const cost = item.frozenCost || (item.qty * item.myCost);
+                const prof = item.profit;
+                const mgn = item.marginPct;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="sticky-col" style="font-size:11px;">${item.name}</td>
+                        <td class="w-num">${item.qty}</td>
+                        <td class="w-num">${(item.actualKg||0).toFixed(2)}</td>
+                        <td class="w-num">${item.poRate}</td>
+                        <td class="w-num" style="font-weight:bold;">₹${total.toFixed(0)}</td>
+                        <td class="w-num" style="color:#777">₹${cost.toFixed(0)}</td>
+                        <td class="w-num ${prof<0?'val-neg':'val-pos'}">₹${prof.toFixed(0)}</td>
+                        <td class="w-num">${mgn.toFixed(0)}%</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('page-detail').classList.add('active');
+        }
+
+        window.closeDetail = function() {
+            document.getElementById('page-detail').classList.remove('active');
+        }
+
+        // --- INTERACTIVE MODALS ---
+        
+        // 1. Expense Breakdown
+        window.showExpenses = function() {
+            if(!currentRec) return;
+            let d = currentRec.expenseDetails;
+            
+            // Fallback calculation if details missing
+            if(!d && expenseSettings) {
+                // Simple recreation of calculation if stored data is missing
+                const dateObj = new Date(currentRec.date);
+                const dayIdx = dateObj.getDay(); 
+                const daySet = expenseSettings.days[dayIdx];
+                const billAmt = currentRec.totalBillAmt || 0;
+                const billCost = currentRec.totalCost || 0;
+                d = {
+                    wage: daySet.wage,
+                    transport: daySet.transport,
+                    packing: (billAmt/1000) * expenseSettings.packingRate,
+                    misc: (billCost * expenseSettings.miscPercent)/100,
+                    total: currentRec.totalExpenses
+                };
+            }
+
+            if(!d) { alert("Expense details not available"); return; }
+
+            const html = `
+                <div class="modal-row"><span>Daily Wages</span><span>₹${d.wage.toFixed(0)}</span></div>
+                <div class="modal-row"><span>Transport</span><span>₹${d.transport.toFixed(0)}</span></div>
+                <div class="modal-row"><span>Packing</span><span>₹${d.packing.toFixed(0)}</span></div>
+                <div class="modal-row"><span>Misc</span><span>₹${d.misc.toFixed(0)}</span></div>
+                <div class="modal-row total"><span>Total</span><span>₹${d.total.toFixed(0)}</span></div>
+            `;
+            openModal("Expenses", html);
+        }
+
+        // 2. Shortage List
+        window.showShortage = function() {
+            if(!currentRec || !currentRec.items) return;
+            const shortItems = currentRec.items.filter(i => {
+                const ordered = i.originalQty !== undefined ? i.originalQty : (i.poQty || 0);
+                return ordered > i.qty;
+            });
+
+            if(shortItems.length === 0) { alert("No shortages found"); return; }
+
+            let html = `<div style="padding:10px; background:#ffebee; color:#c62828; font-size:12px; font-weight:700;">${shortItems.length} items short packed</div>`;
+            shortItems.forEach(i => {
+                const ord = i.originalQty !== undefined ? i.originalQty : i.poQty;
+                const diff = ord - i.qty;
+                const loss = diff * i.poRate;
+                html += `
+                    <div class="modal-row">
+                        <span style="flex:1; overflow:hidden; text-overflow:ellipsis;">${i.name}</span>
+                        <span style="color:#777; margin:0 10px;">${ord} -> ${i.qty}</span>
+                        <span style="color:red; font-weight:700;">-${diff} (₹${loss})</span>
+                    </div>
+                `;
+            });
+            openModal("Short Items", html);
+        }
+
+        // 3. Margin Buckets Logic (Updated Design)
+        function renderMarginBuckets(items) {
+            const buckets = [
+                { l: 'Loss (<0%)', c: 0, s: 0, p:0, cls: 'bd-loss', items:[] },
+                { l: '0% - 5%', c: 0, s: 0, p:0, cls: 'bd-low', items:[] },
+                { l: '5% - 10%', c: 0, s: 0, p:0, cls: 'bd-mid', items:[] },
+                { l: '10% - 20%', c: 0, s: 0, p:0, cls: 'bd-ok', items:[] },
+                { l: '20% - 50%', c: 0, s: 0, p:0, cls: 'bd-good', items:[] },
+                { l: '> 50%', c: 0, s: 0, p:0, cls: 'bd-great', items:[] }
+            ];
+
+            items.filter(i => i.qty > 0).forEach(i => {
+                const m = i.marginPct;
+                const sale = i.qty * i.poRate;
+                let idx = 0;
+                
+                if(m < 0) idx=0; 
+                else if(m<5) idx=1; 
+                else if(m<10) idx=2; 
+                else if(m<20) idx=3; 
+                else if(m<50) idx=4; 
+                else idx=5;
+                
+                buckets[idx].c++;
+                buckets[idx].s += sale;
+                buckets[idx].p += i.profit;
+                buckets[idx].items.push(i);
+            });
+
+            const container = document.getElementById('margin-container');
+            container.innerHTML = '';
+            
+            buckets.forEach(b => {
+                const div = document.createElement('div');
+                div.className = `ma-card ${b.cls}`;
+                div.onclick = () => showCategoryItems(b.l, b.items);
+                
+                div.innerHTML = `
+                    <div class="ma-header">${b.l}</div>
+                    <div class="ma-body">
+                        <div class="ma-row">
+                            <span>Items</span>
+                            <span class="ma-val">${b.c}</span>
+                        </div>
+                        <div class="ma-row">
+                            <span>Sales</span>
+                            <span class="ma-val">₹${b.s.toFixed(0)}</span>
+                        </div>
+                        <div class="ma-sep"></div>
+                        <div class="ma-row">
+                            <span>Profit</span>
+                            <span class="ma-prof">₹${b.p.toFixed(0)}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.showCategoryItems = function(label, items) {
+            if(items.length === 0) return;
+            let html = '';
+            items.forEach(i => {
+                const prof = i.profit.toFixed(0);
+                html += `
+                    <div class="modal-row">
+                        <span style="flex:1;">${i.name}</span>
+                        <span style="font-weight:700; color:${i.profit<0?'red':'green'}">₹${prof} (${i.marginPct.toFixed(0)}%)</span>
+                    </div>
+                `;
+            });
+            openModal(label, html);
+        }
+
+        // --- MODAL UTILS ---
+        function openModal(title, content) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('info-modal').classList.remove('hidden');
+        }
+        
+        window.closeModal = function(e) {
+            if(e.target.id === 'info-modal') document.getElementById('info-modal').classList.add('hidden');
+        }
+
+        // --- FINANCE TAB ---
+        window.renderFinance = function() {
+            const from = document.getElementById('fin-from').value;
+            const to = document.getElementById('fin-to').value;
+            const tbody = document.getElementById('finance-body');
+            tbody.innerHTML = '';
+
+            let totBilled=0, totRcvd=0, totPend=0, creditDaysSum=0, creditCount=0, pendingCount=0;
+
+            allIndents.forEach(rec => {
+                if (rec.date < from || rec.date > to) return;
+
+                const billNo = getBillNo(rec);
+                const billAmt = rec.totalBillAmt || rec.totalRev || 0;
+                const recvAmt = rec.receivedAmount || 0;
+                const pending = billAmt - recvAmt;
+                const note = rec.financeNote || '';
+                const rcvDate = rec.receivedDate || '';
+
+                // Days Logic
+                let days = '-';
+                if(rcvDate && rec.date) {
+                    const start = new Date(rec.date);
+                    const end = new Date(rcvDate);
+                    days = Math.ceil(Math.abs(end-start)/(1000*60*60*24));
+                    if(recvAmt > 0) { creditDaysSum += days; creditCount++; }
+                }
+
+                totBilled += billAmt; totRcvd += recvAmt; 
+                if(pending > 1) { // Threshold for float diffs
+                    totPend += pending;
+                    pendingCount++;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="sticky-col" style="font-weight:500;">${billNo}</td>
+                        <td class="w-date">${formatDate(rec.date)}</td>
+                        <td class="w-num">₹${billAmt.toFixed(0)}</td>
+                        <td class="w-date" style="text-align:right;">${formatDate(rcvDate)}</td>
+                        <td class="w-num" style="text-align:center;">${days}</td>
+                        <td style="font-style:italic; color:#666; font-size:11px; padding-left:10px;">${note}</td>
+                    </tr>
+                `;
+            });
+
+            const avgDays = creditCount > 0 ? (creditDaysSum/creditCount).toFixed(0) : 0;
+
+            document.getElementById('kpi-fin-total').innerText = `₹${totBilled.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-fin-rcvd').innerText = `₹${totRcvd.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-fin-pend').innerText = `₹${totPend.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-fin-count').innerText = pendingCount;
+            document.getElementById('kpi-fin-days').innerText = avgDays;
+        }
+
+        // --- UTILS ---
+        function getBillNo(rec) {
+            if(rec.date) {
+                const parts = rec.date.split('-');
+                if(parts.length === 3) return `MFB${parts[2]}${parts[1]}${parts[0].slice(-2)}`;
+            }
+            return `#${rec.id.toString().slice(-4)}`;
+        }
+
+        function formatDate(dateStr) {
+            if(!dateStr) return '-';
+            const parts = dateStr.split('-');
+            return `${parts[2]}/${parts[1]}`;
+        }
+        
+        function formatDateFull(dateStr) {
+            if(!dateStr) return '-';
+            const parts = dateStr.split('-');
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+
+        checkAuth();
+    </script>
+</body>
+</html>
