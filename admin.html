@@ -13,7 +13,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
-    <!-- PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
@@ -28,48 +27,41 @@
         .hidden { display: none !important; }
 
         /* --- HEADER --- */
-        .header { height: 56px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50; }
+        .header { height: 60px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50; }
         .header h2 { font-size: 18px; margin: 0; color: var(--primary); }
         .icon-btn { background: none; border: none; padding: 8px; color: var(--text-sub); border-radius: 50%; cursor: pointer; }
 
-        /* --- DROPDOWN MENU --- */
+        .header-title-box { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
+        .h-main { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .h-sub { font-size: 11px; color: var(--text-sub); font-weight: 500; }
+
         .menu-container { position: relative; }
-        .dropdown-menu { 
-            position: absolute; top: 40px; right: 0; 
-            background: white; border: 1px solid var(--border); 
-            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-            width: 160px; z-index: 100; display: none; 
-        }
+        .dropdown-menu { position: absolute; top: 40px; right: 0; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 160px; z-index: 100; display: none; }
         .dropdown-menu.show { display: block; }
-        .menu-item { 
-            padding: 12px 16px; display: flex; align-items: center; gap: 10px; 
-            font-size: 14px; color: var(--text-main); cursor: pointer; 
-            border-bottom: 1px solid #f1f3f4; 
-        }
+        .menu-item { padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-main); cursor: pointer; border-bottom: 1px solid #f1f3f4; }
         .menu-item:last-child { border-bottom: none; }
         .menu-item:active { background: #f1f3f4; }
 
-        /* --- CONTENT STRUCTURE --- */
+        /* --- CONTENT --- */
         .content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
         .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
         .tab-content.active { display: flex; }
+        .detail-top-section { flex-shrink: 0; background: var(--bg); border-bottom: 1px solid var(--border); padding-bottom: 5px; }
 
-        .detail-top-section {
-            flex-shrink: 0; 
-            background: var(--bg);
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 5px;
-        }
-
-        /* --- FILTERS --- */
+        /* --- FILTERS & BARS --- */
         .filter-bar { padding: 10px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .date-input { border: 1px solid var(--border); border-radius: 6px; padding: 6px; font-family: 'Roboto'; font-size: 13px; width: 45%; background: var(--bg); }
         
-        /* --- KPI GRID (3x3 Layout for Detail) --- */
+        .master-info-bar { padding: 12px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+        .mi-title { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+        .mi-sub { font-size: 11px; color: var(--text-sub); }
+
+        /* --- KPI GRID --- */
         .kpi-container { padding: 10px; }
-        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } /* Default 2 cols */
-        
-        .kpi-grid-3x3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; } /* New 3 cols for Detail */
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } 
+        .kpi-grid-3x3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; } 
+        .kpi-grid-fin { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .kpi-grid-fin .kpi-card:last-child { grid-column: span 2; } 
 
         .kpi-card { background: var(--surface); padding: 10px 8px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; }
         .kpi-label { font-size: 9px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -78,28 +70,18 @@
         
         .val-pos { color: var(--green); } .val-neg { color: var(--red); } .val-warn { color: var(--orange); } .val-net { color: var(--purple); }
 
-        /* --- MARGIN DISTRIBUTION (Horizontal Scroll) --- */
-        .margin-dist-container { 
-            padding: 0 12px 10px 12px; 
-            display: flex; gap: 10px; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; 
-        }
+        /* --- MARGIN DISTRIBUTION --- */
+        .margin-dist-container { padding: 0 12px 10px 12px; display: flex; gap: 10px; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
         .margin-dist-container::-webkit-scrollbar { height: 0px; }
-
-        .ma-card { 
-            min-width: 120px; background: white; border: 1px solid #dadce0; border-radius: 8px; 
-            overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-            display: flex; flex-direction: column; cursor: pointer; transition: transform 0.1s;
-        }
+        .ma-card { min-width: 120px; background: white; border: 1px solid #dadce0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; cursor: pointer; transition: transform 0.1s; }
         .ma-card:active { transform: scale(0.98); }
-
-        /* Bucket Colors */
+        
         .bd-loss { border-top: 4px solid var(--red); } .bd-loss .ma-header { background: #ffebee; color: #c62828; } .bd-loss .ma-prof { color: var(--red); }
         .bd-low { border-top: 4px solid var(--orange); } .bd-low .ma-header { background: #fff3e0; color: #ef6c00; } .bd-low .ma-prof { color: var(--orange); }
         .bd-mid { border-top: 4px solid #fdd835; } .bd-mid .ma-header { background: #fffde7; color: #f9a825; } .bd-mid .ma-prof { color: #f9a825; }
         .bd-ok { border-top: 4px solid #29b6f6; } .bd-ok .ma-header { background: #e1f5fe; color: #0277bd; } .bd-ok .ma-prof { color: #0288d1; }
         .bd-good { border-top: 4px solid var(--primary); } .bd-good .ma-header { background: #e3f2fd; color: #1565c0; } .bd-good .ma-prof { color: var(--primary); }
         .bd-great { border-top: 4px solid var(--green); } .bd-great .ma-header { background: #e8f5e9; color: #2e7d32; } .bd-great .ma-prof { color: var(--green); }
-
         .ma-header { padding: 6px 4px; font-size: 10px; font-weight: 900; text-align: center; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .ma-body { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
         .ma-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #5f6368; font-weight: 500; }
@@ -107,31 +89,44 @@
         .ma-sep { border-top: 1px dashed #ddd; margin: 2px 0; }
         .ma-prof { font-size: 13px; font-weight: 900; text-align: right; }
 
-        /* --- TABLE --- */
-        .table-wrapper { flex: 1; overflow: auto; position: relative; background: var(--surface); }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        /* --- CLEAN TABLE STYLING --- */
+        .table-wrapper { flex: 1; overflow: auto; position: relative; background: var(--surface); border-top: 1px solid var(--border); }
+        table { border-collapse: collapse; width: 100%; border-spacing: 0; }
         
+        th, td { 
+            padding: 12px 8px; font-size: 12px; white-space: nowrap; vertical-align: middle; 
+            text-align: center; 
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border); 
+        }
+        th:last-child, td:last-child { border-right: none; }
+
         th { 
-            position: sticky; top: 0; z-index: 20; 
-            background: #f8f9fa; color: var(--text-sub); 
-            font-size: 11px; font-weight: 700; text-transform: uppercase; 
-            padding: 10px 8px; border-bottom: 1px solid var(--border); 
-            white-space: nowrap;
+            position: sticky; top: 0; z-index: 20; background: #f8f9fa; color: var(--text-sub); 
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
         }
-        td { 
-            padding: 10px 8px; border-bottom: 1px solid #f1f3f4; 
-            font-size: 12px; color: var(--text-main); 
-            white-space: nowrap; vertical-align: middle;
-        }
-        tr:active { background-color: #e8f0fe; }
+        
+        /* Sortable Header */
+        th.sortable { cursor: pointer; user-select: none; }
+        th.sortable:active { background: #e8f0fe; color: var(--primary); }
 
-        .sticky-col { position: sticky; left: 0; background: var(--surface); z-index: 15; border-right: 1px solid #eee; width: 50vw; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+        tbody tr:nth-child(even) { background-color: #fafafa; }
+        tbody tr:active { background-color: #e8f0fe; }
+
+        /* Sticky Left Column */
+        .sticky-col, th.sticky-col { 
+            position: sticky; left: 0; background: var(--surface); z-index: 15; 
+            border-right: 2px solid #dadce0 !important; width: 45vw; max-width: 160px; 
+            overflow: hidden; text-overflow: ellipsis; 
+            text-align: left !important; 
+            padding-left: 12px;
+        }
         th.sticky-col { z-index: 25; background: #f8f9fa; }
+        
+        .w-num { min-width: 75px; }
+        .w-date { min-width: 85px; color: var(--text-sub); }
 
-        .w-num { text-align: right; min-width: 80px; }
-        .w-date { min-width: 80px; font-size: 11px; color: var(--text-sub); }
-
-        /* --- POPUP MODAL --- */
+        /* --- MODALS --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 5000; display: flex; align-items: center; justify-content: center; }
         .modal-box { background: white; width: 90%; max-width: 350px; max-height: 80vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         .modal-head { padding: 15px; border-bottom: 1px solid #eee; font-weight: 700; font-size: 16px; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; }
@@ -140,7 +135,7 @@
         .modal-row:last-child { border-bottom: none; }
         .modal-row.total { background: #f8f9fa; font-weight: 700; border-top: 1px solid #ddd; }
 
-        /* --- BOTTOM NAV & LOGIN --- */
+        /* --- NAV & LOGIN --- */
         .bottom-nav { height: 56px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 100; }
         .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; width: 100%; height: 100%; font-size: 10px; font-weight: 500; }
         .nav-item.active { color: var(--primary); }
@@ -220,13 +215,12 @@
                 </div>
 
                 <div class="kpi-container">
-                    <!-- Special 5 item grid -->
-                    <div class="kpi-grid" style="grid-template-columns: 1fr 1fr; gap:8px;">
+                    <div class="kpi-grid-fin">
                         <div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-val" id="kpi-fin-total">₹0</div></div>
                         <div class="kpi-card"><div class="kpi-label">Received</div><div class="kpi-val val-pos" id="kpi-fin-rcvd">₹0</div></div>
                         <div class="kpi-card"><div class="kpi-label">Pending Amt</div><div class="kpi-val val-neg" id="kpi-fin-pend">₹0</div></div>
                         <div class="kpi-card"><div class="kpi-label">Pending Bills</div><div class="kpi-val" id="kpi-fin-count">0</div></div>
-                        <div class="kpi-card" style="grid-column: span 2"><div class="kpi-label">Avg Credit Days</div><div class="kpi-val" id="kpi-fin-days">0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Avg Credit Days</div><div class="kpi-val" id="kpi-fin-days">0</div></div>
                     </div>
                 </div>
 
@@ -246,6 +240,29 @@
                     </table>
                 </div>
             </div>
+
+            <!-- TAB 3: MASTER -->
+            <div id="tab-master" class="tab-content">
+                <div class="master-info-bar">
+                    <div class="mi-title">Master Price List</div>
+                    <div class="mi-sub" id="master-updated">Loading...</div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sticky-col sortable" onclick="sortMaster('name')">Item Name <span style="font-size:10px">▼</span></th>
+                                <th class="w-num">Conv</th>
+                                <th class="w-num">Cost/Pc</th>
+                                <th class="w-num">Sell</th>
+                                <th class="w-num sortable" onclick="sortMaster('margin')">Mgn% <span style="font-size:10px">▼</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="master-body"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <div class="bottom-nav">
@@ -255,6 +272,9 @@
             <div class="nav-item" onclick="switchTab('finance', this)">
                 <span class="material-icons">account_balance</span><span>Finance</span>
             </div>
+            <div class="nav-item" onclick="switchTab('master', this)">
+                <span class="material-icons">sell</span><span>Master</span>
+            </div>
         </div>
     </div>
 
@@ -262,9 +282,12 @@
     <div id="page-detail" class="page">
         <div class="header">
             <button class="icon-btn" onclick="closeDetail()"><span class="material-icons">arrow_back</span></button>
-            <h2 id="detail-title" style="flex:1; margin-left:10px;">Bill Detail</h2>
             
-            <!-- MENU BUTTON -->
+            <div class="header-title-box">
+                <div id="detail-bill-no" class="h-main"></div>
+                <div id="detail-date" class="h-sub"></div>
+            </div>
+            
             <div class="menu-container">
                 <button class="icon-btn" onclick="toggleMenu()"><span class="material-icons">more_vert</span></button>
                 <div id="detail-menu" class="dropdown-menu">
@@ -275,10 +298,7 @@
         </div>
         
         <div class="content">
-            
-            <!-- TOP SECTION (KPIs + Margin Scroll) -->
             <div class="detail-top-section">
-                <!-- 9 KPIs GRID (3x3) -->
                 <div class="kpi-container">
                     <div class="kpi-grid-3x3">
                         <div class="kpi-card kpi-click" onclick="showShortage()"><div class="kpi-label">Indent Amt</div><div class="kpi-val" id="det-indent">₹0</div></div>
@@ -295,25 +315,21 @@
                     </div>
                 </div>
 
-                <!-- MARGIN DISTRIBUTION SCROLL -->
-                <div id="margin-container" class="margin-dist-container">
-                    <!-- Injected by JS -->
-                </div>
+                <div id="margin-container" class="margin-dist-container"></div>
             </div>
 
-            <!-- TABLE SECTION (Fills Remaining Space) -->
             <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
-                            <th class="sticky-col">Item Name</th>
+                            <th class="sticky-col sortable" onclick="sortDetail('name')">Item Name ▼</th>
                             <th class="w-num">Qty</th>
                             <th class="w-num">Weight</th>
-                            <th class="w-num">Sell Price</th>
-                            <th class="w-num">Total</th>
-                            <th class="w-num">Cost</th>
-                            <th class="w-num">Profit</th>
-                            <th class="w-num">Mgn%</th>
+                            <th class="w-num">Sell</th>
+                            <th class="w-num sortable" onclick="sortDetail('total')">Total ▼</th>
+                            <th class="w-num sortable" onclick="sortDetail('cost')">Cost ▼</th>
+                            <th class="w-num sortable" onclick="sortDetail('profit')">Profit ▼</th>
+                            <th class="w-num sortable" onclick="sortDetail('margin')">Mgn% ▼</th>
                         </tr>
                     </thead>
                     <tbody id="detail-body"></tbody>
@@ -351,12 +367,14 @@
         const db = getDatabase(app);
         
         let allIndents = [];
+        let allProducts = [];
         let masterMap = {};
         let expenseSettings = null; 
         let currentRec = null;
+        let masterSort = { key: 'name', dir: 1 };
+        let detailSort = { key: 'name', dir: 1 }; // New Sort State
         const ADMIN_PASS = "Admin#098"; 
 
-        // --- AUTH ---
         window.handleLogin = function() {
             const pass = document.getElementById('login-pass').value;
             if(pass === ADMIN_PASS) {
@@ -378,7 +396,6 @@
             if(localStorage.getItem('swiggy_admin_auth') === 'true') startApp();
         }
 
-        // --- APP LOGIC ---
         function startApp() {
             document.getElementById('page-login').classList.add('hidden');
             document.getElementById('page-main').classList.remove('hidden');
@@ -400,24 +417,31 @@
 
         async function loadData() {
             try {
-                // Load Indents
+                // Indents
                 const snap = await get(ref(db, 'indents'));
                 if(snap.exists()) {
                     allIndents = Object.values(snap.val()).sort((a,b) => b.id - a.id);
                 }
-                // Load Settings
                 const expSnap = await get(ref(db, 'settings/expenses'));
                 if(expSnap.exists()) expenseSettings = expSnap.val();
                 
-                // Load Products (For Dump Calc)
+                // Last Update Time
+                const timeSnap = await get(ref(db, 'settings/lastErpUpdate'));
+                if(timeSnap.exists()) {
+                    const rawDate = timeSnap.val();
+                    document.getElementById('master-updated').innerText = "Last Updated: " + formatLastUpdated(rawDate);
+                }
+
+                // Products
                 const prodSnap = await get(ref(db, 'products'));
                 if(prodSnap.exists()) {
-                    const arr = prodSnap.val();
-                    arr.forEach(p => { if(p) masterMap[p.id] = p; });
+                    allProducts = prodSnap.val();
+                    allProducts.forEach(p => { if(p) masterMap[p.id] = p; });
                 }
 
                 renderReport();
                 renderFinance();
+                renderMaster();
             } catch(e) { console.error(e); alert("Error loading data"); }
         }
 
@@ -428,7 +452,49 @@
             el.classList.add('active');
         }
 
-        // --- REPORT TAB ---
+        // --- MASTER TABLE LOGIC ---
+        window.sortMaster = function(key) {
+            if(masterSort.key === key) masterSort.dir *= -1;
+            else { masterSort.key = key; masterSort.dir = 1; }
+            renderMaster();
+        }
+
+        window.renderMaster = function() {
+            const tbody = document.getElementById('master-body');
+            tbody.innerHTML = '';
+            
+            const sorted = [...allProducts].sort((a,b) => {
+                let valA, valB;
+                if(masterSort.key === 'name') {
+                    valA = a.name.toLowerCase(); valB = b.name.toLowerCase();
+                } else if(masterSort.key === 'margin') {
+                    const cA = (a.costKg||0)*(a.conv||0);
+                    valA = a.spPiece>0 ? ((a.spPiece-cA)/a.spPiece) : -999;
+                    const cB = (b.costKg||0)*(b.conv||0);
+                    valB = b.spPiece>0 ? ((b.spPiece-cB)/b.spPiece) : -999;
+                }
+                if(valA < valB) return -1 * masterSort.dir;
+                if(valA > valB) return 1 * masterSort.dir;
+                return 0;
+            });
+
+            sorted.forEach(p => {
+                if(!p) return;
+                const costPc = (p.costKg || 0) * (p.conv || 0);
+                const margin = p.spPiece > 0 ? ((p.spPiece - costPc)/p.spPiece)*100 : 0;
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="sticky-col">${p.name}</td>
+                        <td class="w-num">${p.conv}</td>
+                        <td class="w-num">₹${costPc.toFixed(2)}</td>
+                        <td class="w-num">₹${p.spPiece}</td>
+                        <td class="w-num ${margin>=0?'val-pos':'val-neg'}">${margin.toFixed(0)}%</td>
+                    </tr>
+                `;
+            });
+        }
+
         window.renderReport = function() {
             const from = document.getElementById('rep-from').value;
             const to = document.getElementById('rep-to').value;
@@ -469,10 +535,10 @@
             document.getElementById('kpi-rep-exp').innerText = `₹${kpiExp.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
         }
 
-        // --- DETAIL PAGE ---
         window.openDetail = function(rec) {
             currentRec = rec;
-            document.getElementById('detail-title').innerText = `Bill: ${formatDateFull(rec.date)}`;
+            document.getElementById('detail-bill-no').innerText = getBillNo(rec);
+            document.getElementById('detail-date').innerText = formatDateFull(rec.date);
             
             const tIndent = rec.totalIndentAmt || 0;
             const tBill = rec.totalBillAmt || rec.totalRev || 0;
@@ -480,11 +546,9 @@
             const tExp = rec.totalExpenses || 0;
             const tGross = rec.profit || 0;
             const tNet = rec.netProfit !== undefined ? rec.netProfit : (tGross - tExp);
-            
             const grossM = tBill > 0 ? (tGross / tBill) * 100 : 0;
             const netM = tBill > 0 ? (tNet / tBill) * 100 : 0;
 
-            // Calculate Dump
             let tDump = 0;
             (rec.items || []).forEach(i => {
                 const master = masterMap[i.code];
@@ -492,7 +556,6 @@
                     const std = i.qty * master.conv;
                     const diff = i.actualKg - std;
                     if (diff > 0.05) {
-                        // Use historical cost if available, else master
                         const costPerKg = i.frozenCostPerKg || master.costKg || 0;
                         tDump += (diff * costPerKg);
                     }
@@ -503,7 +566,7 @@
             document.getElementById('det-bill').innerText = `₹${tBill.toFixed(0)}`;
             document.getElementById('det-cost').innerText = `₹${tCost.toFixed(0)}`;
             document.getElementById('det-exp').innerText = `₹${tExp.toFixed(0)}`;
-            document.getElementById('det-dump').innerText = `₹${tDump.toFixed(0)}`; // 9th KPI
+            document.getElementById('det-dump').innerText = `₹${tDump.toFixed(0)}`;
             
             document.getElementById('det-gross').innerText = `₹${tGross.toFixed(0)}`;
             document.getElementById('det-margin').innerText = `${grossM.toFixed(1)}%`;
@@ -511,10 +574,48 @@
             document.getElementById('det-net-margin').innerText = `${netM.toFixed(1)}%`;
 
             renderMarginBuckets(rec.items || []);
+            
+            // Reset Sort and Render
+            detailSort = { key: 'name', dir: 1 };
+            renderDetailTable();
 
+            document.getElementById('page-detail').classList.add('active');
+        }
+
+        // --- NEW DETAIL TABLE RENDER & SORT ---
+        window.sortDetail = function(key) {
+            if (detailSort.key === key) detailSort.dir *= -1;
+            else { detailSort.key = key; detailSort.dir = 1; }
+            renderDetailTable();
+        }
+
+        window.renderDetailTable = function() {
             const tbody = document.getElementById('detail-body');
             tbody.innerHTML = '';
-            (rec.items || []).filter(i => i.qty > 0).forEach(item => {
+            
+            const items = (currentRec.items || []).filter(i => i.qty > 0);
+            
+            const sortedItems = [...items].sort((a,b) => {
+                let valA, valB;
+                // Calculate values for sorting
+                if(detailSort.key === 'name') {
+                    valA = a.name.toLowerCase(); valB = b.name.toLowerCase();
+                } else if(detailSort.key === 'total') {
+                    valA = a.qty * a.poRate; valB = b.qty * b.poRate;
+                } else if(detailSort.key === 'cost') {
+                    valA = a.frozenCost || (a.qty * a.myCost); valB = b.frozenCost || (b.qty * b.myCost);
+                } else if(detailSort.key === 'profit') {
+                    valA = a.profit; valB = b.profit;
+                } else if(detailSort.key === 'margin') {
+                    valA = a.marginPct; valB = b.marginPct;
+                }
+                
+                if(valA < valB) return -1 * detailSort.dir;
+                if(valA > valB) return 1 * detailSort.dir;
+                return 0;
+            });
+
+            sortedItems.forEach(item => {
                 const total = item.qty * item.poRate;
                 const cost = item.frozenCost || (item.qty * item.myCost);
                 const prof = item.profit;
@@ -522,23 +623,21 @@
 
                 tbody.innerHTML += `
                     <tr>
-                        <td class="sticky-col" style="font-size:11px;">${item.name}</td>
+                        <td class="sticky-col">${item.name}</td>
                         <td class="w-num">${item.qty}</td>
                         <td class="w-num">${(item.actualKg||0).toFixed(2)}</td>
                         <td class="w-num">${item.poRate}</td>
                         <td class="w-num" style="font-weight:bold;">₹${total.toFixed(0)}</td>
                         <td class="w-num" style="color:#777">₹${cost.toFixed(0)}</td>
                         <td class="w-num ${prof<0?'val-neg':'val-pos'}">₹${prof.toFixed(0)}</td>
-                        <td class="w-num">${mgn.toFixed(0)}%</td>
+                        <td class="w-num ${mgn>=0?'val-pos':'val-neg'}">${mgn.toFixed(0)}%</td>
                     </tr>
                 `;
             });
-
-            document.getElementById('page-detail').classList.add('active');
         }
 
         window.closeDetail = function() {
-            document.getElementById('detail-menu').classList.remove('show'); // Hide menu
+            document.getElementById('detail-menu').classList.remove('show');
             document.getElementById('page-detail').classList.remove('active');
         }
 
@@ -546,7 +645,161 @@
             document.getElementById('detail-menu').classList.toggle('show');
         }
 
-        // --- INTERACTIVE MODALS ---
+        // --- PDF DOWNLOADS ---
+        const fmt = (n) => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        window.downloadBillPDF = function() {
+            document.getElementById('detail-menu').classList.remove('show');
+            if(!currentRec) return;
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            
+            const validItems = (currentRec.items || []).filter(i => i.qty > 0).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+            const dateParts = currentRec.date.split('-'); 
+            const invoiceNo = `MFB${dateParts[2]}${dateParts[1]}${dateParts[0].slice(-2)}`;
+            const displayDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+
+            const margin = 20; const pageW = 210; const contentW = pageW - (margin * 2);
+            let y = 15;
+
+            // HEADER
+            doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(40, 40, 40);
+            doc.text("INVOICE", margin, y); 
+            doc.setFontSize(10); doc.setTextColor(0, 0, 0);
+            doc.text("MF BIGMARKET IRITTY", margin, y + 5);
+            doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(80, 80, 80);
+            doc.text("Ground Floor, City Center", margin, y + 9);
+            doc.text("Iritty, Kerala", margin, y + 13);
+
+            doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0);
+            doc.text("To: SPWAVE PVT LTD", pageW - margin, y, { align: 'right' }); 
+            let metaY = y + 7;
+            doc.setFontSize(9); doc.setFont("helvetica", "normal");
+            doc.setTextColor(100, 100, 100); doc.text("Invoice No:", pageW - margin - 35, metaY); 
+            doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(invoiceNo, pageW - margin, metaY, { align: 'right' });
+            metaY += 5;
+            doc.setTextColor(100, 100, 100); doc.setFont("helvetica", "normal"); doc.text("Date:", pageW - margin - 35, metaY); 
+            doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(displayDate, pageW - margin, metaY, { align: 'right' });
+            y = metaY + 8;
+
+            // TABLE
+            const wSl=10, wCode=15, wUom=15, wQty=20, wCost=25, wTotal=30;
+            const wName = contentW - (wSl+wCode+wUom+wQty+wCost+wTotal);
+            const xSl=margin, xCode=xSl+wSl, xName=xCode+wCode, xUom=xName+wName, xQty=xUom+wUom, xCost=xQty+wQty, xTotal=xCost+wCost;
+            const rowH = 7; const headH = 8;
+            const vLines = [xCode, xName, xUom, xQty, xCost, xTotal];
+
+            function drawHeader(yPos) {
+                doc.setFillColor(235, 237, 240); doc.setDrawColor(0); doc.setLineWidth(0.3);
+                doc.rect(margin, yPos, contentW, headH, 'FD');
+                doc.setLineWidth(0.1); vLines.forEach(x => doc.line(x, yPos, x, yPos + headH));
+                doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(0);
+                const ty = yPos + 5;
+                doc.text("SL", xSl+2, ty); doc.text("CODE", xCode+2, ty); doc.text("ITEM NAME", xName+2, ty);
+                doc.text("UOM", xUom+2, ty); doc.text("QTY", xQty+wQty-2, ty, {align:'right'});
+                doc.text("COST", xCost+wCost-2, ty, {align:'right'}); doc.text("TOTAL", xTotal+wTotal-2, ty, {align:'right'});
+            }
+
+            drawHeader(y); y += headH;
+            doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+            let totalAmount = 0;
+
+            validItems.forEach((item, index) => {
+                if (y > 270) { doc.addPage(); y = 15; drawHeader(y); y += headH; doc.setFont("helvetica", "normal"); doc.setFontSize(9); }
+                if (index % 2 === 1) { doc.setFillColor(250, 250, 250); doc.rect(margin, y, contentW, rowH, 'F'); }
+                doc.setDrawColor(0); doc.setLineWidth(0.1); doc.rect(margin, y, contentW, rowH, 'S');
+                vLines.forEach(x => doc.line(x, y, x, y + rowH));
+
+                const lineTotal = item.qty * item.poRate;
+                totalAmount += lineTotal;
+                const masterItem = masterMap[item.code] || {};
+                const uomStr = masterItem.uom || 'Unit';
+                const cy = y + 4.5;
+
+                doc.setTextColor(0);
+                doc.text((index + 1).toString(), xSl+2, cy);
+                doc.text(item.code.toString(), xCode+2, cy);
+                doc.text(item.name.substring(0,32), xName+2, cy);
+                doc.text(uomStr, xUom+2, cy);
+                doc.text(item.qty.toString(), xQty+wQty-2, cy, {align:'right'});
+                doc.text(fmt(item.poRate), xCost+wCost-2, cy, {align:'right'});
+                doc.text(fmt(lineTotal), xTotal+wTotal-2, cy, {align:'right'});
+                y += rowH;
+            });
+
+            y += 2;
+            doc.setLineWidth(0.5); doc.line(margin, y, pageW-margin, y); y+=7;
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+            doc.text("GRAND TOTAL", margin, y);
+            doc.setFontSize(12); doc.text("Rs " + fmt(totalAmount), pageW-margin-2, y, {align:'right'});
+            y += 3; doc.setLineWidth(0.5); doc.line(margin, y, pageW-margin, y);
+            doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(150);
+            doc.text("Computer Generated Invoice", pageW/2, 285, {align:'center'});
+            doc.save(`Bill_${invoiceNo}.pdf`);
+        }
+
+        window.downloadReportPDF = function() {
+            document.getElementById('detail-menu').classList.remove('show');
+            if(!currentRec) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            
+            // Re-calc basic stats
+            const tBill = currentRec.totalBillAmt || 0;
+            const tCost = currentRec.totalCost || 0;
+            const tGross = currentRec.profit || 0;
+            const tExp = currentRec.totalExpenses || 0;
+            const tNet = currentRec.netProfit !== undefined ? currentRec.netProfit : (tGross - tExp);
+            
+            let expD = currentRec.expenseDetails;
+            if (!expD && expenseSettings) {
+                const d = new Date(currentRec.date);
+                const ds = expenseSettings.days[d.getDay()];
+                expD = { total: tExp, wage: ds.wage, transport: ds.transport, packing: (tBill/1000)*expenseSettings.packingRate, misc: (tCost*expenseSettings.miscPercent)/100 };
+            } else if (!expD) { expD = {total:0, wage:0, transport:0, packing:0, misc:0}; }
+
+            // Title
+            doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.text("SWIGGY REPORT", 105, 18, { align: 'center' });
+            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text(formatDateFull(currentRec.date), 105, 25, { align: 'center' });
+
+            // KPIs
+            let y = 35;
+            const kpis = [
+                {l:'REVENUE', v:tBill}, {l:'COGS', v:tCost}, {l:'EXPENSES', v:tExp}, {l:'NET PROFIT', v:tNet}
+            ];
+            let x = 10; const kw = 45;
+            kpis.forEach(k => {
+                doc.setFillColor(245); doc.rect(x, y, kw, 20, 'F');
+                doc.setFontSize(8); doc.text(k.l, x+kw/2, y+6, {align:'center'});
+                doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text(k.v.toFixed(0), x+kw/2, y+15, {align:'center'});
+                x += kw + 3;
+            });
+            y += 30;
+
+            // Waterfall Text
+            doc.setFontSize(10); doc.text("Profitability:", 10, y); y+=6;
+            doc.setFont("helvetica", "normal");
+            doc.text(`Revenue: ${tBill.toFixed(0)}`, 15, y); y+=5;
+            doc.text(`(-) Cost: ${tCost.toFixed(0)}`, 15, y); y+=5;
+            doc.setFont("helvetica", "bold"); doc.text(`= Gross: ${tGross.toFixed(0)}`, 15, y); y+=5;
+            doc.setFont("helvetica", "normal"); doc.text(`(-) Exp: ${tExp.toFixed(0)}`, 15, y); y+=6;
+            doc.setFont("helvetica", "bold"); doc.setTextColor(0,100,0); doc.text(`= NET: ${tNet.toFixed(0)}`, 15, y);
+            doc.setTextColor(0);
+
+            // Expenses Text
+            y = 65; x = 110;
+            doc.text("Expenses:", x, y); y+=6;
+            doc.setFont("helvetica", "normal");
+            doc.text(`Wages: ${expD.wage}`, x+5, y); y+=5;
+            doc.text(`Transport: ${expD.transport}`, x+5, y); y+=5;
+            doc.text(`Packing: ${expD.packing.toFixed(0)}`, x+5, y); y+=5;
+            doc.text(`Misc: ${expD.misc.toFixed(0)}`, x+5, y);
+
+            doc.save(`Report_${currentRec.date}.pdf`);
+        }
+
+        // --- HELPER FUNCTIONS ---
         window.showExpenses = function() {
             if(!currentRec) return;
             let d = currentRec.expenseDetails;
@@ -559,12 +812,7 @@
                 d = { wage: daySet.wage, transport: daySet.transport, packing: (billAmt/1000) * expenseSettings.packingRate, misc: (billCost * expenseSettings.miscPercent)/100, total: currentRec.totalExpenses };
             }
             if(!d) { alert("N/A"); return; }
-            const html = `
-                <div class="modal-row"><span>Wages</span><span>₹${d.wage.toFixed(0)}</span></div>
-                <div class="modal-row"><span>Transport</span><span>₹${d.transport.toFixed(0)}</span></div>
-                <div class="modal-row"><span>Packing</span><span>₹${d.packing.toFixed(0)}</span></div>
-                <div class="modal-row"><span>Misc</span><span>₹${d.misc.toFixed(0)}</span></div>
-                <div class="modal-row total"><span>Total</span><span>₹${d.total.toFixed(0)}</span></div>`;
+            const html = `<div class="modal-row"><span>Wages</span><span>₹${d.wage.toFixed(0)}</span></div><div class="modal-row"><span>Transport</span><span>₹${d.transport.toFixed(0)}</span></div><div class="modal-row"><span>Packing</span><span>₹${d.packing.toFixed(0)}</span></div><div class="modal-row"><span>Misc</span><span>₹${d.misc.toFixed(0)}</span></div><div class="modal-row total"><span>Total</span><span>₹${d.total.toFixed(0)}</span></div>`;
             openModal("Expenses", html);
         }
 
@@ -599,7 +847,6 @@
                     }
                 }
             });
-            
             if(dumpList.length === 0) { alert("No dump found"); return; }
             let html = '';
             dumpList.forEach(i => {
@@ -651,44 +898,6 @@
         }
         window.closeModal = function(e) { if(e.target.id === 'info-modal') document.getElementById('info-modal').classList.add('hidden'); }
 
-        // --- PDF DOWNLOADS ---
-        window.downloadBillPDF = function() {
-            document.getElementById('detail-menu').classList.remove('show');
-            if(!currentRec) return;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const date = formatDateFull(currentRec.date);
-            const items = (currentRec.items||[]).filter(i=>i.qty>0).sort((a,b)=>a.name.localeCompare(b.name));
-            
-            doc.setFontSize(14); doc.text(`INVOICE - ${date}`, 105, 15, {align:'center'});
-            
-            let y = 30;
-            doc.setFontSize(9);
-            items.forEach((i, idx) => {
-                if(y > 270) { doc.addPage(); y=20; }
-                const lineTotal = i.qty * i.poRate;
-                doc.text(`${i.name.substring(0,25)}`, 10, y);
-                doc.text(`${i.qty} x ${i.poRate}`, 130, y);
-                doc.text(lineTotal.toFixed(2), 190, y, {align:'right'});
-                y += 7;
-            });
-            doc.line(10, y, 200, y);
-            y += 7;
-            doc.setFontSize(12); doc.setFont("helvetica", "bold");
-            doc.text(`TOTAL: ${currentRec.totalBillAmt.toFixed(0)}`, 190, y, {align:'right'});
-            doc.save(`Bill_${date}.pdf`);
-        }
-
-        window.downloadReportPDF = function() {
-            document.getElementById('detail-menu').classList.remove('show');
-            if(!currentRec) return;
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("Full Report feature requires more complex PDF logic (see main app)", 10, 10);
-            doc.save("Report_Placeholder.pdf");
-        }
-
-        // --- FINANCE TAB ---
         window.renderFinance = function() {
             const from = document.getElementById('fin-from').value;
             const to = document.getElementById('fin-to').value;
@@ -737,7 +946,6 @@
             document.getElementById('kpi-fin-days').innerText = avgDays;
         }
 
-        // --- UTILS ---
         function getBillNo(rec) {
             if(rec.date) {
                 const parts = rec.date.split('-');
@@ -754,6 +962,18 @@
             if(!dateStr) return '-';
             const parts = dateStr.split('-');
             return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        
+        function formatLastUpdated(dateStr) {
+            if(!dateStr) return 'Never';
+            const d = new Date(dateStr);
+            if(isNaN(d.getTime())) return dateStr;
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = String(d.getFullYear()).slice(-2);
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${mins}`;
         }
 
         checkAuth();
