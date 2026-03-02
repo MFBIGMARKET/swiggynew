@@ -13,6 +13,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
+    <!-- PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         :root { --primary: #1a73e8; --bg: #f0f2f5; --surface: #ffffff; --border: #dadce0; --text-main: #202124; --text-sub: #5f6368; --green: #188038; --red: #d93025; --orange: #f57c00; --purple: #9334e6; }
         * { box-sizing: border-box; }
@@ -27,93 +30,83 @@
         /* --- HEADER --- */
         .header { height: 56px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50; }
         .header h2 { font-size: 18px; margin: 0; color: var(--primary); }
-        .icon-btn { background: none; border: none; padding: 8px; color: var(--text-sub); border-radius: 50%; }
+        .icon-btn { background: none; border: none; padding: 8px; color: var(--text-sub); border-radius: 50%; cursor: pointer; }
 
-        /* --- CONTENT --- */
-        .content { flex: 1; overflow-y: hidden; display: flex; flex-direction: column; }
+        /* --- DROPDOWN MENU --- */
+        .menu-container { position: relative; }
+        .dropdown-menu { 
+            position: absolute; top: 40px; right: 0; 
+            background: white; border: 1px solid var(--border); 
+            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            width: 160px; z-index: 100; display: none; 
+        }
+        .dropdown-menu.show { display: block; }
+        .menu-item { 
+            padding: 12px 16px; display: flex; align-items: center; gap: 10px; 
+            font-size: 14px; color: var(--text-main); cursor: pointer; 
+            border-bottom: 1px solid #f1f3f4; 
+        }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:active { background: #f1f3f4; }
+
+        /* --- CONTENT STRUCTURE --- */
+        .content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
         .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
         .tab-content.active { display: flex; }
+
+        .detail-top-section {
+            flex-shrink: 0; 
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+        }
 
         /* --- FILTERS --- */
         .filter-bar { padding: 10px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .date-input { border: 1px solid var(--border); border-radius: 6px; padding: 6px; font-family: 'Roboto'; font-size: 13px; width: 45%; background: var(--bg); }
         
-        /* --- KPI GRID --- */
-        .kpi-container { padding: 10px; overflow-x: auto; flex-shrink: 0; }
-        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        /* --- KPI GRID (3x3 Layout for Detail) --- */
+        .kpi-container { padding: 10px; }
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } /* Default 2 cols */
         
-        /* Special Grid for Finance (5 items) */
-        .kpi-grid-fin { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .kpi-grid-fin .kpi-card:last-child { grid-column: span 2; } /* Make last item full width */
+        .kpi-grid-3x3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; } /* New 3 cols for Detail */
 
-        .kpi-card { background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; }
-        .kpi-label { font-size: 10px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; margin-bottom: 4px; }
-        .kpi-val { font-size: 18px; font-weight: 900; color: var(--text-main); }
-        .kpi-click { cursor: pointer; border-bottom: 3px solid var(--primary); } /* Interactive Indicator */
+        .kpi-card { background: var(--surface); padding: 10px 8px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; }
+        .kpi-label { font-size: 9px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .kpi-val { font-size: 15px; font-weight: 900; color: var(--text-main); }
+        .kpi-click { cursor: pointer; border-bottom: 2px solid var(--primary); } 
         
         .val-pos { color: var(--green); } .val-neg { color: var(--red); } .val-warn { color: var(--orange); } .val-net { color: var(--purple); }
 
-                /* --- MARGIN DISTRIBUTION (Horizontal Scroll) --- */
+        /* --- MARGIN DISTRIBUTION (Horizontal Scroll) --- */
         .margin-dist-container { 
-            padding: 5px 12px 15px 12px; /* Bottom padding for scrollbar space */
-            display: flex; 
-            gap: 12px; 
-            overflow-x: auto; 
-            flex-shrink: 0; 
-            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+            padding: 0 12px 10px 12px; 
+            display: flex; gap: 10px; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; 
         }
-        
-        /* Hide scrollbar visually but allow scroll (Optional) */
-        .margin-dist-container::-webkit-scrollbar { height: 4px; }
-        .margin-dist-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .margin-dist-container::-webkit-scrollbar { height: 0px; }
 
-        /* CARD STYLE (Match Main App) */
         .ma-card { 
-            min-width: 130px; 
-            background: white; 
-            border: 1px solid #dadce0; 
-            border-radius: 8px; 
-            overflow: hidden; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-            display: flex; flex-direction: column;
-            cursor: pointer;
-            transition: transform 0.1s;
+            min-width: 120px; background: white; border: 1px solid #dadce0; border-radius: 8px; 
+            overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            display: flex; flex-direction: column; cursor: pointer; transition: transform 0.1s;
         }
         .ma-card:active { transform: scale(0.98); }
 
-        /* Header Colors */
-        .bd-loss { border-top: 4px solid var(--red); } 
-        .bd-loss .ma-header { background: #ffebee; color: #c62828; } 
-        .bd-loss .ma-prof { color: var(--red); }
+        /* Bucket Colors */
+        .bd-loss { border-top: 4px solid var(--red); } .bd-loss .ma-header { background: #ffebee; color: #c62828; } .bd-loss .ma-prof { color: var(--red); }
+        .bd-low { border-top: 4px solid var(--orange); } .bd-low .ma-header { background: #fff3e0; color: #ef6c00; } .bd-low .ma-prof { color: var(--orange); }
+        .bd-mid { border-top: 4px solid #fdd835; } .bd-mid .ma-header { background: #fffde7; color: #f9a825; } .bd-mid .ma-prof { color: #f9a825; }
+        .bd-ok { border-top: 4px solid #29b6f6; } .bd-ok .ma-header { background: #e1f5fe; color: #0277bd; } .bd-ok .ma-prof { color: #0288d1; }
+        .bd-good { border-top: 4px solid var(--primary); } .bd-good .ma-header { background: #e3f2fd; color: #1565c0; } .bd-good .ma-prof { color: var(--primary); }
+        .bd-great { border-top: 4px solid var(--green); } .bd-great .ma-header { background: #e8f5e9; color: #2e7d32; } .bd-great .ma-prof { color: var(--green); }
 
-        .bd-low { border-top: 4px solid var(--orange); } 
-        .bd-low .ma-header { background: #fff3e0; color: #ef6c00; } 
-        .bd-low .ma-prof { color: var(--orange); }
+        .ma-header { padding: 6px 4px; font-size: 10px; font-weight: 900; text-align: center; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .ma-body { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+        .ma-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #5f6368; font-weight: 500; }
+        .ma-val { font-weight: 700; color: #202124; font-size: 12px; }
+        .ma-sep { border-top: 1px dashed #ddd; margin: 2px 0; }
+        .ma-prof { font-size: 13px; font-weight: 900; text-align: right; }
 
-        .bd-mid { border-top: 4px solid #fdd835; } 
-        .bd-mid .ma-header { background: #fffde7; color: #f9a825; } 
-        .bd-mid .ma-prof { color: #f9a825; }
-
-        .bd-ok { border-top: 4px solid #29b6f6; } 
-        .bd-ok .ma-header { background: #e1f5fe; color: #0277bd; } 
-        .bd-ok .ma-prof { color: #0288d1; }
-
-        .bd-good { border-top: 4px solid var(--primary); } 
-        .bd-good .ma-header { background: #e3f2fd; color: #1565c0; } 
-        .bd-good .ma-prof { color: var(--primary); }
-
-        .bd-great { border-top: 4px solid var(--green); } 
-        .bd-great .ma-header { background: #e8f5e9; color: #2e7d32; } 
-        .bd-great .ma-prof { color: var(--green); }
-
-        /* Card Internals */
-        .ma-header { padding: 8px 4px; font-size: 11px; font-weight: 900; text-align: center; text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .ma-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
-        .ma-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #5f6368; font-weight: 500; }
-        .ma-val { font-weight: 700; color: #202124; font-size: 13px; }
-        .ma-sep { border-top: 1px dashed #ddd; margin: 4px 0; }
-        .ma-prof { font-size: 15px; font-weight: 900; text-align: right; }
-        
         /* --- TABLE --- */
         .table-wrapper { flex: 1; overflow: auto; position: relative; background: var(--surface); }
         table { border-collapse: separate; border-spacing: 0; width: 100%; }
@@ -139,7 +132,7 @@
         .w-date { min-width: 80px; font-size: 11px; color: var(--text-sub); }
 
         /* --- POPUP MODAL --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 5000; display: flex; align-items: center; justify-content: center; }
         .modal-box { background: white; width: 90%; max-width: 350px; max-height: 80vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         .modal-head { padding: 15px; border-bottom: 1px solid #eee; font-weight: 700; font-size: 16px; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; }
         .modal-body { padding: 0; overflow-y: auto; flex: 1; }
@@ -227,12 +220,13 @@
                 </div>
 
                 <div class="kpi-container">
-                    <div class="kpi-grid-fin">
+                    <!-- Special 5 item grid -->
+                    <div class="kpi-grid" style="grid-template-columns: 1fr 1fr; gap:8px;">
                         <div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-val" id="kpi-fin-total">₹0</div></div>
                         <div class="kpi-card"><div class="kpi-label">Received</div><div class="kpi-val val-pos" id="kpi-fin-rcvd">₹0</div></div>
                         <div class="kpi-card"><div class="kpi-label">Pending Amt</div><div class="kpi-val val-neg" id="kpi-fin-pend">₹0</div></div>
                         <div class="kpi-card"><div class="kpi-label">Pending Bills</div><div class="kpi-val" id="kpi-fin-count">0</div></div>
-                        <div class="kpi-card"><div class="kpi-label">Avg Credit Days</div><div class="kpi-val" id="kpi-fin-days">0</div></div>
+                        <div class="kpi-card" style="grid-column: span 2"><div class="kpi-label">Avg Credit Days</div><div class="kpi-val" id="kpi-fin-days">0</div></div>
                     </div>
                 </div>
 
@@ -268,31 +262,46 @@
     <div id="page-detail" class="page">
         <div class="header">
             <button class="icon-btn" onclick="closeDetail()"><span class="material-icons">arrow_back</span></button>
-            <h2 id="detail-title">Bill Detail</h2>
-            <div style="width:40px"></div>
+            <h2 id="detail-title" style="flex:1; margin-left:10px;">Bill Detail</h2>
+            
+            <!-- MENU BUTTON -->
+            <div class="menu-container">
+                <button class="icon-btn" onclick="toggleMenu()"><span class="material-icons">more_vert</span></button>
+                <div id="detail-menu" class="dropdown-menu">
+                    <div class="menu-item" onclick="downloadBillPDF()"><span class="material-icons">receipt</span> Bill PDF</div>
+                    <div class="menu-item" onclick="downloadReportPDF()"><span class="material-icons">picture_as_pdf</span> Report PDF</div>
+                </div>
+            </div>
         </div>
         
         <div class="content">
-            <!-- 8 KPIs GRID WITH CLICKS -->
-            <div class="kpi-container">
-                <div class="kpi-grid">
-                    <div class="kpi-card kpi-click" onclick="showShortage()"><div class="kpi-label">Indent Amt (Short)</div><div class="kpi-val" id="det-indent">₹0</div></div>
-                    <div class="kpi-card"><div class="kpi-label">Bill Amount</div><div class="kpi-val" id="det-bill">₹0</div></div>
-                    <div class="kpi-card"><div class="kpi-label">Bill Cost</div><div class="kpi-val" id="det-cost">₹0</div></div>
-                    <div class="kpi-card kpi-click" onclick="showExpenses()"><div class="kpi-label">Expenses (View)</div><div class="kpi-val val-warn" id="det-exp">₹0</div></div>
-                    
-                    <div class="kpi-card"><div class="kpi-label">Gross Profit</div><div class="kpi-val val-pos" id="det-gross">₹0</div></div>
-                    <div class="kpi-card"><div class="kpi-label">Gross Margin</div><div class="kpi-val val-pos" id="det-margin">0%</div></div>
-                    <div class="kpi-card"><div class="kpi-label">Net Profit</div><div class="kpi-val val-net" id="det-net">₹0</div></div>
-                    <div class="kpi-card"><div class="kpi-label">Net Margin</div><div class="kpi-val val-net" id="det-net-margin">0%</div></div>
+            
+            <!-- TOP SECTION (KPIs + Margin Scroll) -->
+            <div class="detail-top-section">
+                <!-- 9 KPIs GRID (3x3) -->
+                <div class="kpi-container">
+                    <div class="kpi-grid-3x3">
+                        <div class="kpi-card kpi-click" onclick="showShortage()"><div class="kpi-label">Indent Amt</div><div class="kpi-val" id="det-indent">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Bill Amount</div><div class="kpi-val" id="det-bill">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Bill Cost</div><div class="kpi-val" id="det-cost">₹0</div></div>
+                        
+                        <div class="kpi-card kpi-click" onclick="showExpenses()"><div class="kpi-label">Expenses</div><div class="kpi-val val-warn" id="det-exp">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Gross Profit</div><div class="kpi-val val-pos" id="det-gross">₹0</div></div>
+                        <div class="kpi-card kpi-click" onclick="showDump()"><div class="kpi-label">Dump Cost</div><div class="kpi-val val-neg" id="det-dump">₹0</div></div>
+                        
+                        <div class="kpi-card"><div class="kpi-label">Net Profit</div><div class="kpi-val val-net" id="det-net">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Gross Mgn</div><div class="kpi-val val-pos" id="det-margin">0%</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Net Mgn</div><div class="kpi-val val-net" id="det-net-margin">0%</div></div>
+                    </div>
+                </div>
+
+                <!-- MARGIN DISTRIBUTION SCROLL -->
+                <div id="margin-container" class="margin-dist-container">
+                    <!-- Injected by JS -->
                 </div>
             </div>
 
-            <!-- MARGIN DISTRIBUTION SCROLL -->
-            <div id="margin-container" class="margin-dist-container"></div>
-                <!-- Injected by JS -->
-            </div>
-
+            <!-- TABLE SECTION (Fills Remaining Space) -->
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -328,7 +337,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // --- PASTE FIREBASE CONFIG HERE ---
         const firebaseConfig = {
             apiKey: "AIzaSyB6OFRosamp5U5lKnAxl0wptGt5-eHL6ZQ",
             authDomain: "swiggymargin.firebaseapp.com",
@@ -343,7 +351,8 @@
         const db = getDatabase(app);
         
         let allIndents = [];
-        let expenseSettings = null; // To store global settings if needed
+        let masterMap = {};
+        let expenseSettings = null; 
         let currentRec = null;
         const ADMIN_PASS = "Admin#098"; 
 
@@ -374,7 +383,6 @@
             document.getElementById('page-login').classList.add('hidden');
             document.getElementById('page-main').classList.remove('hidden');
             
-            // Set Default Date (Current Month)
             const now = new Date();
             const y = now.getFullYear();
             const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -397,9 +405,16 @@
                 if(snap.exists()) {
                     allIndents = Object.values(snap.val()).sort((a,b) => b.id - a.id);
                 }
-                // Load Settings for expenses fallback
+                // Load Settings
                 const expSnap = await get(ref(db, 'settings/expenses'));
                 if(expSnap.exists()) expenseSettings = expSnap.val();
+                
+                // Load Products (For Dump Calc)
+                const prodSnap = await get(ref(db, 'products'));
+                if(prodSnap.exists()) {
+                    const arr = prodSnap.val();
+                    arr.forEach(p => { if(p) masterMap[p.id] = p; });
+                }
 
                 renderReport();
                 renderFinance();
@@ -457,7 +472,6 @@
         // --- DETAIL PAGE ---
         window.openDetail = function(rec) {
             currentRec = rec;
-            const billNo = getBillNo(rec);
             document.getElementById('detail-title').innerText = `Bill: ${formatDateFull(rec.date)}`;
             
             const tIndent = rec.totalIndentAmt || 0;
@@ -470,20 +484,34 @@
             const grossM = tBill > 0 ? (tGross / tBill) * 100 : 0;
             const netM = tBill > 0 ? (tNet / tBill) * 100 : 0;
 
-            // Fill 8 KPIs
+            // Calculate Dump
+            let tDump = 0;
+            (rec.items || []).forEach(i => {
+                const master = masterMap[i.code];
+                if (master && master.conv > 0 && i.actualKg > 0) {
+                    const std = i.qty * master.conv;
+                    const diff = i.actualKg - std;
+                    if (diff > 0.05) {
+                        // Use historical cost if available, else master
+                        const costPerKg = i.frozenCostPerKg || master.costKg || 0;
+                        tDump += (diff * costPerKg);
+                    }
+                }
+            });
+
             document.getElementById('det-indent').innerText = `₹${tIndent.toFixed(0)}`;
             document.getElementById('det-bill').innerText = `₹${tBill.toFixed(0)}`;
             document.getElementById('det-cost').innerText = `₹${tCost.toFixed(0)}`;
             document.getElementById('det-exp').innerText = `₹${tExp.toFixed(0)}`;
+            document.getElementById('det-dump').innerText = `₹${tDump.toFixed(0)}`; // 9th KPI
+            
             document.getElementById('det-gross').innerText = `₹${tGross.toFixed(0)}`;
             document.getElementById('det-margin').innerText = `${grossM.toFixed(1)}%`;
             document.getElementById('det-net').innerText = `₹${tNet.toFixed(0)}`;
             document.getElementById('det-net-margin').innerText = `${netM.toFixed(1)}%`;
 
-            // Calculate & Render Margin Buckets
             renderMarginBuckets(rec.items || []);
 
-            // Render Table
             const tbody = document.getElementById('detail-body');
             tbody.innerHTML = '';
             (rec.items || []).filter(i => i.qty > 0).forEach(item => {
@@ -510,72 +538,76 @@
         }
 
         window.closeDetail = function() {
+            document.getElementById('detail-menu').classList.remove('show'); // Hide menu
             document.getElementById('page-detail').classList.remove('active');
         }
 
+        window.toggleMenu = function() {
+            document.getElementById('detail-menu').classList.toggle('show');
+        }
+
         // --- INTERACTIVE MODALS ---
-        
-        // 1. Expense Breakdown
         window.showExpenses = function() {
             if(!currentRec) return;
             let d = currentRec.expenseDetails;
-            
-            // Fallback calculation if details missing
             if(!d && expenseSettings) {
-                // Simple recreation of calculation if stored data is missing
                 const dateObj = new Date(currentRec.date);
                 const dayIdx = dateObj.getDay(); 
                 const daySet = expenseSettings.days[dayIdx];
                 const billAmt = currentRec.totalBillAmt || 0;
                 const billCost = currentRec.totalCost || 0;
-                d = {
-                    wage: daySet.wage,
-                    transport: daySet.transport,
-                    packing: (billAmt/1000) * expenseSettings.packingRate,
-                    misc: (billCost * expenseSettings.miscPercent)/100,
-                    total: currentRec.totalExpenses
-                };
+                d = { wage: daySet.wage, transport: daySet.transport, packing: (billAmt/1000) * expenseSettings.packingRate, misc: (billCost * expenseSettings.miscPercent)/100, total: currentRec.totalExpenses };
             }
-
-            if(!d) { alert("Expense details not available"); return; }
-
+            if(!d) { alert("N/A"); return; }
             const html = `
-                <div class="modal-row"><span>Daily Wages</span><span>₹${d.wage.toFixed(0)}</span></div>
+                <div class="modal-row"><span>Wages</span><span>₹${d.wage.toFixed(0)}</span></div>
                 <div class="modal-row"><span>Transport</span><span>₹${d.transport.toFixed(0)}</span></div>
                 <div class="modal-row"><span>Packing</span><span>₹${d.packing.toFixed(0)}</span></div>
                 <div class="modal-row"><span>Misc</span><span>₹${d.misc.toFixed(0)}</span></div>
-                <div class="modal-row total"><span>Total</span><span>₹${d.total.toFixed(0)}</span></div>
-            `;
+                <div class="modal-row total"><span>Total</span><span>₹${d.total.toFixed(0)}</span></div>`;
             openModal("Expenses", html);
         }
 
-        // 2. Shortage List
         window.showShortage = function() {
             if(!currentRec || !currentRec.items) return;
             const shortItems = currentRec.items.filter(i => {
                 const ordered = i.originalQty !== undefined ? i.originalQty : (i.poQty || 0);
                 return ordered > i.qty;
             });
-
             if(shortItems.length === 0) { alert("No shortages found"); return; }
-
-            let html = `<div style="padding:10px; background:#ffebee; color:#c62828; font-size:12px; font-weight:700;">${shortItems.length} items short packed</div>`;
+            let html = '';
             shortItems.forEach(i => {
                 const ord = i.originalQty !== undefined ? i.originalQty : i.poQty;
                 const diff = ord - i.qty;
                 const loss = diff * i.poRate;
-                html += `
-                    <div class="modal-row">
-                        <span style="flex:1; overflow:hidden; text-overflow:ellipsis;">${i.name}</span>
-                        <span style="color:#777; margin:0 10px;">${ord} -> ${i.qty}</span>
-                        <span style="color:red; font-weight:700;">-${diff} (₹${loss})</span>
-                    </div>
-                `;
+                html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="color:#777; margin:0 10px;">${ord}->${i.qty}</span><span style="color:red; font-weight:700;">-${diff} (₹${loss})</span></div>`;
             });
             openModal("Short Items", html);
         }
 
-        // 3. Margin Buckets Logic (Updated Design)
+        window.showDump = function() {
+            if(!currentRec || !currentRec.items) return;
+            let dumpList = [];
+            currentRec.items.forEach(i => {
+                const master = masterMap[i.code];
+                if (master && master.conv > 0 && i.actualKg > 0) {
+                    const std = i.qty * master.conv;
+                    const diff = i.actualKg - std;
+                    if (diff > 0.05) {
+                        const costPerKg = i.frozenCostPerKg || master.costKg || 0;
+                        dumpList.push({ name: i.name, diff: diff, cost: diff * costPerKg });
+                    }
+                }
+            });
+            
+            if(dumpList.length === 0) { alert("No dump found"); return; }
+            let html = '';
+            dumpList.forEach(i => {
+                html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="color:orange;">+${i.diff.toFixed(2)}kg</span><span style="color:red; font-weight:700; margin-left:10px;">₹${i.cost.toFixed(0)}</span></div>`;
+            });
+            openModal("Dump Breakdown", html);
+        }
+
         function renderMarginBuckets(items) {
             const buckets = [
                 { l: 'Loss (<0%)', c: 0, s: 0, p:0, cls: 'bd-loss', items:[] },
@@ -585,51 +617,20 @@
                 { l: '20% - 50%', c: 0, s: 0, p:0, cls: 'bd-good', items:[] },
                 { l: '> 50%', c: 0, s: 0, p:0, cls: 'bd-great', items:[] }
             ];
-
             items.filter(i => i.qty > 0).forEach(i => {
                 const m = i.marginPct;
                 const sale = i.qty * i.poRate;
                 let idx = 0;
-                
-                if(m < 0) idx=0; 
-                else if(m<5) idx=1; 
-                else if(m<10) idx=2; 
-                else if(m<20) idx=3; 
-                else if(m<50) idx=4; 
-                else idx=5;
-                
-                buckets[idx].c++;
-                buckets[idx].s += sale;
-                buckets[idx].p += i.profit;
-                buckets[idx].items.push(i);
+                if(m < 0) idx=0; else if(m<5) idx=1; else if(m<10) idx=2; else if(m<20) idx=3; else if(m<50) idx=4; else idx=5;
+                buckets[idx].c++; buckets[idx].s += sale; buckets[idx].p += i.profit; buckets[idx].items.push(i);
             });
-
             const container = document.getElementById('margin-container');
             container.innerHTML = '';
-            
             buckets.forEach(b => {
                 const div = document.createElement('div');
                 div.className = `ma-card ${b.cls}`;
                 div.onclick = () => showCategoryItems(b.l, b.items);
-                
-                div.innerHTML = `
-                    <div class="ma-header">${b.l}</div>
-                    <div class="ma-body">
-                        <div class="ma-row">
-                            <span>Items</span>
-                            <span class="ma-val">${b.c}</span>
-                        </div>
-                        <div class="ma-row">
-                            <span>Sales</span>
-                            <span class="ma-val">₹${b.s.toFixed(0)}</span>
-                        </div>
-                        <div class="ma-sep"></div>
-                        <div class="ma-row">
-                            <span>Profit</span>
-                            <span class="ma-prof">₹${b.p.toFixed(0)}</span>
-                        </div>
-                    </div>
-                `;
+                div.innerHTML = `<div class="ma-header">${b.l}</div><div class="ma-body"><div class="ma-row"><span>Items</span><span class="ma-val">${b.c}</span></div><div class="ma-row"><span>Sales</span><span class="ma-val">₹${b.s.toFixed(0)}</span></div><div class="ma-sep"></div><div class="ma-row"><span>Profit</span><span class="ma-prof">₹${b.p.toFixed(0)}</span></div></div>`;
                 container.appendChild(div);
             });
         }
@@ -638,26 +639,53 @@
             if(items.length === 0) return;
             let html = '';
             items.forEach(i => {
-                const prof = i.profit.toFixed(0);
-                html += `
-                    <div class="modal-row">
-                        <span style="flex:1;">${i.name}</span>
-                        <span style="font-weight:700; color:${i.profit<0?'red':'green'}">₹${prof} (${i.marginPct.toFixed(0)}%)</span>
-                    </div>
-                `;
+                html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="font-weight:700; color:${i.profit<0?'red':'green'}">₹${i.profit.toFixed(0)} (${i.marginPct.toFixed(0)}%)</span></div>`;
             });
             openModal(label, html);
         }
 
-        // --- MODAL UTILS ---
         function openModal(title, content) {
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-content').innerHTML = content;
             document.getElementById('info-modal').classList.remove('hidden');
         }
-        
-        window.closeModal = function(e) {
-            if(e.target.id === 'info-modal') document.getElementById('info-modal').classList.add('hidden');
+        window.closeModal = function(e) { if(e.target.id === 'info-modal') document.getElementById('info-modal').classList.add('hidden'); }
+
+        // --- PDF DOWNLOADS ---
+        window.downloadBillPDF = function() {
+            document.getElementById('detail-menu').classList.remove('show');
+            if(!currentRec) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const date = formatDateFull(currentRec.date);
+            const items = (currentRec.items||[]).filter(i=>i.qty>0).sort((a,b)=>a.name.localeCompare(b.name));
+            
+            doc.setFontSize(14); doc.text(`INVOICE - ${date}`, 105, 15, {align:'center'});
+            
+            let y = 30;
+            doc.setFontSize(9);
+            items.forEach((i, idx) => {
+                if(y > 270) { doc.addPage(); y=20; }
+                const lineTotal = i.qty * i.poRate;
+                doc.text(`${i.name.substring(0,25)}`, 10, y);
+                doc.text(`${i.qty} x ${i.poRate}`, 130, y);
+                doc.text(lineTotal.toFixed(2), 190, y, {align:'right'});
+                y += 7;
+            });
+            doc.line(10, y, 200, y);
+            y += 7;
+            doc.setFontSize(12); doc.setFont("helvetica", "bold");
+            doc.text(`TOTAL: ${currentRec.totalBillAmt.toFixed(0)}`, 190, y, {align:'right'});
+            doc.save(`Bill_${date}.pdf`);
+        }
+
+        window.downloadReportPDF = function() {
+            document.getElementById('detail-menu').classList.remove('show');
+            if(!currentRec) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Full Report feature requires more complex PDF logic (see main app)", 10, 10);
+            doc.save("Report_Placeholder.pdf");
         }
 
         // --- FINANCE TAB ---
@@ -671,7 +699,6 @@
 
             allIndents.forEach(rec => {
                 if (rec.date < from || rec.date > to) return;
-
                 const billNo = getBillNo(rec);
                 const billAmt = rec.totalBillAmt || rec.totalRev || 0;
                 const recvAmt = rec.receivedAmount || 0;
@@ -679,7 +706,6 @@
                 const note = rec.financeNote || '';
                 const rcvDate = rec.receivedDate || '';
 
-                // Days Logic
                 let days = '-';
                 if(rcvDate && rec.date) {
                     const start = new Date(rec.date);
@@ -689,10 +715,7 @@
                 }
 
                 totBilled += billAmt; totRcvd += recvAmt; 
-                if(pending > 1) { // Threshold for float diffs
-                    totPend += pending;
-                    pendingCount++;
-                }
+                if(pending > 1) { totPend += pending; pendingCount++; }
 
                 tbody.innerHTML += `
                     <tr>
@@ -707,7 +730,6 @@
             });
 
             const avgDays = creditCount > 0 ? (creditDaysSum/creditCount).toFixed(0) : 0;
-
             document.getElementById('kpi-fin-total').innerText = `₹${totBilled.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
             document.getElementById('kpi-fin-rcvd').innerText = `₹${totRcvd.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
             document.getElementById('kpi-fin-pend').innerText = `₹${totPend.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
@@ -723,13 +745,11 @@
             }
             return `#${rec.id.toString().slice(-4)}`;
         }
-
         function formatDate(dateStr) {
             if(!dateStr) return '-';
             const parts = dateStr.split('-');
             return `${parts[2]}/${parts[1]}`;
         }
-        
         function formatDateFull(dateStr) {
             if(!dateStr) return '-';
             const parts = dateStr.split('-');
