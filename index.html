@@ -136,23 +136,78 @@
         .text-green { color: var(--green) !important; font-weight: 700; } 
         .text-red { color: var(--red) !important; font-weight: 700; }
 
-        /* Column Config */
-        .w-code { width: 70px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
-        .w-name { width: auto; font-weight: 500; min-width: 150px; }
-        .w-uom { width: 100px; }
-        .w-num { width: 95px; }
-        .w-calc { width: 95px; background-color: #f8f9fa; color: #5f6368; }
-        .w-stat { width: 110px; font-weight: 700; }
-        .w-action { width: 60px; }
+        /* --- TABLE LAYOUT UPDATES --- */
+        table { width: 100%; border-collapse: collapse; background: white; table-layout: fixed; }
+        
+        /* Fixed Headers */
+        th {
+            padding: 10px 8px; background: #fff;
+            color: var(--text-sub); font-size: 11px; font-weight: 700; text-transform: uppercase;
+            border-bottom: 2px solid var(--border); 
+            white-space: nowrap; /* Prevent wrapping */
+            overflow: hidden; text-overflow: ellipsis;
+            vertical-align: middle;
+        }
 
-        /* History Table Widths - UPDATED */
+        /* General Column Config */
+        .w-code { width: 80px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
+        .w-name { width: auto; } /* Auto width fills remaining space */
+        .w-uom { width: 80px; }
+        .w-num { width: 80px; text-align: right; }
+        .w-calc { width: 90px; background-color: #f8f9fa; color: #5f6368; text-align: right; }
+        .w-stat { width: 70px; font-weight: 700; text-align: right; }
+        .w-action { width: 60px; text-align: center; }
+
+        /* SPECIFIC HISTORY DETAIL COLUMNS - REDISTRIBUTED */
+        .hd-code { width: 80px; color: var(--text-sub); }
+        /* --- FINANCE TABLE STYLES (Doubled Widths) --- */
+        .w-fix-100 { width: 200px; text-align: right; padding-right: 15px; }
+        .w-fix-date { width: 200px; text-align: left; }
+        .w-fix-bill { width: 200px; text-align: left; font-family: 'Roboto Mono', monospace; color: var(--text-sub); }
+        .w-fix-action { 
+            width: 240px; 
+            text-align: center; 
+            white-space: normal; 
+            overflow: visible; 
+            text-overflow: clip; 
+        }
+        .w-note { width: auto; font-style: italic; color: #555; white-space: normal !important; overflow: visible !important;}
+        
+        /* Finance Row Highlights */
+        .row-diff { background-color: #fff3e0 !important; }
+        .row-diff:hover { background-color: #ffe0b2 !important; }
+        .row-paid { background-color: #f6ffed !important; }
+        
+        .status-pill { padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid transparent; }
+        .st-pending { background: #f1f3f4; color: #5f6368; border-color: #dadce0; }
+        .st-received { background: #e6f4ea; color: #137333; border-color: #ceead6; }
+        .st-partial { background: #fce8e6; color: #c5221f; border-color: #fad2cf; }
+        
+        /* Name takes remaining space, but is constrained by wider columns now */
+        .hd-name { width: auto; min-width: 180px; font-weight: 500; } 
+        
+        .hd-qty { width: 65px; text-align: right; } /* "PKTS" */
+        .hd-weight { width: 110px; text-align: right; } /* Fits "WEIGHT (KG)" */
+        .hd-price { width: 100px; text-align: right; } /* Fits "SELL PRICE" */
+        .hd-total { width: 110px; text-align: right; font-weight: bold; background: #f8f9fa; } /* Fits "TOTAL PRICE" */
+        .hd-cost { width: 110px; text-align: right; color: #5f6368; } /* Fits "FROZEN COST" */
+        .hd-img { width: 70px; text-align: center; } /* Fits "PHOTO" */
+        .hd-prof { width: 90px; text-align: right; } /* Fits "PROFIT" */
+        .hd-marg { width: 85px; text-align: right; } /* Fits "MARGIN %" */
+
+        /* History Main List */
         .h-date { width: 90px; }
-        .h-id { width: 70px; color: var(--text-sub); font-family: 'Roboto Mono', monospace; }
-        .h-items { width: 50px; text-align: right; }
-        .h-money { width: 100px; text-align: right; font-weight: 500; }
-        .h-profit { width: 85px; text-align: right; font-weight: 700; }
-        .h-margin { width: 90px; text-align: right; } 
-        .h-action { width: 60px; text-align: center; }
+        /* Update this specific class in your <style> block */
+.h-id { 
+    width: 100px; /* Increased from 70px to fit MFB... */ 
+    color: var(--text-sub); 
+    font-family: 'Roboto Mono', monospace; 
+}
+        .h-items { width: 60px; text-align: right; }
+        .h-money { width: 90px; text-align: right; }
+        .h-profit { width: 80px; text-align: right; }
+        .h-margin { width: 70px; text-align: right; } 
+        .h-action { width: 50px; text-align: center; }
         
 
         /* Add this inside your <style> tag */
@@ -176,6 +231,8 @@
             text-align: right; outline: none; transition: 0.2s; font-family: inherit; font-size: 13px;
             background: white;
         }
+        /* Add this to your styles */
+        .w-fix-rcvd { width: 130px; text-align: left; color: var(--text-sub); }
         .cell-input:focus { border: 2px solid var(--primary); box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
         
         .qty-edit {
@@ -216,20 +273,6 @@ body.role-data-entry .tab[onclick*="view-indent"],
 body.role-data-entry .tab[onclick*="view-review"],
 body.role-data-entry .tab[onclick*="view-history"] { display: none !important; }
 
-body.role-admin .tab[onclick*="view-master"],
-body.role-admin .tab[onclick*="view-indent"],
-body.role-admin .tab[onclick*="view-review"],
-body.role-admin #header-actions-master { display: none !important; }
-
-/* --- MOBILE ADMIN OPTIMIZATION --- */
-.mobile-menu-btn { display: none; } /* Hidden on Desktop */
-.mobile-action-menu { 
-    position: absolute; top: 60px; right: 10px; background: white; 
-    border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
-    border-radius: 8px; z-index: 2000; flex-direction: column; 
-    padding: 5px; min-width: 150px;
-}
-.mobile-action-menu button { width: 100%; text-align: left; border: none; margin-bottom: 2px; justify-content: flex-start; }
 /* --- MOBILE RESPONSIVE STYLES --- */
     /* --- MOBILE RESPONSIVE STYLES (FINAL FIX) --- */
     @media (max-width: 768px) {
@@ -338,22 +381,24 @@ body.role-admin #header-actions-master { display: none !important; }
             margin: 0 10px !important;
         }
 
-        /* Hide Desktop Buttons */
-        .desktop-hist-actions { display: none !important; }
-        
-        /* Show 3-Dot Menu */
-        .mobile-menu-btn { display: flex !important; padding: 5px; }
+        /* ACTIONS ARE VISIBLE ON MOBILE NOW */
+        .desktop-hist-actions { 
+            display: flex !important; 
+            flex-wrap: wrap; 
+            gap: 5px; 
+            justify-content: flex-end;
+        }
 
         /* Buttons & Inputs */
         .btn { padding: 0 8px; font-size: 11px; height: 32px; }
         .qty-edit, .cell-input { width: 60px; font-size: 12px; }
     }
         /* --- KPI & MARGIN --- */
-        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
         .kpi-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; margin-bottom: 8px; }
         .kpi-value { font-size: 20px; font-weight: 900; color: var(--text-main); letter-spacing: -0.5px; transition: color 0.3s; }
-        
+        .w-fix-days { width: 80px; text-align: center; color: var(--text-sub); font-weight: 500; }
         .kpi-pos { color: var(--green); } 
         .kpi-neg { color: var(--red); }
         .kpi-warn { color: var(--orange); }
@@ -473,16 +518,15 @@ body.role-admin #header-actions-master { display: none !important; }
         
         .month-picker { padding: 6px 12px; border: 1px solid #dadce0; border-radius: 4px; font-family: 'Roboto'; outline:none; }
     </style>
-</head>
 <body>
 
-    <div id="login-overlay">
+<!-- 1. LOGIN OVERLAY -->
+<div id="login-overlay">
     <div class="login-box">
         <div class="login-title">Swiggy Reports</div>
         <select id="login-role" class="login-input">
             <option value="DEFAULT">Default</option>
             <option value="DATA_ENTRY">Data Entry</option>
-            <option value="ADMIN">Admin (History Only)</option>
         </select>
         <input type="password" id="login-pass" class="login-input" placeholder="Password">
         <button class="login-btn" onclick="handleLogin()">LOGIN</button>
@@ -490,12 +534,13 @@ body.role-admin #header-actions-master { display: none !important; }
     </div>
 </div>
 
-<!-- TOOLTIPS -->
+<!-- 2. TOOLTIPS -->
 <div id="price-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('price')" onmouseleave="hidePriceTooltip()"></div>
 <div id="margin-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('margin')" onmouseleave="hideMarginTooltip()"></div>
 <div id="expense-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('expense')" onmouseleave="hideExpenseTooltip()"></div>
 <div id="indent-tooltip" class="floating-tooltip" onmouseenter="clearTooltipTimer('indent')" onmouseleave="hideIndentTooltip()"></div>
 
+<!-- 3. HEADER -->
 <header>
     <div class="brand">
         <span class="material-icons" style="color:var(--primary)">cloud_queue</span>
@@ -504,7 +549,7 @@ body.role-admin #header-actions-master { display: none !important; }
     
     <div style="display:flex; gap:10px; align-items: center;">
         
-        <!-- Operations Group (Hidden for Admin) -->
+        <!-- Operations Group -->
         <div id="header-actions-master" style="display:flex; gap:10px;">
             <button class="btn btn-icon" onclick="toggleSettings()" title="Clear Data"><span class="material-icons">delete_sweep</span></button>
             <button class="btn" onclick="openExpenseModal()">
@@ -535,13 +580,13 @@ body.role-admin #header-actions-master { display: none !important; }
     </div>
 </header>
 
-<!-- UPDATE TOOLBAR -->
+<!-- 4. TOOLBAR (TABS) -->
 <div class="toolbar">
     <div class="tabs">
         <div class="tab active" onclick="switchTab('view-master')">Price Master</div>
         <div class="tab" onclick="switchTab('view-indent')">Indent Analyzer</div>
-        <!-- REMOVED PACKING REVIEW TAB -->
         <div class="tab" onclick="switchTab('view-history')">Bills / History</div>
+        <div class="tab" onclick="switchTab('view-finance')">Finance</div>
     </div>
     <div class="search-wrapper">
         <span class="material-icons" style="font-size:20px; color:#5f6368">search</span>
@@ -549,7 +594,7 @@ body.role-admin #header-actions-master { display: none !important; }
     </div>
 </div>
 
-<!-- CONTENT -->
+<!-- 5. MAIN CONTENT -->
 <div class="main">
 
     <!-- SETTINGS PANEL (Hidden) -->
@@ -558,17 +603,15 @@ body.role-admin #header-actions-master { display: none !important; }
         <button class="btn btn-filled" style="background:#d93025; border:none;" onclick="clearAllData()">Clear All Data</button>
     </div>
 
-    <!-- 1. PRICE MASTER TAB -->
+    <!-- VIEW: PRICE MASTER -->
     <div id="view-master">
         <div class="card">
             <div class="card-header">
                 <span class="card-title">Product Master List</span>
                 <div style="display:flex; gap:10px;">
-                            <!-- NEW DOWNLOAD BUTTON START -->
-        <button class="btn" onclick="downloadMasterExcel()">
-            <span class="material-icons">file_download</span> Download Excel
-        </button>
-        <!-- NEW DOWNLOAD BUTTON END -->
+                    <button class="btn" onclick="downloadMasterExcel()">
+                        <span class="material-icons">file_download</span> Download Excel
+                    </button>
                     <button id="btn-edit-master" class="btn" onclick="toggleEditMode()">
                         <span class="material-icons">edit</span> Edit Costs
                     </button>
@@ -579,29 +622,26 @@ body.role-admin #header-actions-master { display: none !important; }
             </div>
             <table>
                 <thead>
-                    <!-- INSIDE <thead> of Price Master -->
-<tr>
-    <th class="w-code t-left sortable" onclick="sortMaster('id')">Code</th>
-    <!-- NEW HEADER -->
-    <th class="w-code t-left" style="width:90px; color:#5f6368;">ERP Code</th> 
-    <!-- END NEW HEADER -->
-    <th class="w-name t-left sortable" onclick="sortMaster('name')">Product Name</th>
-    <th class="w-uom t-left">UOM</th>
-    <th class="w-num t-right sortable" onclick="sortMaster('conv')">Conv (Kg)</th>
-    <th class="w-num t-right sortable" onclick="sortMaster('costKg')">Buy Cost</th>
-    <th class="w-calc t-right sortable" onclick="sortMaster('costPc')">Cost/Pc</th>
-    <th class="w-num t-right sortable" onclick="sortMaster('spPiece')">Sell Price</th>
-    <th class="w-stat t-right sortable" onclick="sortMaster('margin')">Margin %</th>
-
+                    <tr>
+                        <th class="w-code t-left sortable" onclick="sortMaster('id')">Code</th>
+                        <th class="w-code t-left" style="width:90px; color:#5f6368;">ERP Code</th> 
+                        <th class="w-name t-left sortable" onclick="sortMaster('name')">Product Name</th>
+                        <th class="w-uom t-left">UOM</th>
+                        <th class="w-num t-right sortable" onclick="sortMaster('conv')">Conv (Kg)</th>
+                        <th class="w-num t-right sortable" onclick="sortMaster('costKg')">Buy Cost</th>
+                        <th class="w-calc t-right sortable" onclick="sortMaster('costPc')">Cost/Pc</th>
+                        <th class="w-num t-right sortable" onclick="sortMaster('spPiece')">Sell Price</th>
+                        <th class="w-stat t-right sortable" onclick="sortMaster('margin')">Margin %</th>
+                    </tr>
                 </thead>
                 <tbody id="master-body">
-                    <tr><td colspan="8" style="text-align:center; padding:20px;">Loading data from Firebase...</td></tr>
+                    <tr><td colspan="9" style="text-align:center; padding:20px;">Loading data from Firebase...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- 2. INDENT ANALYZER TAB -->
+    <!-- VIEW: INDENT ANALYZER -->
     <div id="view-indent" class="hidden">
         
         <!-- Upload State -->
@@ -615,9 +655,8 @@ body.role-admin #header-actions-master { display: none !important; }
         <!-- Results State -->
         <div id="indent-preview" class="hidden">
             
-            <!-- MAIN KPIs -->
+            <!-- KPIs -->
             <div class="kpi-grid">
-                <!-- Row 1 -->
                 <div class="kpi-card hoverable" onmouseenter="showIndentDiffTooltip(event, 'current')" onmouseleave="hideIndentTooltip()">
                     <div class="kpi-label">Indent Amount</div>
                     <div class="kpi-value" id="kpi-indent">₹0</div>
@@ -635,7 +674,6 @@ body.role-admin #header-actions-master { display: none !important; }
                     <div class="kpi-value kpi-warn" id="kpi-expenses">₹0</div>
                 </div>
 
-                <!-- Row 2 -->
                 <div class="kpi-card">
                     <div class="kpi-label">Gross Profit</div>
                     <div class="kpi-value" id="kpi-profit">₹0</div>
@@ -654,7 +692,7 @@ body.role-admin #header-actions-master { display: none !important; }
                 </div>
             </div>
 
-            <!-- MARGIN BREAKDOWN GRID -->
+            <!-- Margin Grid -->
             <div class="margin-grid" id="margin-distribution"></div>
 
             <div class="card">
@@ -664,8 +702,8 @@ body.role-admin #header-actions-master { display: none !important; }
                         <span id="indent-date-display" class="date-badge hidden-badge"></span>
                         
                         <button class="btn btn-filled" onclick="sendIndentToPacking()">
-    <span class="material-icons">send</span> Send to Packing
-</button>
+                            <span class="material-icons">send</span> Send to Packing
+                        </button>
                         <button class="btn" onclick="applyIndentPricesToMaster()">
                             <span class="material-icons">update</span> Apply Prices
                         </button>
@@ -690,45 +728,48 @@ body.role-admin #header-actions-master { display: none !important; }
         </div>
     </div>
 
-    
-
-    <!-- 3. INDENT HISTORY TAB (BILLS) -->
+    <!-- VIEW: HISTORY (BILLS) -->
     <div id="view-history" class="hidden">
         
         <!-- HISTORY LIST -->
         <div id="history-list-view">
-                <div class="kpi-grid" style="margin-bottom:15px;">
-        <div class="kpi-card">
-            <div class="kpi-label">Month Revenue</div>
-            <div class="kpi-value" id="hkpi-rev">₹0</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Month Cost</div>
-            <div class="kpi-value" id="hkpi-cost">₹0</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Total Expenses</div>
-            <div class="kpi-value kpi-warn" id="hkpi-exp">₹0</div>
-        </div>
-        <div class="kpi-card" style="border-top: 4px solid var(--purple);">
-            <div class="kpi-label">Net Profit (Margin)</div>
-            <div class="kpi-value kpi-net">
-                <span id="hkpi-net">₹0</span> 
-                <span id="hkpi-marg" style="font-size:14px; font-weight:500; margin-left:5px;">(0%)</span>
+            <div class="kpi-grid" style="margin-bottom:15px;">
+                <div class="kpi-card">
+                    <div class="kpi-label">Month Revenue</div>
+                    <div class="kpi-value" id="hkpi-rev">₹0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Month Cost</div>
+                    <div class="kpi-value" id="hkpi-cost">₹0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Expenses</div>
+                    <div class="kpi-value kpi-warn" id="hkpi-exp">₹0</div>
+                </div>
+                <div class="kpi-card" style="border-top: 4px solid var(--purple);">
+                    <div class="kpi-label">Net Profit (Margin)</div>
+                    <div class="kpi-value kpi-net">
+                        <span id="hkpi-net">₹0</span> 
+                        <span id="hkpi-marg" style="font-size:14px; font-weight:500; margin-left:5px;">(0%)</span>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+            
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">Saved Bills</span>
-                    <input type="month" id="history-month-filter" class="month-picker" onchange="renderIndentHistory()">
-                </div>
+    <span class="card-title">Saved Bills</span>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <input type="date" id="history-date-from" class="month-picker" style="width:auto; padding:4px 8px; height:36px;" onchange="renderIndentHistory()">
+        <span style="color:#999; font-weight:bold;">-</span>
+        <input type="date" id="history-date-to" class="month-picker" style="width:auto; padding:4px 8px; height:36px;" onchange="renderIndentHistory()">
+    </div>
+</div>
                 <div style="overflow: auto; flex: 1;"></div>
                 <table>
                     <thead>
                         <tr>
                             <th class="h-date t-left">Date</th>
-                            <th class="h-id t-left">ID</th>
+                            <th class="h-id t-left">Bill No</th>
                             <th class="h-items t-right">Items</th>
                             <th class="h-money t-right">Indent Amt</th>
                             <th class="h-money t-right">Bill Amt</th>
@@ -744,68 +785,40 @@ body.role-admin #header-actions-master { display: none !important; }
             </div>
         </div>
 
+        <!-- HISTORY DETAIL -->
         <div id="history-detail-view" class="hidden">
-    <!-- UPDATED RESPONSIVE HEADER -->
-    <div id="hist-detail-header" class="card-header" style="border-radius:8px; border:1px solid var(--border); margin-bottom:15px; position:relative;">
-        <button class="btn btn-compact" onclick="closeHistoryDetail()">
-            <span class="material-icons">arrow_back</span> Back
-        </button>
-        
-        <div style="flex:1; margin-left:10px; font-weight:500; font-size:16px;" id="hist-detail-title">Bill Detail</div>
-        
-        <!-- DESKTOP ACTIONS (Hidden on Mobile) -->
-        <div class="desktop-hist-actions" style="display:flex; gap:5px;">
-            <button class="btn btn-compact" onclick="revertBillToPacking()" style="border-color: #d93025; color: #d93025;">
-                <span class="material-icons">undo</span> Revert
-            </button>
-            <button id="btn-hist-edit" class="btn btn-compact" onclick="toggleHistoryEdit()">
-                <span class="material-icons">edit</span> Edit
-            </button>
-            <button class="btn btn-compact" onclick="downloadWeightExcel()">
-                <span class="material-icons">scale</span> Weights
-            </button>
-            <button class="btn btn-compact" onclick="downloadBillPDF()">
-                <span class="material-icons">receipt_long</span> Bill
-            </button>
-            <button class="btn btn-filled btn-compact" onclick="downloadHistoryPDF()">
-                <span class="material-icons">picture_as_pdf</span> Report
-            </button>
-        </div>
-
-        <!-- MOBILE MENU BUTTON (Visible only on Mobile) -->
-        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-            <span class="material-icons">more_vert</span>
-        </button>
-
-        <!-- MOBILE POPUP MENU -->
-        <div id="mobile-actions-menu" class="mobile-action-menu hidden">
-            <button class="btn btn-compact" onclick="revertBillToPacking(); toggleMobileMenu();" style="color: #d93025;">
-                <span class="material-icons">undo</span> Revert Bill
-            </button>
-            <button id="btn-hist-edit-mobile" class="btn btn-compact" onclick="toggleHistoryEdit(); toggleMobileMenu();">
-                <span class="material-icons">edit</span> Edit Data
-            </button>
-            <button class="btn btn-compact" onclick="downloadWeightExcel(); toggleMobileMenu();">
-                <span class="material-icons">scale</span> Download Weights
-            </button>
-            <button class="btn btn-compact" onclick="downloadBillPDF(); toggleMobileMenu();">
-                <span class="material-icons">receipt_long</span> Download Invoice
-            </button>
-            <button class="btn btn-filled btn-compact" onclick="downloadHistoryPDF(); toggleMobileMenu();">
-                <span class="material-icons">picture_as_pdf</span> PDF Report
-            </button>
-        </div>
-    </div>
-    
-    <!-- REST OF HISTORY VIEW (KPIs, etc.) ... -->
+            <div id="hist-detail-header" class="card-header" style="border-radius:8px; border:1px solid var(--border); margin-bottom:15px; position:relative;">
+                <button class="btn btn-compact" onclick="closeHistoryDetail()">
+                    <span class="material-icons">arrow_back</span> Back
+                </button>
+                
+                <div style="flex:1; margin-left:10px; font-weight:500; font-size:16px;" id="hist-detail-title">Bill Detail</div>
+                
+                <div class="desktop-hist-actions" style="display:flex; gap:5px;">
+                    <button class="btn btn-compact" onclick="revertBillToPacking()" style="border-color: #d93025; color: #d93025;">
+                        <span class="material-icons">undo</span> Revert
+                    </button>
+                    <button id="btn-hist-edit" class="btn btn-compact" onclick="toggleHistoryEdit()">
+                        <span class="material-icons">edit</span> Edit
+                    </button>
+                    <button class="btn btn-compact" onclick="downloadWeightExcel()">
+                        <span class="material-icons">scale</span> Weights
+                    </button>
+                    <button class="btn btn-compact" onclick="downloadBillPDF()">
+                        <span class="material-icons">receipt_long</span> Bill
+                    </button>
+                    <button class="btn btn-filled btn-compact" onclick="downloadHistoryPDF()">
+                        <span class="material-icons">picture_as_pdf</span> Report
+                    </button>
+                </div>
+            </div>
             
             <!-- HIST KPI CARDS -->
             <div class="kpi-grid">
-                <!-- Row 1 -->
                 <div class="kpi-card hoverable" onmouseenter="showIndentDiffTooltip(event, 'history')" onmouseleave="hideIndentTooltip()">
-    <div class="kpi-label">Indent Amount</div>
-    <div class="kpi-value" id="hist-kpi-indent">₹0</div>
-</div>
+                    <div class="kpi-label">Indent Amount</div>
+                    <div class="kpi-value" id="hist-kpi-indent">₹0</div>
+                </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Bill Amount</div>
                     <div class="kpi-value" id="hist-kpi-bill">₹0</div>
@@ -819,7 +832,6 @@ body.role-admin #header-actions-master { display: none !important; }
                     <div class="kpi-value kpi-warn" id="hist-kpi-expenses">₹0</div>
                 </div>
 
-                <!-- Row 2 -->
                 <div class="kpi-card">
                     <div class="kpi-label">Gross Profit</div>
                     <div class="kpi-value" id="hist-kpi-profit">₹0</div>
@@ -841,6 +853,7 @@ body.role-admin #header-actions-master { display: none !important; }
             <!-- HIST MARGIN GRID -->
             <div class="margin-grid" id="hist-margin-distribution"></div>
 
+            <!-- DETAIL TABLE -->
             <div class="card">
                  <div class="card-header">
                     <span class="card-title">Bill Item Detail</span>
@@ -848,25 +861,87 @@ body.role-admin #header-actions-master { display: none !important; }
                 <table>
                     <thead>
                         <tr>
-                            <th class="w-code t-left sortable" onclick="sortHistoryDetail('code')">Code</th>
-                            <th class="w-name t-left sortable" onclick="sortHistoryDetail('name')">Item Name</th>
-                            <th class="w-num t-right sortable" onclick="sortHistoryDetail('qty')">Qty</th>
-                            <th class="w-num t-right sortable" onclick="sortHistoryDetail('poRate')">Sell Price</th>
-                            <th class="w-num t-right sortable" onclick="sortHistoryDetail('frozenCost')">Frozen Cost</th>
-                            <th class="w-num t-right sortable" onclick="sortHistoryDetail('profit')">Profit</th>
-                            <th class="w-stat t-right sortable" onclick="sortHistoryDetail('marginPct')">Margin %</th>
+                            <th class="hd-code t-left sortable" onclick="sortHistoryDetail('code')">Code</th>
+                            <th class="hd-name t-left sortable" onclick="sortHistoryDetail('name')">Item Name</th>
+                            <th class="hd-qty t-right sortable" onclick="sortHistoryDetail('qty')">Pkts</th>
+                            <th class="hd-weight t-right sortable" onclick="sortHistoryDetail('actualKg')">Weight (Kg)</th>
+                            <th class="hd-price t-right sortable" onclick="sortHistoryDetail('poRate')">Sell Price</th>
+                            <th class="hd-total t-right">Total Price</th>
+                            <th class="hd-cost t-right sortable" onclick="sortHistoryDetail('frozenCost')">Frozen Cost</th>
+                            <th class="hd-img t-center">Photo</th>
+                            <th class="hd-prof t-right sortable" onclick="sortHistoryDetail('profit')">Profit</th>
+                            <th class="hd-marg t-right sortable" onclick="sortHistoryDetail('marginPct')">Margin %</th>
                         </tr>
                     </thead>
                     <tbody id="hist-detail-body"></tbody>
                 </table>
             </div>
         </div>
+    </div>
 
+    <!-- 4. FINANCE TAB -->
+    <div id="view-finance" class="hidden">
+        
+        <!-- FINANCE KPIs -->
+        <!-- FINANCE KPIs (Updated to 5 Cards) -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Billed</div>
+                <div class="kpi-value" id="fin-total">₹0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Received</div>
+                <div class="kpi-value kpi-pos" id="fin-received">₹0</div>
+            </div>
+            <div class="kpi-card" style="border-top: 4px solid var(--orange);">
+                <div class="kpi-label">Pending Amount</div>
+                <div class="kpi-value kpi-neg" id="fin-pending">₹0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Pending Bills</div>
+                <div class="kpi-value" id="fin-count">0</div>
+            </div>
+            <!-- NEW KPI TILE -->
+            <div class="kpi-card" style="border-top: 4px solid var(--primary);">
+                <div class="kpi-label">Avg Credit Days</div>
+                <div class="kpi-value" id="fin-avg-days">0</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Accounts Receivable</span>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="date" id="fin-date-from" class="month-picker" style="width:auto; padding:4px 8px; height:36px;" onchange="renderFinanceTable()">
+                    <span style="color:#999; font-weight:bold;">-</span>
+                    <input type="date" id="fin-date-to" class="month-picker" style="width:auto; padding:4px 8px; height:36px;" onchange="renderFinanceTable()">
+                    <button class="btn" onclick="exportFinanceExcel()">
+                        <span class="material-icons">file_download</span> Export
+                    </button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="w-fix-date t-center">Date</th>
+                        <th class="w-fix-bill t-center">Bill No</th>
+                        <th class="w-fix-100 t-right">Amount</th>
+                        <th class="w-fix-action t-center">Action</th>
+                        <th class="w-fix-rcvd t-left">Rcvd Date</th>
+                        <th class="w-fix-days t-center">Days</th> <!-- NEW COLUMN -->
+                        <th class="w-note t-center">Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="finance-body"></tbody>
+            </table>
+        </div>
     </div>
 
 </div>
 
-<!-- ADD MODAL -->
+<!-- 6. MODALS -->
+
+<!-- ADD PRODUCT MODAL -->
 <div id="add-modal" class="modal-overlay hidden">
     <div class="modal">
         <div class="modal-body">
@@ -900,7 +975,6 @@ body.role-admin #header-actions-master { display: none !important; }
                     <label>Packing (per ₹1000 Bill Amt)</label>
                     <input type="number" id="exp-packing-rate" class="cell-input" placeholder="e.g. 20">
                 </div>
-                <!-- Dump Input Removed: It is now calculated automatically -->
                 <div>
                     <label>Misc % (of Bill Cost)</label>
                     <input type="number" id="exp-misc-percent" class="cell-input" placeholder="e.g. 1.0">
@@ -924,6 +998,66 @@ body.role-admin #header-actions-master { display: none !important; }
         <div class="modal-footer">
             <button class="btn" onclick="closeExpenseModal()">Cancel</button>
             <button class="btn btn-filled" onclick="saveExpenses()">Save Settings</button>
+        </div>
+    </div>
+</div>
+
+<!-- FINANCE ACTION MODAL -->
+<div id="finance-modal" class="modal-overlay hidden">
+    <div class="modal" style="width: 400px;">
+        <div class="modal-body">
+            <h3 style="margin-top:0">Mark Bill Received</h3>
+            <p id="fin-modal-bill-info" style="color:var(--text-sub); margin-bottom:15px;"></p>
+            
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; font-weight:700; color:#555; display:block; margin-bottom:5px;">Received Date</label>
+                <input type="date" id="fin-input-date" class="cell-input" style="font-family:'Roboto'; font-size:14px;">
+            </div>
+
+            <label style="font-size:12px; font-weight:700; color:#555;">Received Amount</label>
+            <input type="number" id="fin-input-amt" class="cell-input" style="font-size:18px; font-weight:bold; margin-bottom:15px;">
+            
+            <label style="font-size:12px; font-weight:700; color:#555;">Notes (Required if mismatch)</label>
+            <textarea id="fin-input-note" class="cell-input" rows="3" placeholder="e.g. Shortage deduction, Discount given..."></textarea>
+        </div>
+        <div class="modal-footer" style="justify-content:space-between;">
+            <!-- NEW REVERT BUTTON (Left Aligned) -->
+            <button id="btn-fin-revert" class="btn hidden" style="color:var(--red); border-color:#fad2cf; background:#fff;" onclick="revertFinanceStatus()">
+                <span class="material-icons" style="font-size:16px;">restart_alt</span> Revert
+            </button>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="btn" onclick="document.getElementById('finance-modal').classList.add('hidden')">Cancel</button>
+                <button class="btn btn-filled" onclick="saveFinanceStatus()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- IMAGE VIEWER MODAL -->
+<div id="img-modal" onclick="this.style.display='none'">
+  <span class="close-img">&times;</span>
+  <img id="img-content">
+</div>
+
+<!-- CHANGE REPORT MODAL -->
+<div id="report-modal" class="modal-overlay hidden">
+    <div class="modal" style="width: 500px;">
+        <div class="modal-body" style="padding-bottom:0;">
+            <h3 id="report-title" style="margin-top:0; color:var(--primary);">Review Changes</h3>
+            <p id="report-summary" style="color:var(--text-sub); margin-bottom:15px; font-size:13px;"></p>
+            
+            <div style="display:grid; grid-template-columns: 1fr 80px 80px; gap:10px; padding:8px; background:#f1f3f4; font-weight:700; font-size:11px; color:var(--text-sub); border-radius:4px;">
+                <span>ITEM NAME</span>
+                <span style="text-align:right">OLD</span>
+                <span style="text-align:right">NEW</span>
+            </div>
+
+            <div id="report-list" style="max-height: 300px; overflow-y: auto; margin-top:5px; border:1px solid #eee; border-radius:4px;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeReportModal()">Cancel</button>
+            <button id="btn-report-confirm" class="btn btn-filled">Confirm & Save</button>
         </div>
     </div>
 </div>
@@ -1026,14 +1160,32 @@ window.dbUpdate = update;
             if(tSnap.exists()) lastErpUpdate = tSnap.val();
 
             // Setup Defaults
+            // Inside window.loadProductsGlobal...
+            // Setup Defaults
             const now = new Date();
             const y = now.getFullYear();
             const m = String(now.getMonth() + 1).padStart(2, '0');
-            document.getElementById('history-month-filter').value = `${y}-${m}`;
+            const lastDay = new Date(y, now.getMonth() + 1, 0).getDate(); // Last day of month
+
+            // 1. Set HISTORY Default Dates (New)
+            const dateFromStr = `${y}-${m}-01`;
+            const dateToStr = `${y}-${m}-${lastDay}`;
+            
+            const histFrom = document.getElementById('history-date-from');
+            const histTo = document.getElementById('history-date-to');
+            if(histFrom) histFrom.value = dateFromStr;
+            if(histTo) histTo.value = dateToStr;
+
+            // 2. Set FINANCE Default Dates (Existing)
+            const finFrom = document.getElementById('fin-date-from');
+            const finTo = document.getElementById('fin-date-to');
+            if(finFrom) finFrom.value = dateFromStr;
+            if(finTo) finTo.value = dateToStr;
 
             renderMasterTable();
             renderExpenseTable();
             renderIndentHistory();
+            if(indents.length > 0) renderFinanceTable();
             
             // NEW: START LISTENER
             startIncomingPackingListener();
@@ -1043,19 +1195,7 @@ window.dbUpdate = update;
         }
     }, 1000);
 };
-window.toggleMobileMenu = function() {
-    const menu = document.getElementById('mobile-actions-menu');
-    menu.classList.toggle('hidden');
-}
 
-// Close menu when clicking outside
-document.addEventListener('click', function(event) {
-    const menu = document.getElementById('mobile-actions-menu');
-    const btn = document.querySelector('.mobile-menu-btn');
-    if (!menu.contains(event.target) && !btn.contains(event.target)) {
-        menu.classList.add('hidden');
-    }
-});
 // --- AUTOMATED PACKING PROCESSING ---
 
 function startIncomingPackingListener() {
@@ -1073,66 +1213,55 @@ function startIncomingPackingListener() {
 async function autoFinalizeBill(data) {
     if (!data || !data.items) return;
 
-    // 1. Calculate Financials
     let totalBillAmt = 0;
-    let totalRealCost = 0; // Renamed from totalStandardCost
-    let totalDumpCost = 0;
+    let totalRealCost = 0;
     let totalIndentAmt = 0;
     
     // Process items
     const processedItems = data.items.map(i => {
         const master = products.find(p => p.id === i.code);
-        // Cost fallback: Use master cost, or 0
+        
+        // 1. FREEZE COSTS
+        // Store the cost/kg at the moment of billing.
         const costPerKg = master ? (master.costKg || 0) : 0;
         const conv = master ? (master.conv || 0) : 0;
         
-        // A. Standard Weight (Theoretical)
+        // 2. DETERMINE WEIGHT
+        // Standard (Theoretical)
         const standardKg = i.qty * conv;
-        
-        // B. Actual Weight (Used for Costing)
-        // If actualKg exists and is > 0, use it. Otherwise fallback to standard.
+        // Actual Weight (Used for Costing). If 0, fallback to standard.
         const usedKg = (i.actualKg && i.actualKg > 0) ? i.actualKg : standardKg;
 
-        // --- CORE CHANGE: Cost is based on Used Kg ---
+        // 3. CALCULATE TOTALS
+        // Cost = Total Weight * Cost Per Kg
         const lineCost = usedKg * costPerKg;
-        
-        // C. Dump Calculation (For Report Only)
-        // Excess weight compared to standard
-        const excessKg = Math.max(0, usedKg - standardKg);
-        const dumpCost = excessKg * costPerKg;
-
+        // Revenue = Qty * Selling Price (poRate)
         const lineRev = i.qty * i.poRate;
+        
         const lineProf = lineRev - lineCost;
         
-        // Totals
         totalIndentAmt += ((i.poQty || 0) * i.poRate);
         totalBillAmt += lineRev;
         totalRealCost += lineCost;
-        totalDumpCost += dumpCost;
 
         return {
             ...i,
-            frozenCost: lineCost,     // Cost = Actual Weight * Cost/Kg
-            itemDumpCost: dumpCost,   // Just for reporting
+            frozenCostPerKg: costPerKg, // CRITICAL: Save this for future edits
+            frozenCost: lineCost,     
             profit: lineProf,
-            // Unit cost derived from total actual cost divided by qty
             myCost: i.qty > 0 ? (lineCost / i.qty) : 0, 
             marginPct: lineRev > 0 ? (lineProf/lineRev)*100 : 0,
-            originalQty: i.poQty
+            originalQty: i.poQty,
+            actualKg: usedKg // Ensure actualKg is populated
         };
     });
     
-    // Gross Profit = Revenue - Actual Material Cost
+    // Financials
+    const expenseObj = calculateTotalExpense(data.date, totalBillAmt, totalRealCost);
     const grossProfit = totalBillAmt - totalRealCost;
-    const grossMargin = totalBillAmt > 0 ? (grossProfit/totalBillAmt)*100 : 0;
-    
-    // Calculate Expenses (Dump is NOT added to expense total)
-    const expenseObj = calculateTotalExpense(data.date, totalBillAmt, totalRealCost, totalDumpCost);
-    
-    // Net Profit
     const netProfit = grossProfit - expenseObj.total;
 
-    // 2. Create History Record
+    // Create History Record
     const historyRecord = {
         id: Date.now(),
         date: data.date,
@@ -1142,38 +1271,24 @@ async function autoFinalizeBill(data) {
         totalBillAmt: totalBillAmt,
         totalCost: totalRealCost,
         profit: grossProfit,
-        margin: grossMargin,
+        margin: totalBillAmt > 0 ? (grossProfit/totalBillAmt)*100 : 0,
         totalExpenses: expenseObj.total,
         expenseDetails: expenseObj,
         netProfit: netProfit
     };
 
-    // 3. Save & Clean (INCREMENTAL SAVE FIX)
+    // Save & Clean
     try {
-        // Save ONLY this specific record to indents/{id}
         await window.dbSet(window.dbRef(window.db, `indents/${historyRecord.id}`), historyRecord);
-        
-        // Remove the pending node
         await window.dbRemove(window.dbRef(window.db, 'completed_packing'));
         
-        // Update local UI
         indents.unshift(historyRecord);
         alert(`New Bill Processed for ${data.date}!\nRevenue: ₹${totalBillAmt.toFixed(0)}\nProfit: ₹${netProfit.toFixed(0)}`);
         
-        if (currentTabId === 'view-history') {
-            renderIndentHistory();
-        }
-
+        if (currentTabId === 'view-history') renderIndentHistory();
     } catch(e) {
         console.error(e);
-        if(e.message.includes("too large")) {
-            if(confirm("CRITICAL ERROR: The bill data is too large (likely too many photos) and cannot be saved.\n\nDo you want to DISCARD this bill to unblock the app?")) {
-                 await window.dbRemove(window.dbRef(window.db, 'completed_packing'));
-                 location.reload();
-            }
-        } else {
-            alert("Error saving bill: " + e.message);
-        }
+        alert("Error saving bill: " + e.message);
     }
 }
 
@@ -1342,7 +1457,6 @@ function hidePriceTooltip() {
 // --- AUTH CONFIG ---
 const CREDENTIALS = {
     'DATA_ENTRY': '1234', // Simple example, change as needed
-    'ADMIN': 'Admin#098',
     'DEFAULT': '123456' // Or blank if no pass needed for default
 };
 let currentUserRole = null;
@@ -1372,7 +1486,6 @@ window.handleLogin = function() {
 
     // --- CREDENTIALS CHECK ---
     if (role === 'DATA_ENTRY' && pass === '1234') isValid = true;
-    else if (role === 'ADMIN' && pass === 'Admin#098') isValid = true;
     else if (role === 'DEFAULT' && pass === 'default#098') isValid = true;
 
     if (isValid) {
@@ -1401,10 +1514,6 @@ function applyRole(role) {
     if (role === 'DATA_ENTRY') {
         document.body.classList.add('role-data-entry');
         switchTab('view-master'); // Force to Master tab
-    } 
-    else if (role === 'ADMIN') {
-        document.body.classList.add('role-admin');
-        switchTab('view-history'); // Force to History tab
     } 
     else {
         // Default (Manager) - Access to everything
@@ -1624,40 +1733,289 @@ function applyRole(role) {
     }
 
     function switchTab(tabId) {
-            if (currentUserRole === 'DATA_ENTRY' && tabId !== 'view-master') return;
-    if (currentUserRole === 'ADMIN' && tabId !== 'view-history') return;
-    currentTabId = tabId; // Update global state
+        if (currentUserRole === 'DATA_ENTRY' && tabId !== 'view-master') return;
+        currentTabId = tabId;
 
-    // 1. Show/Hide Views
-    document.querySelectorAll('.main > div').forEach(d => d.classList.add('hidden'));
-    document.getElementById(tabId).classList.remove('hidden');
-    
-    // 2. Update Tabs Styles
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    const activeBtn = Array.from(document.querySelectorAll('.tab')).find(t => t.getAttribute('onclick').includes(tabId));
-    if(activeBtn) activeBtn.classList.add('active');
-    
-    // 3. Toggle Header Buttons (Show only for Master)
-    const masterActions = document.getElementById('header-actions-master');
-    if (tabId === 'view-master') {
-        masterActions.classList.remove('hidden');
-    } else {
-        masterActions.classList.add('hidden');
+        // Hide all views
+        document.querySelectorAll('.main > div').forEach(d => d.classList.add('hidden'));
+        document.getElementById(tabId).classList.remove('hidden');
+        
+        // Update Tabs
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        const activeBtn = Array.from(document.querySelectorAll('.tab')).find(t => t.getAttribute('onclick').includes(tabId));
+        if(activeBtn) activeBtn.classList.add('active');
+
+        // Header Actions Visibility
+        const masterActions = document.getElementById('header-actions-master');
+        if (tabId === 'view-master') masterActions.classList.remove('hidden');
+        else masterActions.classList.add('hidden');
+
+        // Logic Per Tab
+        if (tabId === 'view-history') { closeHistoryDetail(); renderIndentHistory(); }
+        if (tabId === 'view-finance') { renderFinanceTable(); } // <--- ADD THIS LINE
+        
+        // Clear search
+        document.getElementById('search').value = '';
+    }
+    // --- FINANCE TAB LOGIC ---
+    let currentFinanceId = null;
+
+    function renderFinanceTable() {
+        const tbody = document.getElementById('finance-body');
+        const fromDate = document.getElementById('fin-date-from').value;
+        const toDate = document.getElementById('fin-date-to').value;
+        
+        tbody.innerHTML = '';
+        
+        let totalBilled = 0;
+        let totalReceived = 0;
+        let countPending = 0;
+        
+        // Variables for Avg Days KPI
+        let totalCreditDays = 0;
+        let countCreditBills = 0;
+
+        const sortedIndents = [...indents].sort((a, b) => b.id - a.id);
+
+        sortedIndents.forEach(rec => {
+            if (fromDate && rec.date < fromDate) return;
+            if (toDate && rec.date > toDate) return;
+
+            const billAmt = rec.totalBillAmt || rec.totalRev || 0;
+            const recvAmt = rec.receivedAmount !== undefined ? rec.receivedAmount : 0;
+            const recvDate = rec.receivedDate || '';
+            
+            const isFull = recvAmt >= (billAmt - 1); 
+            const isPartial = recvAmt > 0 && !isFull;
+            const note = rec.financeNote || '';
+            
+            // --- CREDIT DAYS CALCULATION ---
+            let daysDisplay = '-';
+            if (recvDate && rec.date) {
+                const start = new Date(rec.date);
+                const end = new Date(recvDate);
+                const diffTime = Math.abs(end - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                daysDisplay = diffDays;
+                
+                // Add to KPI calc only if fully paid or significant payment made
+                if(recvAmt > 0) {
+                    totalCreditDays += diffDays;
+                    countCreditBills++;
+                }
+            }
+            // -------------------------------
+
+            // Bill No Logic
+            let billNoDisplay = "---";
+            if (rec.date) {
+                const parts = rec.date.split('-'); 
+                if (parts.length === 3) {
+                    billNoDisplay = `MFB${parts[2]}${parts[1]}${parts[0].slice(-2)}`;
+                }
+            }
+            
+            totalBilled += billAmt;
+            totalReceived += recvAmt;
+            if (!isFull) countPending++;
+
+            let rowClass = '';
+            if (isPartial || (isFull && Math.abs(recvAmt - billAmt) > 1)) rowClass = 'row-diff'; 
+            else if (isFull) rowClass = 'row-paid';
+
+            const safeNote = note.replace(/'/g, "\\'");
+            const modalCall = `openFinanceModal(${rec.id}, ${billAmt}, '${safeNote}', ${recvAmt}, '${billNoDisplay}', '${recvDate}')`;
+
+            let actionHtml = '';
+            if (recvAmt === 0) {
+                actionHtml = `<button class="btn btn-compact" onclick="${modalCall}">Mark Paid</button>`;
+            } else {
+                actionHtml = `<span class="status-pill ${isFull?'st-received':'st-partial'}" onclick="${modalCall}">₹${recvAmt}</span>`;
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = rowClass;
+            tr.innerHTML = `
+                <td class="w-fix-date t-left">${formatDate(rec.date)}</td>
+                <td class="w-fix-bill t-left">${billNoDisplay}</td>
+                <td class="w-fix-100 t-right">₹${billAmt.toFixed(0)}</td>
+                <td class="w-fix-action t-center">${actionHtml}</td>
+                <td class="w-fix-rcvd t-left">${formatDate(recvDate)}</td>
+                <td class="w-fix-days t-center">${daysDisplay}</td> <!-- New Column -->
+                <td class="w-note t-left">${note}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const totalPending = totalBilled - totalReceived;
+        const avgDays = countCreditBills > 0 ? (totalCreditDays / countCreditBills).toFixed(0) : 0;
+        
+        document.getElementById('fin-total').innerText = '₹' + totalBilled.toLocaleString('en-IN', {maximumFractionDigits:0});
+        document.getElementById('fin-received').innerText = '₹' + totalReceived.toLocaleString('en-IN', {maximumFractionDigits:0});
+        document.getElementById('fin-pending').innerText = '₹' + totalPending.toLocaleString('en-IN', {maximumFractionDigits:0});
+        document.getElementById('fin-count').innerText = countPending;
+        document.getElementById('fin-avg-days').innerText = avgDays; // KPI Update
+    }
+    function openFinanceModal(id, billAmt, currentNote, currentRecv, billNoStr, savedDate) {
+        currentFinanceId = id;
+        
+        const displayBill = billNoStr || `#${id}`;
+        document.getElementById('fin-modal-bill-info').innerText = `Bill ${displayBill} | Amount: ₹${billAmt}`;
+        
+        const inputAmt = document.getElementById('fin-input-amt');
+        inputAmt.value = currentRecv > 0 ? currentRecv : billAmt;
+        inputAmt.dataset.billTotal = billAmt; 
+
+        document.getElementById('fin-input-note').value = currentNote || '';
+        
+        const inputDate = document.getElementById('fin-input-date');
+        if (savedDate) {
+            inputDate.value = savedDate;
+        } else {
+            const today = new Date().toISOString().split('T')[0];
+            inputDate.value = today;
+        }
+        
+        // Show Revert button only if there is data to revert
+        const revertBtn = document.getElementById('btn-fin-revert');
+        if (currentRecv > 0 || savedDate) {
+            revertBtn.classList.remove('hidden');
+        } else {
+            revertBtn.classList.add('hidden');
+        }
+        
+        document.getElementById('finance-modal').classList.remove('hidden');
+        inputAmt.focus();
+        inputAmt.select();
+    }
+    async function revertFinanceStatus() {
+        if (!currentFinanceId) return;
+        
+        if(!confirm("Are you sure you want to revert payment status to Pending?")) return;
+
+        try {
+            const updates = {};
+            // Set fields to null/0 to clear them
+            updates[`indents/${currentFinanceId}/receivedAmount`] = 0;
+            updates[`indents/${currentFinanceId}/financeNote`] = null;
+            updates[`indents/${currentFinanceId}/receivedDate`] = null; 
+            
+            await window.dbUpdate(window.dbRef(window.db), updates);
+
+            // Update local
+            const item = indents.find(i => i.id === currentFinanceId);
+            if(item) {
+                item.receivedAmount = 0;
+                item.financeNote = '';
+                item.receivedDate = null;
+            }
+
+            document.getElementById('finance-modal').classList.add('hidden');
+            renderFinanceTable();
+            
+        } catch(e) {
+            alert("Error reverting: " + e.message);
+        }
     }
 
-    // 4. Reset Search & Refresh
-    document.getElementById('search').value = '';
+    async function saveFinanceStatus() {
+        if (!currentFinanceId) return;
+
+        const inputAmt = document.getElementById('fin-input-amt');
+        const inputNote = document.getElementById('fin-input-note');
+        const inputDate = document.getElementById('fin-input-date');
+        
+        const billTotal = parseFloat(inputAmt.dataset.billTotal);
+        const newRecv = parseFloat(inputAmt.value) || 0;
+        const newNote = inputNote.value.trim();
+        const newDate = inputDate.value; // Get the date
+
+        if (newRecv !== billTotal && newRecv > 0 && newNote === '') {
+            alert("⚠️ Amount is different from Bill Amount.\n\nPlease add a Note.");
+            inputNote.focus();
+            return;
+        }
+        
+        if (newRecv > 0 && !newDate) {
+            alert("⚠️ Please select a Received Date.");
+            return;
+        }
+
+        try {
+            const updates = {};
+            updates[`indents/${currentFinanceId}/receivedAmount`] = newRecv;
+            updates[`indents/${currentFinanceId}/financeNote`] = newNote;
+            updates[`indents/${currentFinanceId}/receivedDate`] = newDate; // Save Date
+            
+            await window.dbUpdate(window.dbRef(window.db), updates);
+
+            const item = indents.find(i => i.id === currentFinanceId);
+            if(item) {
+                item.receivedAmount = newRecv;
+                item.financeNote = newNote;
+                item.receivedDate = newDate; // Update local
+            }
+
+            document.getElementById('finance-modal').classList.add('hidden');
+            renderFinanceTable();
+            
+        } catch(e) {
+            alert("Error saving: " + e.message);
+        }
+    }
     
-    if (tabId === 'view-history') {
-        closeHistoryDetail(); 
-        renderIndentHistory();
+    function exportFinanceExcel() {
+        // Added Credit Days Column
+        let csv = "Date,Bill No,Bill Amount,Received Amount,Received Date,Credit Days,Pending Amount,Status,Notes\n";
+        
+        const fromDate = document.getElementById('fin-date-from').value;
+        const toDate = document.getElementById('fin-date-to').value;
+
+        const sortedIndents = [...indents].sort((a, b) => b.id - a.id);
+
+        sortedIndents.forEach(rec => {
+            if (fromDate && rec.date < fromDate) return;
+            if (toDate && rec.date > toDate) return;
+
+            const billAmt = rec.totalBillAmt || rec.totalRev || 0;
+            const recvAmt = rec.receivedAmount || 0;
+            const recvDate = rec.receivedDate ? formatDate(rec.receivedDate) : ''; 
+            
+            // Calc days for CSV
+            let days = '';
+            if (rec.receivedDate && rec.date) {
+                const start = new Date(rec.date);
+                const end = new Date(rec.receivedDate);
+                days = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
+            }
+
+            const pending = billAmt - recvAmt;
+            let status = 'Pending';
+            if (recvAmt >= (billAmt - 1)) status = 'Paid';
+            else if (recvAmt > 0) status = 'Partial';
+            
+            let billNoStr = rec.id;
+            if (rec.date) {
+                const parts = rec.date.split('-'); 
+                if (parts.length === 3) {
+                    billNoStr = `MFB${parts[2]}${parts[1]}${parts[0].slice(-2)}`;
+                }
+            }
+
+            const note = (rec.financeNote || '').replace(/,/g, ' '); 
+            
+            // Add days to row
+            csv += `${formatDate(rec.date)},${billNoStr},${billAmt},${recvAmt},${recvDate},${days},${pending},${status},${note}\n`;
+        });
+
+        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Finance_Report_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
-    if (tabId === 'view-review') {
-        checkReviewData();
-    }
-    // Trigger render to clear filter
-    handleGlobalSearch();
-}
 function handleGlobalSearch() {
     if (currentTabId === 'view-master') renderMasterTable();
     else if (currentTabId === 'view-indent') renderIndentPreview();
@@ -2301,65 +2659,79 @@ function addToHistory(product, source, buy, sell) {
         document.getElementById('indent-preview').classList.add('hidden');
     }
 
-    function renderIndentHistory() {
-    const filterVal = document.getElementById('history-month-filter').value;
-    const search = document.getElementById('search').value.toLowerCase(); // Read Search
-    const tbody = document.getElementById('history-body');
-    tbody.innerHTML = '';
-
-    let sumRev=0, sumCost=0, sumExp=0, sumNet=0;
-
-    indents.forEach((rec, index) => {
-        // Month Filter
-        if(filterVal && rec.date.substring(0, 7) !== filterVal) return;
-
-        // Search Filter (ID or Date)
-        if (search && !rec.id.toString().includes(search) && !rec.date.includes(search)) return;
-
-        const tBill = rec.totalBillAmt || rec.totalRev || 0;
-        const tCost = rec.totalCost || 0;
-        const tExp = rec.totalExpenses || 0;
-        const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
-        const grossM = tBill > 0 ? (rec.profit / tBill) * 100 : 0;
-        const netM = tBill > 0 ? (tNet / tBill) * 100 : 0;
-
-        sumRev += tBill; sumCost += tCost; sumExp += tExp; sumNet += tNet;
-
-        const tr = document.createElement('tr');
-        tr.className = 'clickable-row';
-        tr.onclick = function() { viewHistoryDetail(index); };
+   function renderIndentHistory() {
+        const fromDate = document.getElementById('history-date-from').value;
+        const toDate = document.getElementById('history-date-to').value;
+        const search = document.getElementById('search').value.toLowerCase();
         
-        const displayDate = formatDate(rec.date);
-        const grossClass = grossM >= 0 ? 'text-green' : 'text-red';
-        const netClass = netM >= 0 ? 'text-green' : 'text-red';
+        const tbody = document.getElementById('history-body');
+        tbody.innerHTML = '';
 
-        tr.innerHTML = `
-            <td class="h-date t-left">${displayDate}</td>
-            <td class="h-id t-left">#${rec.id.toString().slice(-4)}</td>
-            <td class="h-items t-right">${rec.itemsCount || rec.items.length}</td>
-            <td class="h-money t-right" style="color:#5f6368">₹${rec.totalIndentAmt ? rec.totalIndentAmt.toFixed(0) : '0'}</td>
-            <td class="h-money t-right">₹${tBill.toFixed(0)}</td>
-            <td class="h-profit t-right" style="color:${rec.profit<0?'var(--red)':'var(--green)'}">₹${rec.profit.toFixed(0)}</td>
-            <td class="h-margin t-right ${grossClass}">${grossM.toFixed(1)}%</td>
-            <td class="h-profit t-right" style="color:${tNet<0?'var(--red)':'var(--purple)'}">₹${tNet.toFixed(0)}</td>
-            <td class="h-margin t-right ${netClass}">${netM.toFixed(1)}%</td>
-            <td class="w-action t-center" onclick="event.stopPropagation()">
-                <button class="btn-icon" style="color:var(--red)" onclick="deleteIndent(${rec.id})"><span class="material-icons">delete</span></button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+        let sumRev=0, sumCost=0, sumExp=0, sumNet=0;
 
-    // Update KPI Tiles
-    document.getElementById('hkpi-rev').innerText = '₹' + sumRev.toLocaleString('en-IN', {maximumFractionDigits:0});
-    document.getElementById('hkpi-cost').innerText = '₹' + sumCost.toLocaleString('en-IN', {maximumFractionDigits:0});
-    document.getElementById('hkpi-exp').innerText = '₹' + sumExp.toLocaleString('en-IN', {maximumFractionDigits:0});
-    
-    document.getElementById('hkpi-net').innerText = '₹' + sumNet.toLocaleString('en-IN', {maximumFractionDigits:0});
-    const totalMargin = sumRev > 0 ? (sumNet / sumRev) * 100 : 0;
-    document.getElementById('hkpi-marg').innerText = `(${totalMargin.toFixed(1)}%)`;
-    document.getElementById('hkpi-net').style.color = sumNet >= 0 ? 'var(--purple)' : 'var(--red)';
-}
+        indents.forEach((rec, index) => {
+            // --- DATE FILTER ---
+            if (fromDate && rec.date < fromDate) return;
+            if (toDate && rec.date > toDate) return;
+
+            // --- BILL NUMBER LOGIC (MFBDDMMYY) ---
+            let billNoDisplay = `#${rec.id}`; // Fallback
+            if (rec.date) {
+                const parts = rec.date.split('-'); // YYYY-MM-DD
+                if (parts.length === 3) {
+                    // MFB + DD + MM + YY
+                    billNoDisplay = `MFB${parts[2]}${parts[1]}${parts[0].slice(-2)}`;
+                }
+            }
+
+            // --- SEARCH FILTER ---
+            // Now searching against the new Bill No format as well
+            if (search && !billNoDisplay.toLowerCase().includes(search) && !rec.date.includes(search)) return;
+
+            const tBill = rec.totalBillAmt || rec.totalRev || 0;
+            const tCost = rec.totalCost || 0;
+            const tExp = rec.totalExpenses || 0;
+            const tNet = rec.netProfit !== undefined ? rec.netProfit : (rec.profit - tExp);
+            const grossM = tBill > 0 ? (rec.profit / tBill) * 100 : 0;
+            const netM = tBill > 0 ? (tNet / tBill) * 100 : 0;
+
+            sumRev += tBill; sumCost += tCost; sumExp += tExp; sumNet += tNet;
+
+            const tr = document.createElement('tr');
+            tr.className = 'clickable-row';
+            tr.onclick = function() { viewHistoryDetail(index); };
+            
+            const displayDate = formatDate(rec.date);
+            const grossClass = grossM >= 0 ? 'text-green' : 'text-red';
+            const netClass = netM >= 0 ? 'text-green' : 'text-red';
+
+            tr.innerHTML = `
+                <td class="h-date t-left">${displayDate}</td>
+                <td class="h-id t-left">${billNoDisplay}</td>
+                <td class="h-items t-right">${rec.itemsCount || rec.items.length}</td>
+                <td class="h-money t-right" style="color:#5f6368">₹${rec.totalIndentAmt ? rec.totalIndentAmt.toFixed(0) : '0'}</td>
+                <td class="h-money t-right">₹${tBill.toFixed(0)}</td>
+                <td class="h-profit t-right" style="color:${rec.profit<0?'var(--red)':'var(--green)'}">₹${rec.profit.toFixed(0)}</td>
+                <td class="h-margin t-right ${grossClass}">${grossM.toFixed(1)}%</td>
+                <td class="h-profit t-right" style="color:${tNet<0?'var(--red)':'var(--purple)'}">₹${tNet.toFixed(0)}</td>
+                <td class="h-margin t-right ${netClass}">${netM.toFixed(1)}%</td>
+                <td class="w-action t-center" onclick="event.stopPropagation()">
+                    <button class="btn-icon" style="color:var(--red)" onclick="deleteIndent(${rec.id})"><span class="material-icons">delete</span></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Update KPI Tiles
+        document.getElementById('hkpi-rev').innerText = '₹' + sumRev.toLocaleString('en-IN', {maximumFractionDigits:0});
+        document.getElementById('hkpi-cost').innerText = '₹' + sumCost.toLocaleString('en-IN', {maximumFractionDigits:0});
+        document.getElementById('hkpi-exp').innerText = '₹' + sumExp.toLocaleString('en-IN', {maximumFractionDigits:0});
+        
+        document.getElementById('hkpi-net').innerText = '₹' + sumNet.toLocaleString('en-IN', {maximumFractionDigits:0});
+        const totalMargin = sumRev > 0 ? (sumNet / sumRev) * 100 : 0;
+        document.getElementById('hkpi-marg').innerText = `(${totalMargin.toFixed(1)}%)`;
+        document.getElementById('hkpi-net').style.color = sumNet >= 0 ? 'var(--purple)' : 'var(--red)';
+    }
 
     
     function deleteIndent(id) {
@@ -2480,50 +2852,53 @@ function renderHistoryDetailTable() {
         const historyIndex = indents.indexOf(currentViewedHistory);
 
         currentViewedHistory.items.forEach((item, itemIndex) => {
-             // Show all items in edit mode, even 0 qty, so we can fix them
+             // Show all items in edit mode, even 0 qty
              if (!isHistoryEditMode && (!item.qty || item.qty <= 0)) return; 
 
              const tr = document.createElement('tr');
              const mPct = item.marginPct || 0;
              const colorClass = mPct >= 0 ? 'text-green' : 'text-red';
-             const totalLineCost = item.frozenCost || (item.myCost * item.qty);
-
-             // --- NAME COLUMN LOGIC ---
-             let nameDisplay = `<div>${item.name}</div>`;
              
+             // Calculations
+             const totalSellPrice = item.qty * item.poRate;
+             const totalLineCost = item.frozenCost; 
+
+             // --- INPUTS VS DISPLAY ---
+             let qtyDisplay, weightDisplay;
+
              if (isHistoryEditMode) {
-                 // EDIT MODE: Input for Actual Kg
-                 nameDisplay += `<div style="margin-top:4px; display:flex; align-items:center; gap:5px;">
-                    <span style="font-size:10px; color:#888;">Act Kg:</span>
-                    <input type="number" class="cell-input" style="width:60px; padding:2px;" 
-                        value="${item.actualKg || 0}" id="edit-kg-${itemIndex}">
-                 </div>`;
+                 // EDIT MODE
+                 qtyDisplay = `<input type="number" class="qty-edit" value="${item.qty}" id="edit-qty-${itemIndex}" style="width:60px">`;
+                 weightDisplay = `<input type="number" class="cell-input" value="${item.actualKg || 0}" id="edit-kg-${itemIndex}" step="0.001">`;
              } else {
-                 // VIEW MODE: Badges
-                 let badges = '';
-                 if(item.actualKg !== undefined && item.actualKg > 0) {
-                     badges += ` <span style="font-size:10px; color:#1a73e8; background:#e8f0fe; padding:2px 5px; border-radius:4px; margin-right:5px;">${item.actualKg}kg</span>`;
-                 }
-                 if(item.img) {
-                     badges += `<span style="cursor:pointer; font-size:14px;" onclick="openImgModal('${historyIndex}', 'history', '${itemIndex}')">📷</span>`;
-                 }
-                 if(badges) nameDisplay += `<div style="margin-top:2px;">${badges}</div>`;
+                 // VIEW MODE
+                 qtyDisplay = item.qty;
+                 
+                 // Highlight weight if it differs significantly from standard
+                 const master = products.find(p => p.id === item.code);
+                 const stdKg = master ? (item.qty * master.conv) : 0;
+                 const isDiff = Math.abs((item.actualKg || 0) - stdKg) > 0.05;
+                 
+                 weightDisplay = `<span style="${isDiff ? 'color:var(--primary); font-weight:bold;' : ''}">${(item.actualKg || 0).toFixed(3)}</span>`;
              }
 
-             // --- QTY COLUMN LOGIC ---
-             let qtyDisplay = item.qty;
-             if (isHistoryEditMode) {
-                 qtyDisplay = `<input type="number" class="qty-edit" value="${item.qty}" id="edit-qty-${itemIndex}">`;
+             // --- PHOTO BUTTON ---
+             let photoHtml = '-';
+             if(item.img) {
+                 photoHtml = `<button class="btn-view-img" onclick="openImgModal('${historyIndex}', 'history', '${itemIndex}')"><span class="material-icons" style="font-size:18px">image</span></button>`;
              }
 
              tr.innerHTML = `
-                <td class="w-code t-left">${item.code}</td>
-                <td class="w-name t-left">${nameDisplay}</td>
-                <td class="w-num t-right">${qtyDisplay}</td>
-                <td class="w-num t-right">₹${item.poRate}</td>
-                <td class="w-num t-right">₹${totalLineCost.toFixed(2)}</td>
-                <td class="w-num t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
-                <td class="w-stat t-right ${colorClass}">${mPct.toFixed(0)}%</td>
+                <td class="hd-code t-left">${item.code}</td>
+                <td class="hd-name t-left" style="font-weight:500;">${item.name}</td>
+                <td class="hd-qty t-right">${qtyDisplay}</td>
+                <td class="hd-weight t-right">${weightDisplay}</td>
+                <td class="hd-price t-right">₹${item.poRate}</td>
+                <td class="hd-total t-right">₹${totalSellPrice.toFixed(0)}</td>
+                <td class="hd-cost t-right">₹${totalLineCost.toFixed(0)}</td>
+                <td class="hd-img t-center">${photoHtml}</td>
+                <td class="hd-prof t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
+                <td class="hd-marg t-right ${colorClass}">${mPct.toFixed(0)}%</td>
              `;
              tbody.appendChild(tr);
         });
@@ -2540,9 +2915,9 @@ async function toggleHistoryEdit() {
         renderHistoryDetailTable();
     } else {
         // SAVE CHANGES
-        if(!confirm("Save changes to this bill?")) return;
+        if(!confirm("Save changes to this bill? This will recalculate all financials.")) return;
 
-        let tBill=0, tRealCost=0, tDumpCost=0, tIndent=0;
+        let tBill=0, tRealCost=0, tIndent=0;
 
         currentViewedHistory.items.forEach((item, idx) => {
             const qtyInput = document.getElementById(`edit-qty-${idx}`);
@@ -2550,65 +2925,58 @@ async function toggleHistoryEdit() {
             
             if(qtyInput && kgInput) {
                 const newQty = parseFloat(qtyInput.value) || 0;
-                const newKg = parseFloat(kgInput.value) || 0;
+                let newKg = parseFloat(kgInput.value) || 0;
 
-                // 1. Get Master Data for Costing
+                // 1. GET MASTER DATA & FROZEN COST
                 const master = products.find(p => p.id === item.code);
                 const conv = master ? (master.conv || 0) : 0;
                 
-                // Use historical cost if available, else current master cost
-                // We need Cost Per Kg specifically
-                let histCostPerKg = 0;
-                
-                // Attempt to reverse engineer historical cost per kg from saved data
-                if (item.myCost && conv > 0) {
-                    histCostPerKg = item.myCost / conv;
-                } else if (master) {
-                    histCostPerKg = master.costKg;
+                // CRITICAL FIX: Use stored frozenCostPerKg if available, otherwise Master
+                let costPerKg = item.frozenCostPerKg;
+                if (costPerKg === undefined || costPerKg === null) {
+                    costPerKg = master ? master.costKg : 0;
                 }
 
-                // --- RECALCULATE BASED ON ACTUAL KG ---
-                
-                // Standard (Theoretical)
-                const standardKg = newQty * conv;
-                
-                // Actual (Used for Costing)
-                // Use newKg if entered, else fallback to standard
-                const usedKg = (newKg > 0) ? newKg : standardKg;
+                // Auto-calculate weight if user entered 0 Kg but has Qty (Fallback)
+                if (newKg === 0 && newQty > 0 && conv > 0) {
+                    newKg = newQty * conv;
+                }
 
-                const lineCost = usedKg * histCostPerKg;
+                // 2. RECALCULATE STRICTLY
+                // Cost = Total Weight * Cost/Kg
+                const lineCost = newKg * costPerKg;
                 
-                // Dump (Excess)
-                const excessKg = Math.max(0, usedKg - standardKg);
-                const dumpCost = excessKg * histCostPerKg;
-                
+                // Revenue = Qty * Frozen Sell Price
                 const lineRev = newQty * item.poRate;
+                
                 const lineProf = lineRev - lineCost;
                 
-                // Update Item Fields
+                // 3. UPDATE ITEM
                 item.qty = newQty;
                 item.actualKg = newKg;
-                item.frozenCost = lineCost; // Store Actual Cost
-                item.itemDumpCost = dumpCost;
+                
+                // Ensure costPerKg is saved for next time
+                item.frozenCostPerKg = costPerKg; 
+                item.frozenCost = lineCost; 
+                
                 item.profit = lineProf;
-                // Unit cost = Total Line Cost / Qty
                 item.myCost = newQty > 0 ? (lineCost / newQty) : 0;
                 item.marginPct = lineRev > 0 ? (lineProf/lineRev)*100 : 0;
 
-                // Accumulate Totals
+                // 4. ACCUMULATE
                 tBill += lineRev;
                 tRealCost += lineCost;
-                tDumpCost += dumpCost;
                 tIndent += ((item.originalQty||0) * item.poRate);
             }
         });
 
-        // 2. Recalculate Record Totals
-        const expenseObj = calculateTotalExpense(currentViewedHistory.date, tBill, tRealCost, tDumpCost);
+        // 5. RECALCULATE TOTALS
+        // Note: Recalculate expense based on new totals
+        const expenseObj = calculateTotalExpense(currentViewedHistory.date, tBill, tRealCost);
         const grossProfit = tBill - tRealCost;
         
         currentViewedHistory.totalBillAmt = tBill;
-        currentViewedHistory.totalRev = tBill; 
+        currentViewedHistory.totalRev = tBill; // Legacy support
         currentViewedHistory.totalCost = tRealCost;
         currentViewedHistory.profit = grossProfit;
         currentViewedHistory.margin = tBill > 0 ? (grossProfit/tBill)*100 : 0;
@@ -2617,17 +2985,18 @@ async function toggleHistoryEdit() {
         currentViewedHistory.netProfit = grossProfit - expenseObj.total;
         currentViewedHistory.totalIndentAmt = tIndent;
 
-        // 3. Save (INCREMENTAL FIX)
+        // 6. SAVE TO DB
         try {
             await window.dbSet(window.dbRef(window.db, `indents/${currentViewedHistory.id}`), currentViewedHistory);
             
-            // 4. Exit Edit Mode
+            // Exit Edit Mode
             isHistoryEditMode = false;
             btn.innerHTML = '<span class="material-icons">edit</span> Edit';
             btn.classList.remove('btn-filled');
             
             refreshHistoryKPIs();
             renderHistoryDetailTable();
+            alert("Bill updated successfully.");
         } catch(e) {
             alert("Error saving: " + e.message);
         }
