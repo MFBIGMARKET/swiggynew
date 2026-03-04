@@ -138,10 +138,34 @@
         .user-info p { margin: 4px 0 0 0; color: #666; font-size: 13px; }
         .logout-btn { background: #ffebee; color: var(--red); border: none; padding: 8px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px; margin-left: auto; }
 
-        .att-list { background:white; border-radius:12px; overflow:hidden; border:1px solid #eee; margin-top:10px; }
-        .att-row { display:grid; grid-template-columns: 0.8fr 1fr 1fr 0.8fr; padding:12px; border-bottom:1px solid #f0f0f0; font-size:13px; align-items:center; }
-        .att-row.head { background:#f9f9f9; font-weight:700; color:#666; font-size:11px; text-transform:uppercase; }
-        .ot-val { font-weight:700; color:var(--orange); background:#fff3e0; padding:2px 6px; border-radius:4px; font-size:12px; }
+        /* NEW ATTENDANCE TABLE STYLE (Neat Bordered) */
+        .att-table-container { 
+            background: white; border-radius: 12px; overflow: hidden; 
+            border: 1px solid var(--border); margin-top: 10px; 
+        }
+        .att-table { width: 100%; border-collapse: collapse; }
+        .att-table th { 
+            background: #f8f9fa; color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; 
+            padding: 12px 10px; border-bottom: 1px solid #eee; text-align: center;
+        }
+        .att-table td { 
+            padding: 12px 10px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #333; text-align: center;
+            border-right: 1px solid #f8f8f8;
+        }
+        .att-table td:last-child { border-right: none; }
+        .ot-val { font-weight: 700; color: var(--orange); background: #fff3e0; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+
+        /* COMPACT ADMIN TOOLS (FAB STYLE) */
+        .admin-fab {
+            position: fixed; bottom: 80px; right: 20px;
+            background: var(--primary); color: white;
+            width: 56px; height: 56px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+            cursor: pointer; z-index: 200;
+            transition: transform 0.2s;
+        }
+        .admin-fab:active { transform: scale(0.95); }
 
         /* ADMIN DASHBOARD */
         .admin-att-card { background: white; padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
@@ -225,7 +249,7 @@
                 </div>
             </div>
 
-            <!-- ADMIN VIEW -->
+            <!-- ADMIN VIEW (Clean Header) -->
             <div id="admin-att-view" class="hidden">
                 <div class="hist-header">
                     <span class="section-title">Staff Status Today</span>
@@ -271,15 +295,31 @@
                         <input type="month" id="prof-month-filter" class="month-picker" onchange="loadAttendanceHistory()">
                     </div>
                 </div>
-                <div class="att-list">
-                    <div class="att-row head"><div>Date</div><div>In</div><div>Out</div><div style="text-align:right">OT</div></div>
-                    <div id="att-history-body"></div>
+                
+                <!-- NEW NEAT TABLE -->
+                <div class="att-table-container">
+                    <table class="att-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>In</th>
+                                <th>Out</th>
+                                <th>OT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="att-history-body"></tbody>
+                    </table>
                 </div>
+            </div>
+            
+            <!-- ADMIN TOOLS (Compact FAB) -->
+            <div id="admin-profile-tools" class="hidden admin-fab" onclick="openAdminOverride()" title="Manual Attendance">
+                <span class="material-icons">edit_calendar</span>
             </div>
         </div>
     </div>
 
-    <!-- BOTTOM NAV: Added IDs for selective hiding -->
+    <!-- BOTTOM NAV -->
     <div class="bottom-nav">
         <div id="nav-task" class="nav-item active" onclick="switchTab('available', this)"><span class="material-icons">assignment</span><span>Tasks</span></div>
         <div id="nav-att" class="nav-item" onclick="switchTab('attendance', this)"><span class="material-icons">fingerprint</span><span>Attend</span></div>
@@ -314,13 +354,12 @@
 
 <!-- HISTORY DETAIL -->
 <div class="page" id="page-history-detail">
-    <!-- Inside <div id="page-history-detail"> -->
     <div class="header">
         <button class="icon-btn" onclick="closePage('page-history-detail')"><span class="material-icons">arrow_back</span></button>
         <h2 style="font-size:16px;">Details</h2>
         
+        <!-- NEW DOWNLOAD BUTTON -->
         <div style="margin-left: auto; display:flex; gap:10px;">
-            <!-- Added ID and hidden-force class -->
             <button id="btn-download-history" class="icon-btn hidden-force" onclick="downloadHistoryCSV()" title="Download Excel">
                 <span class="material-icons" style="color:var(--primary)">file_download</span>
             </button>
@@ -353,13 +392,53 @@
     </div>
 </div>
 
+<!-- ADMIN ATTENDANCE OVERRIDE MODAL -->
+<div id="admin-override-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <div class="modal-header" style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:16px;">Manual Attendance</h3>
+            <span class="material-icons" onclick="document.getElementById('admin-override-modal').classList.add('hidden')" style="cursor:pointer">close</span>
+        </div>
+        <div style="padding:20px;">
+            <label style="font-size:12px; font-weight:700; color:#666; display:block; margin-bottom:5px;">Select Date</label>
+            <input type="date" id="override-date" class="login-input" style="padding:8px; margin-bottom:15px;">
+            
+            <label style="font-size:12px; font-weight:700; color:#666; display:block; margin-bottom:5px;">Select Employee</label>
+            <select id="override-emp" class="login-input" style="padding:8px; margin-bottom:15px;">
+                <option value="VISHAKH">VISHAKH</option>
+                <option value="RAJEEV">RAJEEV</option>
+                <option value="MOUSUM">MOUSUM</option>
+                <option value="YADHU">YADHU</option>
+            </select>
+            
+            <!-- NEW TIME INPUTS -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#666;">In Time</label>
+                    <input type="time" id="override-time-in" class="login-input" style="padding:8px;">
+                </div>
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#666;">Out Time</label>
+                    <input type="time" id="override-time-out" class="login-input" style="padding:8px;">
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button onclick="saveAdminOverride()" style="padding:12px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700;">SAVE</button>
+                <button onclick="markAdminAbsent()" style="padding:12px; background:var(--red); color:white; border:none; border-radius:8px; font-weight:700;">ABSENT</button>
+            </div>
+            
+            <p id="override-status" style="font-size:12px; color:#666; margin-top:15px; text-align:center; min-height:15px;"></p>
+        </div>
+    </div>
+</div>
+
 <div id="img-modal" onclick="this.style.display='none'"><span class="close-img">&times;</span><img id="img-content"></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, get, child, remove, query, limitToLast, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // --- ⚠️ PASTE FIREBASE CONFIG HERE ---
     const firebaseConfig = {
         apiKey: "AIzaSyB6OFRosamp5U5lKnAxl0wptGt5-eHL6ZQ",
         authDomain: "swiggymargin.firebaseapp.com",
@@ -373,7 +452,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     
-    // --- VARIABLES ---
     let activeIndent = null;
     let currentFilterMode = 'all'; 
     let masterMap = {}; 
@@ -391,7 +469,6 @@
         'BILLING': 'Bill@123'
     };
     
-    // --- LOCATION CONFIG ---
     const SHOP_LAT = 11.9322032684928;
     const SHOP_LNG = 75.57772362536731; 
     const ALLOWED_RADIUS_KM = 0.100;
@@ -403,7 +480,6 @@
         return `${d}/${m}/${y.slice(-2)}`;
     }
 
-    // --- INITIALIZATION ---
     function init() {
         checkAuth(); 
         setupRealtimeListener();
@@ -448,7 +524,6 @@
         }
     }
 
-    // --- SHOW DASHBOARD WITH ACCESS CONTROL ---
     function showDashboard() {
         document.getElementById('page-login').classList.add('hidden');
         document.getElementById('page-dashboard').classList.remove('hidden');
@@ -456,7 +531,7 @@
         document.getElementById('prof-avatar').innerText = currentUser.charAt(0);
         document.getElementById('prof-name').innerText = currentUser;
         
-        // --- 1. ACCESS CONTROL: FINISH BUTTON (Admin & Vishakh) ---
+        // 1. ACCESS CONTROL: FINISH BUTTON
         const finishBtn = document.getElementById('header-finish-btn');
         if (finishBtn) {
             if (currentUser === 'ADMIN' || currentUser === 'VISHAKH') {
@@ -466,7 +541,7 @@
             }
         }
 
-        // --- 2. ACCESS CONTROL: DOWNLOAD BUTTON (Admin & Billing) ---
+        // 2. ACCESS CONTROL: DOWNLOAD BUTTON
         const dlBtn = document.getElementById('btn-download-history');
         if (dlBtn) {
             if (currentUser === 'ADMIN' || currentUser === 'BILLING') {
@@ -476,25 +551,22 @@
             }
         }
 
-        // --- 3. BILLING USER LOGIC ---
+        // 3. BILLING USER LOGIC
         if (currentUser === 'BILLING') {
             document.getElementById('prof-role').innerText = 'Billing Staff';
             
-            // Hide Tasks and Attendance
             document.getElementById('nav-task').classList.add('hidden-force');
             document.getElementById('nav-att').classList.add('hidden-force');
             
-            // Show History and Profile
             document.getElementById('nav-hist').classList.remove('hidden-force');
             document.getElementById('nav-prof').classList.remove('hidden-force');
             
-            // Force switch to History
             const histBtn = document.getElementById('nav-hist');
             switchTab('history', histBtn);
             return;
         } 
         
-        // --- 4. STANDARD USER LOGIC ---
+        // 4. STANDARD USER LOGIC
         document.getElementById('nav-task').classList.remove('hidden-force');
         document.getElementById('nav-att').classList.remove('hidden-force');
         document.getElementById('nav-prof').classList.remove('hidden-force');
@@ -504,12 +576,17 @@
             document.getElementById('staff-att-view').classList.add('hidden');
             document.getElementById('admin-att-view').classList.remove('hidden');
             document.getElementById('admin-user-filter').classList.remove('hidden'); 
+            
+            // SHOW ADMIN TOOLS IN PROFILE
+            document.getElementById('admin-profile-tools').classList.remove('hidden');
+            
             loadAdminDashboard();
         } else {
             document.getElementById('prof-role').innerText = 'Staff Member';
             document.getElementById('staff-att-view').classList.remove('hidden');
             document.getElementById('admin-att-view').classList.add('hidden');
             document.getElementById('admin-user-filter').classList.add('hidden');
+            document.getElementById('admin-profile-tools').classList.add('hidden');
         }
         
         switchTab('available', document.getElementById('nav-task'));
@@ -947,7 +1024,7 @@
         if (currentUser === 'ADMIN') targetUser = document.getElementById('admin-user-filter').value;
         const filterVal = document.getElementById('prof-month-filter').value;
         const tbody = document.getElementById('att-history-body');
-        tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Loading...</div>';
+        tbody.innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">Loading...</td></tr>';
         try {
             const snap = await get(ref(db, 'attendance'));
             if(snap.exists()) {
@@ -960,17 +1037,79 @@
                 });
                 rows.sort((a,b) => b.date.localeCompare(a.date));
                 tbody.innerHTML = '';
-                if(rows.length === 0) { tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No records.</div>'; return; }
+                if(rows.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="color:#ccc; padding:20px;">No records.</td></tr>'; return; }
                 rows.forEach(r => {
                     const day = r.date.split('-')[2];
                     const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
                     const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
                     let otDisplay = `<span style="color:#ccc">-</span>`;
                     if (r.ot > 0) { const h = Math.floor(r.ot / 60); const m = r.ot % 60; otDisplay = `<span class="ot-val">${h}h ${m}m</span>`; }
-                    tbody.innerHTML += `<div class="att-row"><div style="font-weight:500">${day}</div><div>${inT}</div><div>${outT}</div><div style="text-align:right">${otDisplay}</div></div>`;
+                    tbody.innerHTML += `<tr><td style="font-weight:700">${day}</td><td>${inT}</td><td>${outT}</td><td>${otDisplay}</td></tr>`;
                 });
-            } else { tbody.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No data.</div>'; }
+            } else { tbody.innerHTML = '<tr><td colspan="4" style="color:#ccc; padding:20px;">No data.</td></tr>'; }
         } catch(e) { console.error(e); }
+    }
+
+    // --- ADMIN MANUAL ATTENDANCE LOGIC ---
+    window.openAdminOverride = function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('override-date').value = today;
+        document.getElementById('override-time-in').value = ""; 
+        document.getElementById('override-time-out').value = ""; 
+        document.getElementById('override-status').innerText = "";
+        document.getElementById('admin-override-modal').classList.remove('hidden');
+    }
+
+    window.saveAdminOverride = async function() {
+        const date = document.getElementById('override-date').value;
+        const emp = document.getElementById('override-emp').value;
+        const timeIn = document.getElementById('override-time-in').value;
+        const timeOut = document.getElementById('override-time-out').value;
+        const statusEl = document.getElementById('override-status');
+        
+        if(!date) { statusEl.innerText = "Select Date"; return; }
+        if(!timeIn && !timeOut) { statusEl.innerText = "Enter at least one time"; return; }
+        
+        const updates = {};
+        
+        if(timeIn) {
+            const isoIn = new Date(`${date}T${timeIn}:00`).toISOString();
+            updates[`attendance/${date}/${emp}/inTime`] = isoIn;
+        }
+        
+        if(timeOut) {
+            const isoOut = new Date(`${date}T${timeOut}:00`).toISOString();
+            updates[`attendance/${date}/${emp}/outTime`] = isoOut;
+            const endLimit = new Date(`${date}T21:00:00`);
+            const actualEnd = new Date(`${date}T${timeOut}:00`);
+            let ot = 0;
+            if(actualEnd > endLimit) {
+                ot = Math.floor((actualEnd - endLimit) / 60000);
+            }
+            updates[`attendance/${date}/${emp}/otMinutes`] = ot;
+        }
+
+        try {
+            await update(ref(db), updates);
+            statusEl.innerText = `✅ Updated ${emp} for ${date}`;
+            if(date === new Date().toISOString().split('T')[0]) loadAdminDashboard();
+            loadAttendanceHistory();
+        } catch(e) { statusEl.innerText = "Error: " + e.message; }
+    }
+
+    window.markAdminAbsent = async function() {
+        if(!confirm("Mark this employee as ABSENT? This will clear current logs.")) return;
+        const date = document.getElementById('override-date').value;
+        const emp = document.getElementById('override-emp').value;
+        const statusEl = document.getElementById('override-status');
+        
+        try {
+            // Remove the node for that employee on that date
+            await remove(ref(db, `attendance/${date}/${emp}`));
+            statusEl.innerText = `✅ Marked ABSENT: ${emp}`;
+            if(date === new Date().toISOString().split('T')[0]) loadAdminDashboard();
+            loadAttendanceHistory();
+        } catch(e) { statusEl.innerText = "Error: " + e.message; }
     }
 
     function checkLocation() {
@@ -1016,7 +1155,6 @@
         }
 
         const dateStr = currentHistoryRec.date;
-        // REMOVED 'Packed By' from header
         let csvContent = "ERP Code,Code,Item Name,Ordered Qty,Packed Qty,Weight (Kg)\n";
 
         currentHistoryRec.items.forEach(item => {
@@ -1025,13 +1163,11 @@
             const pckQty = item.qty || 0;
             const weight = item.actualKg || 0;
             
-            // Lookup ERP Code
             let erpCode = "";
             if (masterMap[item.code] && masterMap[item.code].erpCode) {
                 erpCode = `"${masterMap[item.code].erpCode}"`; 
             }
 
-            // REMOVED packer variable from row
             csvContent += `${erpCode},${item.code},${cleanName},${ordQty},${pckQty},${weight}\n`;
         });
 
@@ -1069,7 +1205,10 @@
     window.filterHistoryList = filterHistoryList;
     window.loadAttendanceHistory = loadAttendanceHistory;
     window.openModal = openModal;
-    window.downloadHistoryCSV = downloadHistoryCSV; // Exported
+    window.downloadHistoryCSV = downloadHistoryCSV;
+    window.openAdminOverride = openAdminOverride;
+    window.saveAdminOverride = saveAdminOverride;
+    window.markAdminAbsent = markAdminAbsent;
 
     init();
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(console.error); }
