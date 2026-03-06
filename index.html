@@ -2815,7 +2815,9 @@ function addToHistory(product, source, buy, sell) {
                 <td class="h-profit t-right" style="color:${tNet<0?'var(--red)':'var(--purple)'}">₹${tNet.toFixed(0)}</td>
                 <td class="h-margin t-right ${netClass}">${netM.toFixed(1)}%</td>
                 <td class="w-action t-center" onclick="event.stopPropagation()">
-                    <button class="btn-icon" style="color:var(--red)" onclick="deleteIndent(${rec.id})"><span class="material-icons">delete</span></button>
+                    <button class="btn-icon" style="color:var(--red)" onclick="deleteIndent(${rec.id})">
+    <span class="material-icons">delete</span>
+</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -2833,18 +2835,59 @@ function addToHistory(product, source, buy, sell) {
     }
 
     
-    function deleteIndent(id) {
-        if(!confirm("Delete this record permanently?")) return;
-        
-        // --- KEY FIX: Delete Specific Node ---
-        window.dbRemove(window.dbRef(window.db, `indents/${id}`))
-            .then(() => {
-                indents = indents.filter(x => x.id !== id);
-                renderIndentHistory();
-                closeHistoryDetail(); // If open
-            })
-            .catch(err => alert("Error deleting: " + err.message));
-    }
+    // --- UPDATED DELETE FUNCTION (Fix for Reload Issue) ---
+    // --- ROBUST DELETE FUNCTION (Finds Key then Deletes) ---
+    window.deleteIndent = async function(idToDel) {
+        if(!confirm("⚠️ PERMANENT DELETE WARNING:\n\nAre you sure you want to remove this bill?\nIt will be gone from History and Finance.")) return;
+
+        try {
+            const dbRef = window.dbRef(window.db);
+            const targetId = Number(idToDel); // Ensure it's a number for comparison
+            
+            // 1. Fetch all indents to find the real database KEY for this ID
+            const snapshot = await window.dbGet(window.dbChild(dbRef, 'indents'));
+            
+            if (snapshot.exists()) {
+                let keyToDelete = null;
+                
+                // Loop through database records to find the match
+                snapshot.forEach((childSnapshot) => {
+                    const val = childSnapshot.val();
+                    // Check if this record's ID matches the target
+                    if (val && val.id == targetId) {
+                        keyToDelete = childSnapshot.key;
+                    }
+                });
+
+                if (keyToDelete) {
+                    // 2. Delete the specific node using the found key
+                    const path = `indents/${keyToDelete}`;
+                    await window.dbRemove(window.dbRef(window.db, path));
+                    
+                    // 3. Update Local UI
+                    indents = indents.filter(x => x.id != targetId);
+                    
+                    // Close details if open
+                    if(currentViewedHistory && currentViewedHistory.id == targetId) {
+                        closeHistoryDetail();
+                    }
+
+                    // Refresh Views
+                    if (typeof renderIndentHistory === 'function') renderIndentHistory();
+                    if (typeof renderFinanceTable === 'function') renderFinanceTable();
+                    if (typeof renderDashboard === 'function') renderDashboard(); // For admin app
+
+                    // alert("Deleted successfully."); // Optional
+                } else {
+                    alert("❌ Error: Record not found in database. The screen will reload to sync data.");
+                    location.reload(); 
+                }
+            }
+        } catch (e) {
+            console.error("Delete Error:", e);
+            alert("❌ Delete failed: " + e.message);
+        }
+    };
 
     function viewHistoryDetail(index) {
             isHistoryEditMode = false; // Reset mode
