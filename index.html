@@ -160,22 +160,50 @@
 
         /* SPECIFIC HISTORY DETAIL COLUMNS - REDISTRIBUTED */
         .hd-code { width: 80px; color: var(--text-sub); }
-        /* --- FINANCE TABLE STYLES (Doubled Widths) --- */
-        .w-fix-100 { width: 200px; text-align: right; padding-right: 15px; }
-        .w-fix-date { width: 200px; text-align: left; }
-        .w-fix-bill { width: 200px; text-align: left; font-family: 'Roboto Mono', monospace; color: var(--text-sub); }
+        /* --- FINANCE TABLE STYLES (Perfected) --- */
+        .w-fix-date { width: 100px; text-align: left; }
+        .w-fix-bill { width: 120px; text-align: left; font-family: 'Roboto Mono', monospace; color: var(--text-sub); }
+        .w-fix-100 { width: 100px; text-align: right; padding-right: 15px; font-weight: 700; }
+        
         .w-fix-action { 
-            width: 240px; 
+            width: 110px; 
             text-align: center; 
             white-space: normal; 
             overflow: visible; 
-            text-overflow: clip; 
         }
-        .w-note { width: auto; font-style: italic; color: #555; white-space: normal !important; overflow: visible !important;}
+
+        .w-fix-rcvd-amt { width: 100px; text-align: right; padding-right: 10px; font-weight: 700; color: var(--green); }
+        .w-fix-rcvd { width: 100px; text-align: left; padding-left: 10px; color: var(--text-sub); }
+        .w-fix-days { width: 60px; text-align: center; color: var(--text-sub); font-weight: 500; }
         
-        /* Finance Row Highlights */
-        .row-diff { background-color: #fff3e0 !important; }
-        .row-diff:hover { background-color: #ffe0b2 !important; }
+        .w-fix-mtr { width: 100px; text-align: center; padding: 0 5px; }
+        .w-fix-mtr-paid { width: 60px; text-align: center; }
+        .w-note { width: auto; font-style: italic; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+
+        /* Input for MTR Bill */
+        .mtr-input { 
+            width: 80px; padding: 6px; 
+            border: 1px solid #ddd; border-radius: 4px; 
+            text-align: right; font-size: 13px;
+        }
+        .mtr-input:focus { border-color: var(--primary); outline: none; }
+        
+        /* MTR Paid Toggle Button */
+        .btn-mtr-toggle {
+            background: #fff; color: #ddd; border: 1px solid #eee;
+            width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .btn-mtr-toggle:hover { border-color: #ccc; color: #bbb; }
+        
+        .btn-mtr-toggle.active {
+            background: var(--green); color: white; border-color: var(--green);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        
+        /* Row Highlight Refinement */
+        .row-diff { background-color: #fff8e1 !important; }
         .row-paid { background-color: #f6ffed !important; }
         
         .status-pill { padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid transparent; }
@@ -266,7 +294,30 @@
 
 /* --- LOGOUT BUTTON (Header) --- */
 .btn-logout { background: #ffebee; color: var(--red); border: none; font-weight: 700; margin-left: 10px; }
-
+/* --- UPDATED FINANCE COLUMN WIDTHS --- */
+        .w-fix-rcvd-amt { width: 110px; text-align: right; font-weight: 700; color: var(--green); }
+        .w-fix-mtr { width: 100px; text-align: center; }
+        .w-fix-mtr-paid { width: 70px; text-align: center; }
+        
+        /* Input for MTR Bill */
+        .mtr-input { 
+            width: 100%; padding: 6px; 
+            border: 1px solid #ddd; border-radius: 4px; 
+            text-align: right; font-size: 13px;
+        }
+        .mtr-input:focus { border-color: var(--primary); outline: none; }
+        
+        /* MTR Paid Toggle Button */
+        .btn-mtr-toggle {
+            background: #f1f3f4; color: #ccc; border: 1px solid #ddd;
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .btn-mtr-toggle.active {
+            background: var(--green); color: white; border-color: var(--green);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
 /* --- ROLE BASED VISIBILITY --- */
 /* Hide elements by default if role class is present on body */
 body.role-data-entry .tab[onclick*="view-indent"],
@@ -923,13 +974,16 @@ body.role-data-entry .tab[onclick*="view-history"] { display: none !important; }
             <table>
                 <thead>
                     <tr>
-                        <th class="w-fix-date t-center">Date</th>
-                        <th class="w-fix-bill t-center">Bill No</th>
-                        <th class="w-fix-100 t-right">Amount</th>
+                        <th class="w-fix-date t-left">Date</th>
+                        <th class="w-fix-bill t-left">Bill No</th>
+                        <th class="w-fix-100 t-right">Bill Amt</th>
                         <th class="w-fix-action t-center">Action</th>
+                        <th class="w-fix-rcvd-amt t-right">Rcvd Amt</th>
                         <th class="w-fix-rcvd t-left">Rcvd Date</th>
-                        <th class="w-fix-days t-center">Days</th> <!-- NEW COLUMN -->
-                        <th class="w-note t-center">Notes</th>
+                        <th class="w-fix-days t-center">Days</th>
+                        <th class="w-fix-mtr t-center">MTR Bill</th>
+                        <th class="w-fix-mtr-paid t-center">Paid</th>
+                        <th class="w-note t-left">Notes</th>
                     </tr>
                 </thead>
                 <tbody id="finance-body"></tbody>
@@ -1767,13 +1821,8 @@ function applyRole(role) {
         
         tbody.innerHTML = '';
         
-        let totalBilled = 0;
-        let totalReceived = 0;
-        let countPending = 0;
-        
-        // Variables for Avg Days KPI
-        let totalCreditDays = 0;
-        let countCreditBills = 0;
+        let totalBilled = 0, totalReceived = 0, countPending = 0;
+        let totalCreditDays = 0, countCreditBills = 0;
 
         const sortedIndents = [...indents].sort((a, b) => b.id - a.id);
 
@@ -1784,45 +1833,42 @@ function applyRole(role) {
             const billAmt = rec.totalBillAmt || rec.totalRev || 0;
             const recvAmt = rec.receivedAmount !== undefined ? rec.receivedAmount : 0;
             const recvDate = rec.receivedDate || '';
+            const note = rec.financeNote || '';
+            
+            // --- NEW MTR DATA ---
+            const mtrBill = rec.mtrBill || ''; // The manual input value
+            const isMtrPaid = rec.mtrPaid === true; // The boolean status
             
             const isFull = recvAmt >= (billAmt - 1); 
             const isPartial = recvAmt > 0 && !isFull;
-            const note = rec.financeNote || '';
             
-            // --- CREDIT DAYS CALCULATION ---
+            // Calc Credit Days
             let daysDisplay = '-';
             if (recvDate && rec.date) {
                 const start = new Date(rec.date);
                 const end = new Date(recvDate);
-                const diffTime = Math.abs(end - start);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                daysDisplay = diffDays;
-                
-                // Add to KPI calc only if fully paid or significant payment made
-                if(recvAmt > 0) {
-                    totalCreditDays += diffDays;
-                    countCreditBills++;
-                }
+                daysDisplay = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)); 
+                if(recvAmt > 0) { totalCreditDays += daysDisplay; countCreditBills++; }
             }
-            // -------------------------------
 
-            // Bill No Logic
+            // Bill No
             let billNoDisplay = "---";
             if (rec.date) {
                 const parts = rec.date.split('-'); 
-                if (parts.length === 3) {
-                    billNoDisplay = `MFB${parts[2]}${parts[1]}${parts[0].slice(-2)}`;
-                }
+                if (parts.length === 3) billNoDisplay = `MFB${parts[2]}${parts[1]}${parts[0].slice(-2)}`;
             }
             
+            // KPIs
             totalBilled += billAmt;
             totalReceived += recvAmt;
             if (!isFull) countPending++;
 
+            // Row Styling
             let rowClass = '';
             if (isPartial || (isFull && Math.abs(recvAmt - billAmt) > 1)) rowClass = 'row-diff'; 
             else if (isFull) rowClass = 'row-paid';
 
+            // Main Action Button
             const safeNote = note.replace(/'/g, "\\'");
             const modalCall = `openFinanceModal(${rec.id}, ${billAmt}, '${safeNote}', ${recvAmt}, '${billNoDisplay}', '${recvDate}')`;
 
@@ -1830,8 +1876,15 @@ function applyRole(role) {
             if (recvAmt === 0) {
                 actionHtml = `<button class="btn btn-compact" onclick="${modalCall}">Mark Paid</button>`;
             } else {
-                actionHtml = `<span class="status-pill ${isFull?'st-received':'st-partial'}" onclick="${modalCall}">₹${recvAmt}</span>`;
+                actionHtml = `<span class="status-pill ${isFull?'st-received':'st-partial'}" onclick="${modalCall}">Edit</span>`;
             }
+
+            // Inside renderFinanceTable loop...
+
+            // ... previous logic ...
+            
+            // Handle MTR Bill display: Show empty if 0 for cleaner look
+            const mtrBillVal = rec.mtrBill ? rec.mtrBill : ''; 
 
             const tr = document.createElement('tr');
             tr.className = rowClass;
@@ -1840,9 +1893,22 @@ function applyRole(role) {
                 <td class="w-fix-bill t-left">${billNoDisplay}</td>
                 <td class="w-fix-100 t-right">₹${billAmt.toFixed(0)}</td>
                 <td class="w-fix-action t-center">${actionHtml}</td>
-                <td class="w-fix-rcvd t-left">${formatDate(recvDate)}</td>
-                <td class="w-fix-days t-center">${daysDisplay}</td> <!-- New Column -->
-                <td class="w-note t-left">${note}</td>
+                <td class="w-fix-rcvd-amt t-right">${recvAmt > 0 ? '₹'+recvAmt : '-'}</td>
+                <td class="w-fix-rcvd t-left">${recvDate ? formatDate(recvDate) : '-'}</td>
+                <td class="w-fix-days t-center">${daysDisplay}</td>
+                
+                <td class="w-fix-mtr t-center">
+                    <input type="number" class="mtr-input" value="${mtrBillVal}" placeholder="0" 
+                        onchange="updateMtrBill(${rec.id}, this.value)">
+                </td>
+                
+                <td class="w-fix-mtr-paid t-center">
+                    <button class="btn-mtr-toggle ${isMtrPaid ? 'active' : ''}" onclick="toggleMtrPaid(${rec.id}, ${isMtrPaid})">
+                        <span class="material-icons" style="font-size:16px">check</span>
+                    </button>
+                </td>
+                
+                <td class="w-note t-left" title="${note}">${note}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -1854,7 +1920,40 @@ function applyRole(role) {
         document.getElementById('fin-received').innerText = '₹' + totalReceived.toLocaleString('en-IN', {maximumFractionDigits:0});
         document.getElementById('fin-pending').innerText = '₹' + totalPending.toLocaleString('en-IN', {maximumFractionDigits:0});
         document.getElementById('fin-count').innerText = countPending;
-        document.getElementById('fin-avg-days').innerText = avgDays; // KPI Update
+        document.getElementById('fin-avg-days').innerText = avgDays;
+    }
+    // --- MTR BILL LOGIC ---
+
+    async function updateMtrBill(id, value) {
+        const val = parseFloat(value) || 0;
+        try {
+            await window.dbUpdate(window.dbRef(window.db, `indents/${id}`), { mtrBill: val });
+            
+            // Update local state instantly
+            const item = indents.find(i => i.id === id);
+            if(item) item.mtrBill = val;
+            
+        } catch(e) {
+            console.error(e);
+            alert("Failed to save MTR Bill");
+        }
+    }
+
+    async function toggleMtrPaid(id, currentState) {
+        const newState = !currentState;
+        try {
+            await window.dbUpdate(window.dbRef(window.db, `indents/${id}`), { mtrPaid: newState });
+            
+            // Update local state instantly and re-render to show color change
+            const item = indents.find(i => i.id === id);
+            if(item) item.mtrPaid = newState;
+            
+            renderFinanceTable();
+            
+        } catch(e) {
+            console.error(e);
+            alert("Failed to update status");
+        }
     }
     function openFinanceModal(id, billAmt, currentNote, currentRecv, billNoStr, savedDate) {
         currentFinanceId = id;
