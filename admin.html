@@ -81,14 +81,111 @@
 
         /* --- LIVE TAB STYLES --- */
         .live-container { padding: 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
-        .live-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        
         .live-head { font-size: 14px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
         .pack-status { text-align: center; margin-bottom: 15px; }
         .pack-pct { font-size: 32px; font-weight: 900; color: var(--primary); }
         .pack-sub { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
-        .progress-track { height: 10px; background: #f1f3f4; border-radius: 5px; overflow: hidden; width: 100%; }
-        .progress-fill { height: 100%; background: var(--primary); transition: width 0.5s ease; }
+        
+        /* --- CLEAN LIVE TILE STYLES --- */
+.live-card { 
+    background: #ffffff; 
+    border-radius: 16px; 
+    padding: 24px; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04); 
+    border: 1px solid #edf2f7; 
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.live-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+.live-badge-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: #1a73e8;
+    border-radius: 50%;
+    box-shadow: 0 0 0 rgba(26, 115, 232, 0.4);
+    animation: pulse-blue 2s infinite;
+}
+
+@keyframes pulse-blue {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(26, 115, 232, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
+}
+
+.stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.stat-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.pct-label {
+    font-weight: 800;
+    margin-left: 4px;
+}
+
+/* Hide the old static header */
+#tab-live .live-card .live-head {
+    display: none !important;
+}
+
+/* Make the card more compact */
+#tab-live .live-card {
+    padding: 16px !important; /* Reduced from 24px */
+    margin-bottom: 12px;
+}
+
+/* Remove pulse animation from the text and keep it only on the dot for a cleaner look */
+.live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px; /* Slightly larger as it's now the header */
+    font-weight: 800;
+    color: #1a73e8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Adjust progress spacing to be tighter */
+.progress-track-clean {
+    margin-bottom: 12px !important; /* Reduced from 20px */
+}
+
+.progress-fill-clean {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tap-hint {
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 8px;
+    font-weight: 500;
+}
         .no-order { text-align: center; color: #999; padding: 20px; font-style: italic; }
 
         .att-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -98,6 +195,105 @@
         .st-out { background: var(--red); }
         .att-name { font-weight: 700; font-size: 13px; color: var(--text-main); }
         .att-time { font-size: 11px; color: var(--text-sub); }
+
+/* --- THE FINAL "THIN LINE" KILLER CSS --- */
+
+#page-live-detail .content {
+    display: block !important; /* Prevents flex-squashing */
+    overflow-y: auto !important;
+    padding: 12px !important;
+    background-color: #f0f2f5 !important;
+}
+
+#live-detail-list {
+    display: block !important;
+    width: 100% !important;
+}
+
+.live-item-card {
+    display: flex !important; /* Force it to show its rows */
+    flex-direction: column !important;
+    height: auto !important; /* Overrides any zero-height settings */
+    min-height: 100px !important; /* Guarantees visibility */
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    margin-bottom: 15px !important;
+    border: 1px solid #e0e0e0 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+    overflow: visible !important;
+}
+
+/* Status Borders */
+.live-item-card.packed { border-left: 6px solid #28a745 !important; }
+.live-item-card.overpacked { border: 2px solid #dc3545 !important; background: #fff8f8 !important; }
+
+.li-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 15px !important;
+    border-bottom: 1px solid #eee !important;
+    height: 40px !important; /* Fixed height for header */
+}
+
+.li-name { font-weight: 700; font-size: 14px; color: #1a1a1b; }
+.li-code { font-size: 11px; color: #6c757d; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; }
+
+.li-body {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 10px !important;
+    padding: 12px 15px !important;
+    height: auto !important;
+}
+/* --- ATTENDANCE MODAL FIX --- */
+.att-table th { 
+    background: #f8f9fa; 
+    color: #666; 
+    font-size: 11px; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    padding: 12px 10px; 
+    border-bottom: 1px solid #eee; 
+    text-align: center !important; /* Forces the DATE header to center */
+}
+
+/* --- LIVE MONITOR POLISH --- */
+.li-val { 
+    font-size: 15px; 
+    font-weight: 700; 
+    color: #1a73e8; /* Primary color like packing app */
+    background: #e8f0fe; /* Light blue background */
+    width: 100%; 
+    text-align: center; 
+    padding: 10px 0; 
+    border-radius: 8px; 
+    border: 1px solid #d2e3fc; 
+}
+
+/* Style for the target weight sub-text */
+.li-target-info {
+    font-size: 11px;
+    color: #5f6368;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.li-col { display: flex !important; flex-direction: column !important; align-items: center !important; }
+.li-label { font-size: 9px; color: #8e8e93; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
+
+
+.live-img-btn {
+    width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+    background: #e7f1ff; border-radius: 8px; color: #007bff; cursor: pointer;
+}
+
+.li-footer {
+    font-size: 10px; padding: 0 15px 10px; color: #999; text-align: right;
+}
+
+.live-filter-pending { background: var(--orange) !important; color: white !important; }
+.live-filter-packed { background: var(--green) !important; color: white !important; }
 
         /* --- MARGIN DISTRIBUTION --- */
         .margin-dist-container { padding: 0 12px 10px 12px; display: flex; gap: 10px; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
@@ -151,6 +347,7 @@
         
         .w-num { min-width: 75px; }
         .w-date { min-width: 85px; color: var(--text-sub); }
+        
 
         /* --- MODALS --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 5000; display: flex; align-items: center; justify-content: center; }
@@ -171,6 +368,12 @@
         .login-box { width: 80%; max-width: 300px; text-align: center; }
         .login-inp { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 15px; font-size: 16px; outline:none; }
         .login-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 16px; }
+
+        @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
     </style>
 </head>
 <body>
@@ -298,6 +501,35 @@
                     </table>
                 </div>
             </div>
+            <!-- LIVE DETAIL PAGE -->
+<div id="page-live-detail" class="page">
+    <div class="header">
+        <button class="icon-btn" onclick="closeLiveDetail()"><span class="material-icons">arrow_back</span></button>
+        <div class="header-title-box">
+            <div class="h-main">Live Packing Monitor</div>
+            <div id="live-detail-date" class="h-sub">Loading...</div>
+        </div>
+        <div style="width:40px"></div> <!-- Spacer for symmetry -->
+    </div>
+    
+    <!-- Filter Bar -->
+    <div class="filter-bar" style="padding: 10px 16px;">
+        <input type="text" id="liveSearch" class="date-input" style="flex:1" placeholder="Search item..." onkeyup="renderLiveDetailList()">
+        <button id="live-filter-btn" class="icon-btn" onclick="toggleLiveFilter()" style="border: 1px solid var(--border); border-radius: 8px; margin-left: 8px;">
+            <span class="material-icons" id="live-filter-icon">filter_list</span>
+        </button>
+    </div>
+
+    <div class="content" style="overflow-y: auto; padding: 12px;" id="live-detail-list">
+        <!-- Live Items will be injected here -->
+    </div>
+</div>
+
+<!-- IMAGE VIEW MODAL (Standalone for Admin) -->
+<div id="admin-img-modal" class="modal-overlay hidden" onclick="this.classList.add('hidden')">
+    <span class="material-icons" style="position:absolute; top:20px; right:20px; color:white; font-size:40px; cursor:pointer;">close</span>
+    <img id="admin-img-content" style="max-width:90%; max-height:80vh; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+</div>
 
             <!-- TAB 4: MASTER -->
             <div id="tab-master" class="tab-content">
@@ -434,6 +666,9 @@
         const db = getDatabase(app);
         
         let allIndents = [];
+        
+let liveFilterMode = 'all'; // all, pending, packed
+let activeIndentData = null;
         let allProducts = [];
         let masterMap = {};
         let expenseSettings = null; 
@@ -484,36 +719,338 @@
         }
 
         function setupLiveListeners() {
-            onValue(ref(db, 'active_indent'), (snap) => {
-                const data = snap.val();
-                const container = document.getElementById('live-pack-content');
-                if(!data) {
-                    container.innerHTML = '<div class="no-order">No active order</div>';
-                } else {
-                    const total = data.items ? data.items.length : 0;
-                    const packed = data.items ? data.items.filter(i => i.isPacked).length : 0;
-                    const pct = total > 0 ? Math.round((packed/total)*100) : 0;
-                    container.innerHTML = `<div class="pack-status"><div class="pack-pct">${pct}%</div><div class="pack-sub">${packed} / ${total} items packed</div></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>`;
-                }
-            });
-            const today = new Date().toISOString().split('T')[0];
-            onValue(ref(db, `attendance/${today}`), (snap) => {
-                const data = snap.val() || {};
-                const staff = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU'];
-                const grid = document.getElementById('live-att-grid');
-                let html = '';
-                staff.forEach(name => {
-                    const user = data[name];
-                    let dotClass = '', timeText = 'Absent';
-                    if(user) {
-                        if(user.inTime && !user.outTime) { dotClass = 'st-in'; const t = new Date(user.inTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); timeText = `In: ${t}`; }
-                        else if(user.outTime) { dotClass = 'st-out'; timeText = 'Done'; }
+    // 1. WATCH THE ACTIVE PACKING ORDER (Real-time)
+    onValue(ref(db, 'active_indent'), (snap) => {
+        const data = snap.val();
+        activeIndentData = data; // Store globally so Live Detail Page can use it
+        const container = document.getElementById('live-pack-content');
+        
+        if(!data) {
+            container.innerHTML = '<div class="no-order">No active order currently</div>';
+            container.parentElement.onclick = null;
+            container.parentElement.style.cursor = "default";
+            // Auto-close detail if order is cleared by office
+            if(document.getElementById('page-live-detail').classList.contains('active')) {
+                closeLiveDetail();
+            }
+        } else {
+            // Calculation: Unique Items (Row count)
+            const itemCount = data.items ? data.items.length : 0;
+            const packedCount = data.items ? data.items.filter(i => i.isPacked === true).length : 0;
+            const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
+            const itemColor = itemPct === 100 ? 'var(--green)' : 'var(--primary)';
+
+            // Calculation: Total Packets (Volume)
+            let totalOrdPkts = 0;
+            let totalPackedPkts = 0;
+            if (data.items) {
+                data.items.forEach(i => {
+                    totalOrdPkts += parseFloat(i.poQty) || 0;
+                    if (i.isPacked) {
+                        totalPackedPkts += parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
                     }
-                    html += `<div class="att-item"><div class="status-dot ${dotClass}"></div><div><div class="att-name">${name}</div><div class="att-time">${timeText}</div></div></div>`;
                 });
-                grid.innerHTML = html;
-            });
+            }
+            const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
+            const pktColor = pktPct >= 100 ? 'var(--green)' : '#f57c00';
+
+            // Set up Click interaction for Admin to enter monitoring mode
+            container.parentElement.style.cursor = "pointer";
+            container.parentElement.onclick = () => openLiveDetail();
+
+            // ... inside the onValue(ref(db, 'active_indent')... block
+container.innerHTML = `
+    <div class="live-badge-row" style="margin-bottom: 16px;">
+        <div class="live-indicator">
+            <div class="pulse-dot"></div>
+            Live Packing
+        </div>
+        <div style="background:#eef2f7; color:#475569; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">
+            ${formatDateFull(data.date)} 
+        </div>
+    </div>
+
+    <div style="margin-top: 10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="stat-label" style="font-size:11px;">Unique Items</span>
+            <span class="stat-value" style="font-size:12px;">${packedCount} / ${itemCount} <span class="pct-label" style="color:var(--primary)">${itemPct}%</span></span>
+        </div>
+        <div class="progress-track-clean">
+            <div class="progress-fill-clean" style="width:${itemPct}%; background:var(--primary)"></div>
+        </div>
+    </div>
+
+    <div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="stat-label" style="font-size:11px;">Total Packets</span>
+            <span class="stat-value" style="font-size:12px;">${totalPackedPkts} / ${totalOrdPkts} <span class="pct-label" style="color:#f59e0b">${pktPct}%</span></span>
+        </div>
+        <div class="progress-track-clean" style="margin-bottom: 4px !important;">
+            <div class="progress-fill-clean" style="width:${pktPct}%; background:#f59e0b"></div>
+        </div>
+    </div>
+
+    <div class="tap-hint" style="margin-top: 12px; font-size: 10px;">
+        Tap to monitor individual items
+    </div>
+`;
+
+            // If Admin is currently looking at the Live Detail List, refresh it in real-time
+            if(document.getElementById('page-live-detail').classList.contains('active')) {
+                renderLiveDetailList();
+            }
         }
+    });
+
+    // 2. WATCH TODAY'S ATTENDANCE (Real-time)
+    const today = new Date().toISOString().split('T')[0];
+    onValue(ref(db, `attendance/${today}`), (snap) => {
+        const data = snap.val() || {};
+        const staff = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU'];
+        const grid = document.getElementById('live-att-grid');
+        let html = '';
+        
+        staff.forEach(name => {
+            const user = data[name];
+            let dotClass = '', timeText = 'Absent';
+            
+            if(user) {
+                if(user.inTime && !user.outTime) {
+                    dotClass = 'st-in';
+                    const t = new Date(user.inTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                    timeText = `In: ${t}`;
+                } else if(user.outTime) {
+                    dotClass = 'st-out';
+                    timeText = 'Done';
+                }
+            }
+            
+            html += `
+                <div class="att-item" onclick="openAttHistory('${name}')" style="cursor:pointer">
+                    <div class="status-dot ${dotClass}"></div>
+                    <div>
+                        <div class="att-name">${name}</div>
+                        <div class="att-time">${timeText}</div>
+                    </div>
+                </div>
+            `;
+        });
+        grid.innerHTML = html;
+    });
+}
+        window.openLiveDetail = function() {
+    if(!activeIndentData) return;
+    document.getElementById('live-detail-date').innerText = formatDateFull(activeIndentData.date);
+    renderLiveDetailList();
+    document.getElementById('page-live-detail').classList.add('active');
+}
+
+window.closeLiveDetail = function() {
+    document.getElementById('page-live-detail').classList.remove('active');
+}
+
+window.toggleLiveFilter = function() {
+    const btn = document.getElementById('live-filter-btn');
+    const icon = document.getElementById('live-filter-icon');
+    
+    if (liveFilterMode === 'all') { 
+        liveFilterMode = 'pending'; 
+        btn.className = 'icon-btn live-filter-pending'; 
+        icon.innerText = 'check_box_outline_blank'; 
+    } 
+    else if (liveFilterMode === 'pending') { 
+        liveFilterMode = 'packed'; 
+        btn.className = 'icon-btn live-filter-packed'; 
+        icon.innerText = 'check_box'; 
+    } 
+    else { 
+        liveFilterMode = 'all'; 
+        btn.className = 'icon-btn'; 
+        icon.innerText = 'filter_list'; 
+    }
+    renderLiveDetailList();
+}
+
+window.renderLiveDetailList = function() {
+    const container = document.getElementById('live-detail-list');
+    const searchTerm = document.getElementById('liveSearch').value.toLowerCase();
+    
+    if(!activeIndentData || !activeIndentData.items) return;
+    
+    container.innerHTML = '';
+    
+    const filteredItems = activeIndentData.items.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm) || item.code.toString().includes(searchTerm);
+        let matchesFilter = true;
+        if(liveFilterMode === 'pending') matchesFilter = !item.isPacked;
+        if(liveFilterMode === 'packed') matchesFilter = item.isPacked;
+        return matchesSearch && matchesFilter;
+    }).sort((a, b) => a.name.localeCompare(b.name));
+
+    filteredItems.forEach(item => {
+        const isPacked = item.isPacked === true;
+        const valQty = parseFloat(item.savedQty !== undefined ? item.savedQty : item.poQty) || 0;
+        const valKg = parseFloat(item.savedKg) || 0;
+        
+        // 1. Target Weight Calculation (Like Packing App)
+        const master = masterMap[item.code];
+        let targetWeightHTML = '';
+        if (master && master.conv > 0) {
+            const targetKg = (item.poQty * master.conv).toFixed(2);
+            targetWeightHTML = `<div class="li-target-info">Target: ${targetKg}kg</div>`;
+        }
+
+        // 2. Overpacking logic
+        let cardClass = 'live-item-card';
+        if (isPacked) {
+            let isOver = (valQty > item.poQty);
+            if (!isOver && master && master.conv > 0 && valKg > 0) {
+                const stdWeight = valQty * master.conv;
+                if (valKg > (stdWeight + 0.05)) isOver = true;
+            }
+            cardClass += isOver ? ' overpacked' : ' packed';
+        }
+
+        const div = document.createElement('div');
+        div.className = cardClass;
+        div.innerHTML = `
+            <div class="li-header">
+                <div>
+                    <div class="li-name">${item.name}</div>
+                    ${targetWeightHTML}
+                </div>
+                <span class="li-code">#${item.code}</span>
+            </div>
+            <div class="li-body">
+                <div class="li-col"><span class="li-label">Order</span><span class="li-val" style="background:#f1f3f4; color:#555; border-color:#eee;">${item.poQty}</span></div>
+                <div class="li-col"><span class="li-label">Packed</span><span class="li-val" style="${isPacked ? 'background:#c8e6c9; color:#1b5e20; border-color:#a5d6a7;' : ''}">${isPacked ? valQty : '-'}</span></div>
+                <div class="li-col"><span class="li-label">Weight</span><span class="li-val" style="${valKg > 0 ? 'background:#e8f0fe; color:#1a73e8; border-color:#d2e3fc;' : ''}">${valKg > 0 ? valKg.toFixed(2) : '-'}</span></div>
+                <div class="li-col">
+                    <span class="li-label">Photo</span>
+                    ${item.savedImg ? 
+                        `<div class="live-img-btn" onclick="viewLivePhoto('${item.savedImg}')"><span class="material-icons">image</span></div>` : 
+                        `<div class="live-img-btn" style="background:#f5f5f5; color:#ccc; cursor:default;"><span class="material-icons">no_photography</span></div>`
+                    }
+                </div>
+            </div>
+            <div class="li-footer">
+                ${item.packedBy ? `Packed by: <b>${item.packedBy}</b>` : ''}
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+window.viewLivePhoto = function(src) {
+    document.getElementById('admin-img-content').src = src;
+    document.getElementById('admin-img-modal').classList.remove('hidden');
+}
+
+        // --- ATTENDANCE MODAL LOGIC ---
+    let currentAttUser = null;
+
+    window.openAttHistory = function(name) {
+        currentAttUser = name;
+        document.getElementById('att-modal-title').innerText = `${name} - History`;
+        
+        // Default to current month
+        const now = new Date();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const y = now.getFullYear();
+        document.getElementById('att-modal-month').value = `${y}-${m}`;
+        
+        document.getElementById('att-modal').classList.remove('hidden');
+        loadAttModalHistory();
+    }
+
+    window.loadAttModalHistory = async function() {
+        if(!currentAttUser) return;
+        
+        const filterVal = document.getElementById('att-modal-month').value;
+        const container = document.getElementById('att-modal-body');
+        
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Loading...</div>';
+
+        try {
+            const snap = await get(ref(db, 'attendance'));
+            if(snap.exists()) {
+                const allData = snap.val();
+                const rows = [];
+                
+                Object.keys(allData).forEach(date => {
+                    if (filterVal && date.substring(0, 7) !== filterVal) return;
+                    
+                    const dayData = allData[date][currentAttUser];
+                    if (dayData) { 
+                        rows.push({ 
+                            date: date, 
+                            in: dayData.inTime, 
+                            out: dayData.outTime, 
+                            ot: dayData.otMinutes || 0 
+                        }); 
+                    }
+                });
+
+                rows.sort((a,b) => b.date.localeCompare(a.date)); // Descending order
+                
+                if(rows.length === 0) {
+                    container.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No records found for this month.</div>';
+                    return;
+                }
+
+                // Build Table
+                let html = `
+                    <table style="width:100%; border-collapse: collapse; font-size:13px;">
+                        <thead style="background:#f1f3f4; color:#666; font-size:11px;">
+                            <tr>
+                                <th style="padding:8px; text-align:left;">Date</th>
+                                <th style="padding:8px; text-align:center;">In</th>
+                                <th style="padding:8px; text-align:center;">Out</th>
+                                <th style="padding:8px; text-align:center;">OT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                // Inside loadAttModalHistory rows.forEach loop
+rows.forEach(r => {
+    const day = r.date.split('-')[2];
+    const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+    const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+    
+    // THE MATH FOR DISPLAY
+    let otDisplay = `<span style="color:#ccc">-</span>`;
+    if (r.ot && r.ot > 0) { 
+        const h = Math.floor(r.ot / 60); 
+        const m = r.ot % 60; 
+        otDisplay = `<span style="color:var(--orange); font-weight:700;">${h}h ${m}m</span>`; 
+    }
+
+    html += `
+        <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:8px; font-weight:500; text-align:center;">${day}</td>
+            <td style="padding:8px; text-align:center;">${inT}</td>
+            <td style="padding:8px; text-align:center;">${outT}</td>
+            <td style="padding:8px; text-align:center;">${otDisplay}</td>
+        </tr>
+    `;
+});
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+            } else {
+                container.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No data available.</div>';
+            }
+        } catch(e) {
+            console.error(e);
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:red">Error loading data.</div>';
+        }
+    }
+    
+    // Add to window exports
+    window.openAttHistory = openAttHistory;
+    window.loadAttModalHistory = loadAttModalHistory;
 
         async function loadData() {
             try {
@@ -634,7 +1171,10 @@
         function renderMarginBuckets(items) { const buckets = [{ l: 'Loss (<0%)', c: 0, s: 0, p:0, cls: 'bd-loss', items:[] }, { l: '0% - 5%', c: 0, s: 0, p:0, cls: 'bd-low', items:[] }, { l: '5% - 10%', c: 0, s: 0, p:0, cls: 'bd-mid', items:[] }, { l: '10% - 20%', c: 0, s: 0, p:0, cls: 'bd-ok', items:[] }, { l: '20% - 50%', c: 0, s: 0, p:0, cls: 'bd-good', items:[] }, { l: '> 50%', c: 0, s: 0, p:0, cls: 'bd-great', items:[] }]; items.filter(i => i.qty > 0).forEach(i => { const m = i.marginPct; const sale = i.qty * i.poRate; let idx = 0; if(m < 0) idx=0; else if(m<5) idx=1; else if(m<10) idx=2; else if(m<20) idx=3; else if(m<50) idx=4; else idx=5; buckets[idx].c++; buckets[idx].s += sale; buckets[idx].p += i.profit; buckets[idx].items.push(i); }); const container = document.getElementById('margin-container'); container.innerHTML = ''; buckets.forEach(b => { const div = document.createElement('div'); div.className = `ma-card ${b.cls}`; div.onclick = () => showCategoryItems(b.l, b.items); div.innerHTML = `<div class="ma-header">${b.l}</div><div class="ma-body"><div class="ma-row"><span>Items</span><span class="ma-val">${b.c}</span></div><div class="ma-row"><span>Sales</span><span class="ma-val">₹${b.s.toFixed(0)}</span></div><div class="ma-sep"></div><div class="ma-row"><span>Profit</span><span class="ma-prof">₹${b.p.toFixed(0)}</span></div></div>`; container.appendChild(div); }); }
         window.showCategoryItems = function(label, items) { if(items.length === 0) return; let html = ''; items.forEach(i => { html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="font-weight:700; color:${i.profit<0?'red':'green'}">₹${i.profit.toFixed(0)} (${i.marginPct.toFixed(0)}%)</span></div>`; }); openModal(label, html); }
         function openModal(title, content) { document.getElementById('modal-title').innerText = title; document.getElementById('modal-content').innerHTML = content; document.getElementById('info-modal').classList.remove('hidden'); }
-        window.closeModal = function(e) { if(e.target.id === 'info-modal') document.getElementById('info-modal').classList.add('hidden'); }
+        window.closeModal = function(e) { 
+            if(e.target.id === 'info-modal') document.getElementById('info-modal').classList.add('hidden');
+            if(e.target.id === 'att-modal') document.getElementById('att-modal').classList.add('hidden');
+        }
 
         window.renderFinance = function() {
             const from = document.getElementById('fin-from').value;
@@ -758,5 +1298,20 @@
 
         checkAuth();
     </script>
+    <!-- ATTENDANCE HISTORY MODAL -->
+<div id="att-modal" class="hidden modal-overlay" onclick="closeModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-head">
+            <span id="att-modal-title">Employee History</span>
+            <span class="material-icons" onclick="document.getElementById('att-modal').classList.add('hidden')" style="cursor:pointer">close</span>
+        </div>
+        <div style="padding:10px; background:#f8f9fa; border-bottom:1px solid #eee;">
+            <input type="month" id="att-modal-month" class="date-input" style="width:100%; box-sizing:border-box;" onchange="loadAttModalHistory()">
+        </div>
+        <div id="att-modal-body" class="modal-body" style="max-height:60vh; overflow-y:auto;">
+            <!-- Table Injected Here -->
+        </div>
+    </div>
+</div>
 </body>
 </html>

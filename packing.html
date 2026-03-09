@@ -57,15 +57,15 @@
         .nav-item.active { color: var(--primary); transform: translateY(-2px); }
         .nav-item .material-icons { font-size: 24px; margin-bottom: 3px; }
 
-        /* TASK CARD */
-        .task-card { background: white; border-radius: 16px; padding: 24px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border); cursor: pointer; position: relative; overflow: hidden; }
-        .task-label { font-size: 11px; font-weight: 700; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
-        .task-date { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .date-pill { background: #e3f2fd; color: var(--primary); padding: 4px 10px; border-radius: 6px; font-size: 14px; }
-        .progress-track { height: 8px; background: #f1f3f4; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+        /* TASK CARD UPDATES */
+        .task-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid var(--border); cursor: pointer; position: relative; overflow: hidden; transition: transform 0.2s; }
+        .task-card:active { transform: scale(0.98); }
+        .task-label { font-size: 11px; font-weight: 800; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; }
+        .date-pill { background: #e8f0fe; color: var(--primary); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+        .progress-track { height: 8px; background: #f1f3f4; border-radius: 4px; overflow: hidden; width: 100%; }
         .progress-fill { height: 100%; transition: width 0.5s ease; border-radius: 4px; }
-        .task-footer { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; color: var(--text-sub); }
-        .btn-start { color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 4px; }
+        .task-footer { display: flex; justify-content: flex-end; align-items: center; font-size: 13px; font-weight: 500; color: var(--text-sub); border-top: 1px solid #f1f3f4; padding-top: 12px; margin-top: 5px; }
+        .btn-start { color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 4px; font-size: 13px; letter-spacing: 0.5px; }
 
         /* HISTORY */
         .hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -627,24 +627,69 @@
     function renderDashboardCard() {
         if(!activeIndent) return;
         const container = document.getElementById('available-container');
+        
+        // --- 1. ITEMS CALCULATION ---
         const itemCount = activeIndent.items ? activeIndent.items.length : 0;
         let packedCount = 0;
         if (activeIndent.items) packedCount = activeIndent.items.filter(i => i.isPacked === true).length;
+        
+        const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
+        const itemColor = itemPct === 100 ? 'var(--green)' : 'var(--primary)';
 
-        const progressPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
-        let progressColor = 'var(--primary)';
-        if(progressPct === 100) progressColor = 'var(--green)';
+        // --- 2. PACKETS (VOLUME) CALCULATION ---
+        let totalOrdPkts = 0;
+        let totalPackedPkts = 0;
+        
+        if (activeIndent.items) {
+            activeIndent.items.forEach(i => {
+                totalOrdPkts += parseFloat(i.poQty) || 0;
+                if (i.isPacked) {
+                    totalPackedPkts += parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
+                }
+            });
+        }
+        
+        const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
+        // Use a different color (like orange) for volume to distinguish, turns green when done
+        const pktColor = pktPct >= 100 ? 'var(--green)' : '#f57c00'; 
 
+        // --- RENDER HTML ---
         container.innerHTML = `
             <div class="task-card" onclick="openPacking()">
-                <div class="task-label">Active Order</div>
-                <div class="task-date"><span class="date-pill">${formatDateDisplay(activeIndent.date)}</span></div>
-                <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%; background:${progressColor}"></div></div>
-                <div class="task-footer">
-                    <span style="font-weight:700; color:#333;">${progressPct}%</span>
-                    <span>(${packedCount} / ${itemCount} Packed)</span>
-                    <span class="btn-start" style="margin-left:auto;">OPEN <span class="material-icons" style="font-size:16px">arrow_forward</span></span>
+                
+                <!-- HEADER: Title & Date (Top Right) -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                    <div class="task-label">Active Order</div>
+                    <div class="date-pill">${formatDateDisplay(activeIndent.date)}</div>
                 </div>
+                
+                <!-- PROGRESS 1: Unique Items -->
+                <div style="margin-bottom: 15px;">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#555; margin-bottom:6px;">
+                        <span>UNIQUE ITEMS</span>
+                        <span style="color:var(--text-main)">${packedCount} / ${itemCount} <span style="color:${itemColor}; margin-left:4px;">(${itemPct}%)</span></span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width:${itemPct}%; background:${itemColor}"></div>
+                    </div>
+                </div>
+
+                <!-- PROGRESS 2: Total Packets -->
+                <div style="margin-bottom: 15px;">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#555; margin-bottom:6px;">
+                        <span>TOTAL PACKETS</span>
+                        <span style="color:var(--text-main)">${totalPackedPkts} / ${totalOrdPkts} <span style="color:${pktColor}; margin-left:4px;">(${pktPct}%)</span></span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width:${pktPct}%; background:${pktColor}"></div>
+                    </div>
+                </div>
+                
+                <!-- FOOTER: Open Button -->
+                <div class="task-footer">
+                    <span class="btn-start">OPEN <span class="material-icons" style="font-size:16px">arrow_forward</span></span>
+                </div>
+                
             </div>`;
     }
 
@@ -1038,14 +1083,29 @@
                 rows.sort((a,b) => b.date.localeCompare(a.date));
                 tbody.innerHTML = '';
                 if(rows.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="color:#ccc; padding:20px;">No records.</td></tr>'; return; }
-                rows.forEach(r => {
-                    const day = r.date.split('-')[2];
-                    const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-                    const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-                    let otDisplay = `<span style="color:#ccc">-</span>`;
-                    if (r.ot > 0) { const h = Math.floor(r.ot / 60); const m = r.ot % 60; otDisplay = `<span class="ot-val">${h}h ${m}m</span>`; }
-                    tbody.innerHTML += `<tr><td style="font-weight:700">${day}</td><td>${inT}</td><td>${outT}</td><td>${otDisplay}</td></tr>`;
-                });
+                // ... inside loadAttendanceHistory ...
+rows.forEach(r => {
+    const day = r.date.split('-')[2];
+    const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+    const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+
+    // --- ADD THIS BLOCK TO DEFINE otDisplay ---
+    let otDisplay = `<span style="color:#ccc">-</span>`;
+    if (r.ot > 0) { 
+        const h = Math.floor(r.ot / 60); 
+        const m = r.ot % 60; 
+        otDisplay = `<span class="ot-val">${h}h ${m}m</span>`; 
+    }
+    // ------------------------------------------
+
+    tbody.innerHTML += `
+        <tr>
+            <td style="font-weight:700">${day}</td>
+            <td>${inT}</td>
+            <td>${outT}</td>
+            <td>${otDisplay}</td> 
+        </tr>`;
+});
             } else { tbody.innerHTML = '<tr><td colspan="4" style="color:#ccc; padding:20px;">No data.</td></tr>'; }
         } catch(e) { console.error(e); }
     }
@@ -1061,41 +1121,80 @@
     }
 
     window.saveAdminOverride = async function() {
-        const date = document.getElementById('override-date').value;
-        const emp = document.getElementById('override-emp').value;
-        const timeIn = document.getElementById('override-time-in').value;
-        const timeOut = document.getElementById('override-time-out').value;
-        const statusEl = document.getElementById('override-status');
-        
-        if(!date) { statusEl.innerText = "Select Date"; return; }
-        if(!timeIn && !timeOut) { statusEl.innerText = "Enter at least one time"; return; }
-        
-        const updates = {};
-        
-        if(timeIn) {
-            const isoIn = new Date(`${date}T${timeIn}:00`).toISOString();
-            updates[`attendance/${date}/${emp}/inTime`] = isoIn;
-        }
-        
+    const date = document.getElementById('override-date').value; // e.g., "2026-03-09"
+    const emp = document.getElementById('override-emp').value;
+    const timeIn = document.getElementById('override-time-in').value; // e.g., "09:00"
+    const timeOut = document.getElementById('override-time-out').value; // e.g., "00:30"
+    const statusEl = document.getElementById('override-status');
+    
+    // 1. Basic Validation
+    if(!date) { statusEl.innerText = "❌ Select Date"; return; }
+    if(!timeIn) { statusEl.innerText = "❌ Enter In-Time"; return; }
+    
+    statusEl.innerText = "Saving...";
+    const updates = {};
+    const path = `attendance/${date}/${emp}`;
+
+    try {
+        // 2. Construct the Check-In DateTime Object
+        const checkInDateTime = new Date(`${date}T${timeIn}:00`);
+        updates[`${path}/inTime`] = checkInDateTime.toISOString();
+        updates[`${path}/name`] = emp;
+
+        // 3. Handle Check-Out and Midnight Logic
         if(timeOut) {
-            const isoOut = new Date(`${date}T${timeOut}:00`).toISOString();
-            updates[`attendance/${date}/${emp}/outTime`] = isoOut;
-            const endLimit = new Date(`${date}T21:00:00`);
-            const actualEnd = new Date(`${date}T${timeOut}:00`);
-            let ot = 0;
-            if(actualEnd > endLimit) {
-                ot = Math.floor((actualEnd - endLimit) / 60000);
+            let checkOutDateTime = new Date(`${date}T${timeOut}:00`);
+
+            /** 
+             * MIDNIGHT LOGIC:
+             * If the Out-Time is mathematically EARLIER than the In-Time on the same date string,
+             * it means the employee worked past midnight into the next day.
+             * (Example: In 09:00 AM, Out 12:30 AM)
+             */
+            if (checkOutDateTime <= checkInDateTime) {
+                checkOutDateTime.setDate(checkOutDateTime.getDate() + 1);
             }
-            updates[`attendance/${date}/${emp}/otMinutes`] = ot;
+
+            updates[`${path}/outTime`] = checkOutDateTime.toISOString();
+
+            // 4. Calculate Overtime (OT)
+            // Standard shift ends at 9:00 PM (21:00) on the day of Check-In
+            const standardEnd = new Date(checkInDateTime);
+            standardEnd.setHours(21, 0, 0, 0);
+
+            let otMinutes = 0;
+            if (checkOutDateTime > standardEnd) {
+                // Difference in milliseconds converted to minutes
+                otMinutes = Math.floor((checkOutDateTime - standardEnd) / 60000);
+            }
+            updates[`${path}/otMinutes`] = otMinutes;
         }
 
-        try {
-            await update(ref(db), updates);
-            statusEl.innerText = `✅ Updated ${emp} for ${date}`;
-            if(date === new Date().toISOString().split('T')[0]) loadAdminDashboard();
-            loadAttendanceHistory();
-        } catch(e) { statusEl.innerText = "Error: " + e.message; }
+        // 5. Push to Firebase
+        await update(ref(db), updates);
+
+        // 6. UI Feedback
+        statusEl.style.color = "green";
+        statusEl.innerText = `✅ Success: Updated ${emp}`;
+        
+        // Refresh views if on the current day
+        if(date === new Date().toISOString().split('T')[0]) {
+            if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
+        }
+        
+        // Refresh the local history table if it's visible
+        if(typeof loadAttendanceHistory === 'function') loadAttendanceHistory();
+
+        // Clear time inputs after successful save
+        document.getElementById('override-time-in').value = "";
+        document.getElementById('override-time-out').value = "";
+
+    } catch(e) {
+        console.error(e);
+        statusEl.style.color = "red";
+        statusEl.innerText = "❌ Error: " + e.message;
     }
+}
 
     window.markAdminAbsent = async function() {
         if(!confirm("Mark this employee as ABSENT? This will clear current logs.")) return;
@@ -1135,15 +1234,41 @@
     }
 
     async function confirmCheckOut() {
-        if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop!"); return; }
-        if (!confirm("Check Out?")) return;
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date();
+    if (!window.isLocationValid && !TEST_MODE) { alert("Go to shop!"); return; }
+    if (!confirm("Check Out?")) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+
+    try {
+        // 1. Fetch the check-in time from DB to get the correct date reference
+        const snap = await get(child(ref(db), `attendance/${today}/${currentUser}`));
+        if (!snap.exists()) { alert("Check-in record not found!"); return; }
+        
+        const inTimeData = snap.val().inTime;
+        const inDate = new Date(inTimeData);
+
+        // 2. Set Standard End to 9:00 PM ON THE DAY OF CHECK-IN
+        const standardEnd = new Date(inDate);
+        standardEnd.setHours(21, 0, 0, 0);
+
+        // 3. Calculate OT (Difference in minutes)
         let otMinutes = 0;
-        const standardEnd = new Date(); standardEnd.setHours(21, 0, 0, 0); 
-        if (now > standardEnd) { otMinutes = Math.floor((now - standardEnd) / 60000); }
-        try { await set(ref(db, `attendance/${today}/${currentUser}/outTime`), now.toISOString()); await set(ref(db, `attendance/${today}/${currentUser}/otMinutes`), otMinutes); alert("Done!"); refreshAttendanceTab(); } catch(e) { alert(e.message); }
+        if (now > standardEnd) {
+            otMinutes = Math.floor((now - standardEnd) / 60000);
+        }
+
+        await update(ref(db, `attendance/${today}/${currentUser}`), {
+            outTime: now.toISOString(),
+            otMinutes: otMinutes
+        });
+
+        alert("Check-out Successful!");
+        refreshAttendanceTab();
+    } catch(e) { 
+        alert("Error: " + e.message); 
     }
+}
 
     function openModal(src) { document.getElementById('img-content').src = src; document.getElementById('img-modal').style.display = 'block'; }
 
