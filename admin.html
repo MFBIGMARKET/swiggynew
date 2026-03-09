@@ -347,6 +347,34 @@
         
         .w-num { min-width: 75px; }
         .w-date { min-width: 85px; color: var(--text-sub); }
+
+        /* Detailed Profit Table Styling */
+.prof-table { width: 100%; border-collapse: collapse; text-align: center; }
+.prof-table th, .prof-table td { 
+    padding: 8px 4px; 
+    border: 1px solid #eee; 
+    font-size: 11px; 
+    min-width: 65px;
+    white-space: nowrap;
+}
+
+.prof-table thead th { 
+    position: sticky; top: 0; z-index: 30; 
+    background: #f8f9fa; font-weight: 900; color: #5f6368;
+}
+
+.prof-table .sticky-col { 
+    position: sticky; left: 0; z-index: 40; 
+    background: white !important; border-right: 2px solid #ddd !important;
+    text-align: left; padding-left: 10px; width: 85px; min-width: 85px;
+}
+
+.bg-mf { background-color: #f1f8ff !important; }
+.bg-mtr { background-color: #fdf2ff !important; }
+.bg-total { background-color: #e8f5e9 !important; font-weight: 900; }
+
+.val-small { font-size: 9px; color: #888; display: block; font-weight: 400; }
+.txt-net { font-weight: 800; }
         
 
         /* --- MODALS --- */
@@ -554,16 +582,21 @@
             </div>
 
             <!-- TAB 5: DASHBOARD (PROFITABILITY) -->
-            <div id="tab-dashboard" class="tab-content">
-                <div class="filter-bar">
-                    <input type="date" id="dash-from" class="date-input" onchange="renderDashboard()">
-                    <span style="color:#999; font-weight:bold;">-</span>
-                    <input type="date" id="dash-to" class="date-input" onchange="renderDashboard()">
-                </div>
-                
-                <div id="profitability-container" style="overflow-y:auto; padding:10px;"></div>
-            </div>
+<div id="tab-dashboard" class="tab-content">
+    <div class="filter-bar">
+        <div style="display:flex; gap:8px; flex:1;">
+            <input type="date" id="dash-from" class="date-input" onchange="renderDashboard()">
+            <input type="date" id="dash-to" class="date-input" onchange="renderDashboard()">
         </div>
+        <!-- ADD THIS BUTTON -->
+        <!-- Circular Toggle in tab-dashboard filter-bar -->
+<button class="icon-btn" onclick="toggleDashboardView()" style="width: 36px; height: 36px; border-radius: 50% !important; border: 1px solid #dadce0 !important; background: white !important; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <span class="material-icons" id="dash-toggle-icon" style="font-size: 20px; color: var(--primary);">table_chart</span>
+</button>
+    </div>
+    
+    <div id="profitability-container" style="overflow-y:auto; padding:10px;"></div>
+</div>
 
         <div class="bottom-nav">
             <div class="nav-item" onclick="switchTab('live', this)">
@@ -1082,28 +1115,110 @@ rows.forEach(r => {
             el.classList.add('active');
         }
 
-        window.renderDashboard = function() {
-            const from = document.getElementById('dash-from').value;
-            const to = document.getElementById('dash-to').value;
-            const container = document.getElementById('profitability-container');
-            let mfRev=0, mfCost=0, mfPack=0, mfTrans=0;
-            let mtrRev=0, mtrCost=0, mtrWage=0;
-            allIndents.forEach(rec => {
-                if (rec.date < from || rec.date > to) return;
-                const bill = rec.totalBillAmt || 0;
-                const mtrBill = rec.mtrBill || 0; 
-                let pack=0, trans=0, wage=0;
-                if(rec.expenseDetails) { pack = rec.expenseDetails.packing; trans = rec.expenseDetails.transport; wage = rec.expenseDetails.wage; } 
-                else if(expenseSettings) { const d = new Date(rec.date); const ds = expenseSettings.days[d.getDay()]; pack = (bill/1000) * expenseSettings.packingRate; trans = ds.transport; wage = ds.wage; }
-                mfRev += bill; mfCost += mtrBill; mfPack += pack; mfTrans += trans;
-                mtrRev += mtrBill; mtrCost += (rec.totalCost || 0); mtrWage += wage;
-            });
-            const mfGross = mfRev - mfCost; const mfExp = mfPack + mfTrans; const mfNet = mfGross - mfExp;
-            const mtrGross = mtrRev - mtrCost; const mtrExp = mtrWage; const mtrNet = mtrGross - mtrExp;
-            container.innerHTML = `
-                <div class="profit-card"><div class="profit-header" style="color:var(--primary)">MF BIGMARKET</div><div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div><div class="prof-row"><div>Revenue</div><div>₹${mfRev.toFixed(0)}</div><div>100%</div></div><div class="prof-row"><div>(-) MTR Bill</div><div style="color:#555">₹${mfCost.toFixed(0)}</div><div>${mfRev>0?((mfCost/mfRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>= Gross Profit</div><div>₹${mfGross.toFixed(0)}</div><div>${mfRev>0?((mfGross/mfRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>(-) Packing</div><div style="color:orange">₹${mfPack.toFixed(0)}</div><div></div></div><div class="prof-row"><div>(-) Transport</div><div style="color:orange">₹${mfTrans.toFixed(0)}</div><div></div></div><div class="prof-row total"><div>NET PROFIT</div><div style="color:${mfNet>=0?'green':'red'}">₹${mfNet.toFixed(0)}</div><div>${mfRev>0?((mfNet/mfRev)*100).toFixed(1):0}%</div></div></div>
-                <div class="profit-card"><div class="profit-header" style="color:var(--purple)">MATTANNUR</div><div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div><div class="prof-row"><div>Revenue (Bill)</div><div>₹${mtrRev.toFixed(0)}</div><div>100%</div></div><div class="prof-row"><div>(-) RM Cost</div><div style="color:#555">₹${mtrCost.toFixed(0)}</div><div>${mtrRev>0?((mtrCost/mtrRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>= Gross Profit</div><div>₹${mtrGross.toFixed(0)}</div><div>${mtrRev>0?((mtrGross/mtrRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>(-) Salary</div><div style="color:orange">₹${mtrExp.toFixed(0)}</div><div></div></div><div class="prof-row total"><div>NET PROFIT</div><div style="color:${mtrNet>=0?'green':'red'}">₹${mtrNet.toFixed(0)}</div><div>${mtrRev>0?((mtrNet/mtrRev)*100).toFixed(1):0}%</div></div></div>`;
-        }
+        let dashViewMode = 'summary'; 
+
+window.toggleDashboardView = function() {
+    const icon = document.getElementById('dash-toggle-icon');
+    
+    if (dashViewMode === 'summary') {
+        dashViewMode = 'billwise';
+        icon.innerText = 'pie_chart'; // Change icon to Pie when in Table mode
+    } else {
+        dashViewMode = 'summary';
+        icon.innerText = 'table_chart'; // Change icon to Table when in Summary mode
+    }
+    renderDashboard();
+};
+
+window.renderDashboard = function() {
+    const from = document.getElementById('dash-from').value;
+    const to = document.getElementById('dash-to').value;
+    const container = document.getElementById('profitability-container');
+    
+    if (dashViewMode === 'summary') {
+        // --- SUMMARY VIEW (Your existing logic) ---
+        let mfRev=0, mfCost=0, mfPack=0, mfTrans=0;
+        let mtrRev=0, mtrCost=0, mtrWage=0;
+        allIndents.forEach(rec => {
+            if (rec.date < from || rec.date > to) return;
+            if (!rec.mtrBill || rec.mtrBill <= 0) return;
+            const bill = rec.totalBillAmt || 0;
+            const mtrBill = rec.mtrBill || 0; 
+            let pack=0, trans=0, wage=0;
+            if(rec.expenseDetails) { pack=rec.expenseDetails.packing; trans=rec.expenseDetails.transport; wage=rec.expenseDetails.wage; }
+            mfRev += bill; mfCost += mtrBill; mfPack += pack; mfTrans += trans;
+            mtrRev += mtrBill; mtrCost += (rec.totalCost || 0); mtrWage += wage;
+        });
+        const mfGross = mfRev-mfCost; const mfExp = mfPack+mfTrans; const mfNet = mfGross-mfExp;
+        const mtrGross = mtrRev-mtrCost; const mtrExp = mtrWage; const mtrNet = mtrGross-mtrExp;
+        container.innerHTML = `
+            <div class="profit-card"><div class="profit-header" style="color:var(--primary)">MF BIGMARKET</div><div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div><div class="prof-row"><div>Revenue</div><div>₹${mfRev.toFixed(0)}</div><div>100%</div></div><div class="prof-row"><div>(-) MTR Bill</div><div style="color:#555">₹${mfCost.toFixed(0)}</div><div>${mfRev>0?((mfCost/mfRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>= Gross Profit</div><div>₹${mfGross.toFixed(0)}</div><div>${mfRev>0?((mfGross/mfRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>(-) Packing</div><div style="color:orange">₹${mfPack.toFixed(0)}</div><div></div></div><div class="prof-row"><div>(-) Transport</div><div style="color:orange">₹${mfTrans.toFixed(0)}</div><div></div></div><div class="prof-row total"><div>NET PROFIT</div><div style="color:${mfNet>=0?'green':'red'}">₹${mfNet.toFixed(0)}</div><div>${mfRev>0?((mfNet/mfRev)*100).toFixed(1):0}%</div></div></div>
+            <div class="profit-card"><div class="profit-header" style="color:var(--purple)">MATTANNUR</div><div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div><div class="prof-row"><div>Revenue (Bill)</div><div>₹${mtrRev.toFixed(0)}</div><div>100%</div></div><div class="prof-row"><div>(-) RM Cost</div><div style="color:#555">₹${mtrCost.toFixed(0)}</div><div>${mtrRev>0?((mtrCost/mtrRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>= Gross Profit</div><div>₹${mtrGross.toFixed(0)}</div><div>${mtrRev>0?((mtrGross/mtrRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>(-) Salary</div><div style="color:orange">₹${mtrExp.toFixed(0)}</div><div></div></div><div class="prof-row total"><div>NET PROFIT</div><div style="color:${mtrNet>=0?'green':'red'}">₹${mtrNet.toFixed(0)}</div><div>${mtrRev>0?((mtrNet/mtrRev)*100).toFixed(1):0}%</div></div></div>`;
+    } else {
+        // --- DETAILED BILL-WISE TABLE ---
+        let html = `
+            <div class="table-wrapper">
+                <table class="prof-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="sticky-col">Bill No</th>
+                            <th colspan="3" class="bg-mf">MF Bigmarket (Retail)</th>
+                            <th colspan="3" class="bg-mtr">Mattannur (Supply)</th>
+                            <th rowspan="2" class="bg-total">Total Net</th>
+                        </tr>
+                        <tr>
+                            <th class="bg-mf">Gross</th><th class="bg-mf">Exp</th><th class="bg-mf">Net</th>
+                            <th class="bg-mtr">Gross</th><th class="bg-mtr">Exp</th><th class="bg-mtr">Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        allIndents.forEach(rec => {
+            if (rec.date < from || rec.date > to) return;
+            if (!rec.mtrBill || parseFloat(rec.mtrBill) <= 0) return;
+
+            const bill = parseFloat(rec.totalBillAmt || 0);
+            const mtrBill = parseFloat(rec.mtrBill);
+            const rmCost = parseFloat(rec.totalCost || 0);
+
+            let pack=0, trans=0, wage=0;
+            if(rec.expenseDetails) { 
+                pack=rec.expenseDetails.packing; trans=rec.expenseDetails.transport; wage=rec.expenseDetails.wage; 
+            } else if(expenseSettings) {
+                const d = new Date(rec.date); const ds = expenseSettings.days[d.getDay()];
+                pack = (bill/1000) * expenseSettings.packingRate; trans = ds.transport; wage = ds.wage;
+            }
+
+            // Calculations
+            const mfGross = bill - mtrBill;
+            const mfExp = pack + trans;
+            const mfNet = mfGross - mfExp;
+            const mfMgn = bill > 0 ? (mfNet/bill*100).toFixed(0) : 0;
+
+            const mtrGross = mtrBill - rmCost;
+            const mtrExp = wage;
+            const mtrNet = mtrGross - mtrExp;
+            const mtrMgn = mtrBill > 0 ? (mtrNet/mtrBill*100).toFixed(0) : 0;
+
+            const totalNet = mfNet + mtrNet;
+
+            html += `
+                <tr>
+                    <td class="sticky-col">${getBillNo(rec)}<span class="val-small">${formatDate(rec.date)}</span></td>
+                    <td class="bg-mf">₹${mfGross.toFixed(0)}</td>
+                    <td class="bg-mf" style="color:orange">₹${mfExp.toFixed(0)}</td>
+                    <td class="bg-mf txt-net" style="color:var(--primary)">₹${mfNet.toFixed(0)}<span class="val-small">${mfMgn}%</span></td>
+                    <td class="bg-mtr">₹${mtrGross.toFixed(0)}</td>
+                    <td class="bg-mtr" style="color:orange">₹${mtrExp.toFixed(0)}</td>
+                    <td class="bg-mtr txt-net" style="color:var(--purple)">₹${mtrNet.toFixed(0)}<span class="val-small">${mtrMgn}%</span></td>
+                    <td class="bg-total" style="color:${totalNet>=0?'green':'red'}">₹${totalNet.toFixed(0)}</td>
+                </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
+    }
+};
 
         window.sortMaster = function(key) {
             if(masterSort.key === key) masterSort.dir *= -1; else { masterSort.key = key; masterSort.dir = 1; } renderMaster();
