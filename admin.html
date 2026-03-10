@@ -196,6 +196,17 @@
         .att-name { font-weight: 700; font-size: 13px; color: var(--text-main); }
         .att-time { font-size: 11px; color: var(--text-sub); }
 
+
+        .live-fin-tile {
+    text-align: center;
+    padding: 10px 5px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #eee;
+}
+.fin-label { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+.fin-val { font-size: 14px; font-weight: 800; color: #1e293b; }
+
 /* --- THE FINAL "THIN LINE" KILLER CSS --- */
 
 #page-live-detail .content {
@@ -441,6 +452,18 @@
                             <div class="no-order">Loading...</div>
                         </div>
                     </div>
+                            <!-- 2. NEW: LIVE FINANCIAL SNAPSHOT -->
+        <div class="live-card" id="card-live-fin" style="display:none;">
+            <div class="live-badge-row" style="margin-bottom: 12px;">
+                <div class="live-indicator" style="color:var(--purple)">
+                    <span class="material-icons" style="font-size:16px;">payments</span>
+                    Expected Profit
+                </div>
+            </div>
+            <div id="live-fin-grid" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                <!-- Injected by JS -->
+            </div>
+        </div>
                     <div class="live-card">
                         <div class="live-head">
                             <span>Today's Attendance</span>
@@ -752,90 +775,20 @@ let activeIndentData = null;
         }
 
         function setupLiveListeners() {
-    // 1. WATCH THE ACTIVE PACKING ORDER (Real-time)
+    // 1. Real-time listener for Active Packing
     onValue(ref(db, 'active_indent'), (snap) => {
-        const data = snap.val();
-        activeIndentData = data; // Store globally so Live Detail Page can use it
-        const container = document.getElementById('live-pack-content');
+        activeIndentData = snap.val();
         
-        if(!data) {
-            container.innerHTML = '<div class="no-order">No active order currently</div>';
-            container.parentElement.onclick = null;
-            container.parentElement.style.cursor = "default";
-            // Auto-close detail if order is cleared by office
-            if(document.getElementById('page-live-detail').classList.contains('active')) {
-                closeLiveDetail();
-            }
-        } else {
-            // Calculation: Unique Items (Row count)
-            const itemCount = data.items ? data.items.length : 0;
-            const packedCount = data.items ? data.items.filter(i => i.isPacked === true).length : 0;
-            const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
-            const itemColor = itemPct === 100 ? 'var(--green)' : 'var(--primary)';
-
-            // Calculation: Total Packets (Volume)
-            let totalOrdPkts = 0;
-            let totalPackedPkts = 0;
-            if (data.items) {
-                data.items.forEach(i => {
-                    totalOrdPkts += parseFloat(i.poQty) || 0;
-                    if (i.isPacked) {
-                        totalPackedPkts += parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
-                    }
-                });
-            }
-            const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
-            const pktColor = pktPct >= 100 ? 'var(--green)' : '#f57c00';
-
-            // Set up Click interaction for Admin to enter monitoring mode
-            container.parentElement.style.cursor = "pointer";
-            container.parentElement.onclick = () => openLiveDetail();
-
-            // ... inside the onValue(ref(db, 'active_indent')... block
-container.innerHTML = `
-    <div class="live-badge-row" style="margin-bottom: 16px;">
-        <div class="live-indicator">
-            <div class="pulse-dot"></div>
-            Live Packing
-        </div>
-        <div style="background:#eef2f7; color:#475569; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">
-            ${formatDateFull(data.date)} 
-        </div>
-    </div>
-
-    <div style="margin-top: 10px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span class="stat-label" style="font-size:11px;">Unique Items</span>
-            <span class="stat-value" style="font-size:12px;">${packedCount} / ${itemCount} <span class="pct-label" style="color:var(--primary)">${itemPct}%</span></span>
-        </div>
-        <div class="progress-track-clean">
-            <div class="progress-fill-clean" style="width:${itemPct}%; background:var(--primary)"></div>
-        </div>
-    </div>
-
-    <div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span class="stat-label" style="font-size:11px;">Total Packets</span>
-            <span class="stat-value" style="font-size:12px;">${totalPackedPkts} / ${totalOrdPkts} <span class="pct-label" style="color:#f59e0b">${pktPct}%</span></span>
-        </div>
-        <div class="progress-track-clean" style="margin-bottom: 4px !important;">
-            <div class="progress-fill-clean" style="width:${pktPct}%; background:#f59e0b"></div>
-        </div>
-    </div>
-
-    <div class="tap-hint" style="margin-top: 12px; font-size: 10px;">
-        Tap to monitor individual items
-    </div>
-`;
-
-            // If Admin is currently looking at the Live Detail List, refresh it in real-time
-            if(document.getElementById('page-live-detail').classList.contains('active')) {
-                renderLiveDetailList();
-            }
+        // Refresh the Live Tab UI (Progress + Financials)
+        refreshLiveUI();
+        
+        // If Admin is currently in "Monitor Mode" (Detailed Item List), refresh that too
+        if(document.getElementById('page-live-detail').classList.contains('active')) {
+            renderLiveDetailList();
         }
     });
 
-    // 2. WATCH TODAY'S ATTENDANCE (Real-time)
+    // 2. Real-time listener for Today's Attendance
     const today = new Date().toISOString().split('T')[0];
     onValue(ref(db, `attendance/${today}`), (snap) => {
         const data = snap.val() || {};
@@ -880,6 +833,91 @@ container.innerHTML = `
 
 window.closeLiveDetail = function() {
     document.getElementById('page-live-detail').classList.remove('active');
+}
+
+window.refreshLiveUI = function() {
+    const data = activeIndentData;
+    const packContainer = document.getElementById('live-pack-content');
+    const finCard = document.getElementById('card-live-fin');
+    const finGrid = document.getElementById('live-fin-grid');
+    
+    if(!data || !packContainer) return;
+
+    // --- A. PROGRESS CALCULATIONS ---
+    const itemCount = data.items ? data.items.length : 0;
+    const packedCount = data.items ? data.items.filter(i => i.isPacked === true).length : 0;
+    const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
+    let totalOrdPkts = 0, totalPackedPkts = 0;
+    
+    // --- B. LIVE FINANCIAL CALCULATIONS ---
+    let indentGoal = 0, expectedCost = 0;
+    const masterLoaded = Object.keys(masterMap).length > 0;
+
+    if (data.items) {
+        data.items.forEach(i => {
+            totalOrdPkts += parseFloat(i.poQty) || 0;
+            if (i.isPacked) totalPackedPkts += parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
+            const itemRev = (parseFloat(i.poQty) || 0) * (parseFloat(i.poRate) || 0);
+            indentGoal += itemRev;
+            const master = masterMap[i.code];
+            if (master) {
+                const estKg = (parseFloat(i.poQty) || 0) * (parseFloat(master.conv) || 0);
+                expectedCost += (estKg * (parseFloat(master.costKg) || 0));
+            }
+        });
+    }
+
+    const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
+
+    let estExp = 0;
+    if (expenseSettings && data.date) {
+        const dObj = data.date.includes('-') && data.date.split('-')[0].length === 4 ? new Date(data.date) : new Date();
+        const dayIdx = dObj.getDay();
+        const daySet = expenseSettings.days[dayIdx];
+        const packExp = (indentGoal / 1000) * expenseSettings.packingRate;
+        estExp = (daySet.wage || 0) + (daySet.transport || 0) + packExp;
+    }
+
+    const estGross = indentGoal - expectedCost;
+    const estNet = estGross - estExp;
+    const estMgn = indentGoal > 0 ? (estNet / indentGoal * 100).toFixed(1) : 0;
+
+    // --- C. UI INJECTION ---
+    packContainer.parentElement.onclick = () => openLiveDetail();
+    packContainer.innerHTML = `
+        <div class="live-badge-row" style="margin-bottom: 16px;">
+            <div class="live-indicator"><div class="pulse-dot"></div> Live Packing</div>
+            <div style="background:#eef2f7; color:#475569; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">${formatDateFull(data.date)}</div>
+        </div>
+        <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span class="stat-label">Unique Items</span>
+                <span class="stat-value">${packedCount} / ${itemCount} <span style="color:var(--primary); font-weight:800; margin-left:5px;">${itemPct}%</span></span>
+            </div>
+            <div class="progress-track-clean"><div class="progress-fill-clean" style="width:${itemPct}%; background:var(--primary)"></div></div>
+        </div>
+        <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span class="stat-label">Total Packets</span>
+                <span class="stat-value">${totalPackedPkts} / ${totalOrdPkts} <span style="color:#f59e0b; font-weight:800; margin-left:5px;">${pktPct}%</span></span>
+            </div>
+            <div class="progress-track-clean" style="margin-bottom:4px !important;"><div class="progress-fill-clean" style="width:${pktPct}%; background:#f59e0b"></div></div>
+        </div>
+        <div class="tap-hint" style="margin-top:12px;">Tap to monitor individual items</div>
+    `;
+
+    if(finCard && finGrid) {
+        finCard.style.display = 'block';
+        if (!masterLoaded) {
+            finGrid.innerHTML = `<div style="grid-column: span 3; text-align:center; padding:10px; color:#999; font-size:12px;">Syncing Master Prices...</div>`;
+        } else {
+            finGrid.innerHTML = `
+                <div class="live-fin-tile"><div class="fin-label">Indent Goal</div><div class="fin-val">₹${indentGoal.toFixed(0)}</div></div>
+                <div class="live-fin-tile" style="background:#f0f7ff; border-color:#d0e3ff;"><div class="fin-label" style="color:var(--primary)">Net Profit</div><div class="fin-val" style="color:var(--primary)">₹${estNet.toFixed(0)}</div></div>
+                <div class="live-fin-tile" style="background:#fafffa; border-color:#e0f0e0;"><div class="fin-label" style="color:var(--green)">Net Mgn</div><div class="fin-val" style="color:var(--green)">${estMgn}%</div></div>
+            `;
+        }
+    }
 }
 
 window.toggleLiveFilter = function() {
@@ -1086,27 +1124,46 @@ rows.forEach(r => {
     window.loadAttModalHistory = loadAttModalHistory;
 
         async function loadData() {
-            try {
-                const snap = await get(ref(db, 'indents'));
-                if(snap.exists()) allIndents = Object.values(snap.val()).sort((a,b) => b.id - a.id);
-                const expSnap = await get(ref(db, 'settings/expenses'));
-                if(expSnap.exists()) expenseSettings = expSnap.val();
-                const timeSnap = await get(ref(db, 'settings/lastErpUpdate'));
-                if(timeSnap.exists()) {
-                    const rawDate = timeSnap.val();
-                    document.getElementById('master-updated').innerText = "Last Updated: " + formatLastUpdated(rawDate);
-                }
-                const prodSnap = await get(ref(db, 'products'));
-                if(prodSnap.exists()) {
-                    allProducts = prodSnap.val();
-                    allProducts.forEach(p => { if(p) masterMap[p.id] = p; });
-                }
-                renderReport();
-                renderFinance();
-                renderMaster();
-                renderDashboard();
-            } catch(e) { console.error(e); alert("Error loading data"); }
+    try {
+        // 1. Fetch historical indents
+        const snap = await get(ref(db, 'indents'));
+        if(snap.exists()) allIndents = Object.values(snap.val()).sort((a,b) => b.id - a.id);
+
+        // 2. Fetch global expense settings
+        const expSnap = await get(ref(db, 'settings/expenses'));
+        if(expSnap.exists()) expenseSettings = expSnap.val();
+
+        // 3. Fetch ERP update timestamp
+        const timeSnap = await get(ref(db, 'settings/lastErpUpdate'));
+        if(timeSnap.exists()) {
+            const rawDate = timeSnap.val();
+            document.getElementById('master-updated').innerText = "Last Updated: " + formatLastUpdated(rawDate);
         }
+
+        // 4. Fetch Products and build the Cost Map
+        const prodSnap = await get(ref(db, 'products'));
+        if(prodSnap.exists()) {
+            allProducts = prodSnap.val();
+            masterMap = {}; // Reset map
+            allProducts.forEach(p => { 
+                if(p) masterMap[p.id] = p; 
+            });
+
+            // TRIGGER: Now that costs are loaded, if we already have indent data, calculate profit
+            if (activeIndentData) refreshLiveUI();
+        }
+
+        // 5. Render other static tabs
+        renderReport();
+        renderFinance();
+        renderMaster();
+        renderDashboard();
+
+    } catch(e) { 
+        console.error("Data Load Error:", e); 
+        alert("Error loading data from database."); 
+    }
+}
 
         window.switchTab = function(tabName, el) {
             document.querySelectorAll('.tab-content').forEach(d => d.classList.remove('active'));
