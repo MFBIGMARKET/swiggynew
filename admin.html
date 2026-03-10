@@ -80,7 +80,7 @@
         .col-head { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; background: #fff; border-bottom: 1px solid #eee; justify-content: center !important;}
 
         /* --- LIVE TAB STYLES --- */
-        .live-container { padding: 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+        
         
         .live-head { font-size: 14px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
@@ -145,10 +145,24 @@
     margin-left: 4px;
 }
 
-/* Hide the old static header */
-#tab-live .live-card .live-head {
-    display: none !important;
+/* Update the container for consistent spacing */
+.live-container { 
+    padding: 20px 16px; /* Increased top/bottom padding */
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; /* Consistent gap between all tiles */
+    overflow-y: auto; 
 }
+
+/* 2x2 Grid for Financial Snapshot */
+.live-fin-grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Ensure cards don't have overlapping old headers */
+.live-card .live-head { display: none !important; }
 
 /* Make the card more compact */
 #tab-live .live-card {
@@ -177,6 +191,25 @@
     height: 100%;
     border-radius: 10px;
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Force 2x2 Grid for Financial Snapshot */
+.live-fin-grid-2x2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important; /* Exactly 2 columns */
+    gap: 10px;
+}
+
+/* Polishing the tiles for a 2x2 look */
+.live-fin-tile {
+    text-align: center;
+    padding: 12px 5px;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #edf2f7;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 60px;
 }
 
 .tap-hint {
@@ -464,13 +497,17 @@
                 <!-- Injected by JS -->
             </div>
         </div>
-                    <div class="live-card">
-                        <div class="live-head">
-                            <span>Today's Attendance</span>
-                            <span class="material-icons" style="color:var(--text-sub)">groups</span>
-                        </div>
-                        <div id="live-att-grid" class="att-grid"></div>
-                    </div>
+                    <!-- 3. ATTENDANCE -->
+<div class="live-card">
+    <div class="live-badge-row" style="margin-bottom: 16px;">
+        <div class="live-indicator" style="color:var(--text-sub)">
+            <span class="material-icons" style="font-size:16px;">groups</span>
+            Staff Attendance
+        </div>
+        <div style="font-size:11px; color:#94a3b8; font-weight:700;">TODAY</div>
+    </div>
+    <div id="live-att-grid" class="att-grid"></div>
+</div>
                 </div>
             </div>
 
@@ -843,14 +880,12 @@ window.refreshLiveUI = function() {
     
     if(!data || !packContainer) return;
 
-    // --- A. PROGRESS CALCULATIONS ---
+    // --- A. CALCULATIONS ---
     const itemCount = data.items ? data.items.length : 0;
     const packedCount = data.items ? data.items.filter(i => i.isPacked === true).length : 0;
     const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
-    let totalOrdPkts = 0, totalPackedPkts = 0;
-    
-    // --- B. LIVE FINANCIAL CALCULATIONS ---
-    let indentGoal = 0, expectedCost = 0;
+    let totalOrdPkts = 0, totalPackedPkts = 0, indentGoal = 0, expectedCost = 0;
+
     const masterLoaded = Object.keys(masterMap).length > 0;
 
     if (data.items) {
@@ -882,7 +917,7 @@ window.refreshLiveUI = function() {
     const estNet = estGross - estExp;
     const estMgn = indentGoal > 0 ? (estNet / indentGoal * 100).toFixed(1) : 0;
 
-    // --- C. UI INJECTION ---
+    // --- B. UI: LIVE PACKING ---
     packContainer.parentElement.onclick = () => openLiveDetail();
     packContainer.innerHTML = `
         <div class="live-badge-row" style="margin-bottom: 16px;">
@@ -906,18 +941,48 @@ window.refreshLiveUI = function() {
         <div class="tap-hint" style="margin-top:12px;">Tap to monitor individual items</div>
     `;
 
-    if(finCard && finGrid) {
-        finCard.style.display = 'block';
-        if (!masterLoaded) {
-            finGrid.innerHTML = `<div style="grid-column: span 3; text-align:center; padding:10px; color:#999; font-size:12px;">Syncing Master Prices...</div>`;
-        } else {
-            finGrid.innerHTML = `
-                <div class="live-fin-tile"><div class="fin-label">Indent Goal</div><div class="fin-val">₹${indentGoal.toFixed(0)}</div></div>
-                <div class="live-fin-tile" style="background:#f0f7ff; border-color:#d0e3ff;"><div class="fin-label" style="color:var(--primary)">Net Profit</div><div class="fin-val" style="color:var(--primary)">₹${estNet.toFixed(0)}</div></div>
-                <div class="live-fin-tile" style="background:#fafffa; border-color:#e0f0e0;"><div class="fin-label" style="color:var(--green)">Net Mgn</div><div class="fin-val" style="color:var(--green)">${estMgn}%</div></div>
-            `;
-        }
+    // --- C. UI: EXPECTED PROFIT (Updated to 2x2) ---
+    // ... inside window.refreshLiveUI ...
+
+if(finCard && finGrid) {
+    finCard.style.display = 'block';
+    if (!masterLoaded) {
+        finGrid.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:20px; color:#999; font-size:12px;">Syncing Master Prices...</div>`;
+    } else {
+        // Apply the 2x2 class
+        finGrid.className = "live-fin-grid-2x2"; 
+        
+        // Update the card content with a clean header and 2x2 tiles
+        finCard.innerHTML = `
+            <div class="live-badge-row" style="margin-bottom: 15px;">
+                <div class="live-indicator" style="color:var(--purple)">
+                    <span class="material-icons" style="font-size:16px;">account_balance_wallet</span>
+                    Expected Profit
+                </div>
+                <div style="font-size:10px; color:#94a3b8; font-weight:700;">ESTIMATE</div>
+            </div>
+            
+            <div class="live-fin-grid-2x2" id="live-fin-grid">
+                <div class="live-fin-tile" style="background:#f8fafc;">
+                    <div class="fin-label">Indent Goal</div>
+                    <div class="fin-val">₹${indentGoal.toFixed(0)}</div>
+                </div>
+                <div class="live-fin-tile" style="background:#fffaf5; border-color:#ffeada;">
+                    <div class="fin-label" style="color:var(--orange)">Est. Expense</div>
+                    <div class="fin-val" style="color:var(--orange)">₹${estExp.toFixed(0)}</div>
+                </div>
+                <div class="live-fin-tile" style="background:#f0f7ff; border-color:#d0e3ff;">
+                    <div class="fin-label" style="color:var(--primary)">Net Profit</div>
+                    <div class="fin-val" style="color:var(--primary)">₹${estNet.toFixed(0)}</div>
+                </div>
+                <div class="live-fin-tile" style="background:#fafffa; border-color:#e0f0e0;">
+                    <div class="fin-label" style="color:var(--green)">Net Mgn</div>
+                    <div class="fin-val" style="color:var(--green)">${estMgn}%</div>
+                </div>
+            </div>
+        `;
     }
+}
 }
 
 window.toggleLiveFilter = function() {
