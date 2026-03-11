@@ -89,14 +89,22 @@
         .pack-sub { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
         
         /* --- CLEAN LIVE TILE STYLES --- */
+/* --- COMPACT LIVE TAB SPACING --- */
+.live-container { 
+    padding: 12px 16px; /* Reduced from 20px */
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; /* Reduced from 20px - this handles the distance between tiles */
+    overflow-y: auto; 
+}
+
 .live-card { 
     background: #ffffff; 
-    border-radius: 16px; 
-    padding: 24px; 
-    box-shadow: 0 4px 20px rgba(0,0,0,0.04); 
+    border-radius: 12px; /* Slightly tighter radius for compact look */
+    padding: 16px; /* Tightened internal padding */
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04); 
     border: 1px solid #edf2f7; 
     position: relative;
-    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .live-card:active {
@@ -128,17 +136,24 @@
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
 }
 
-.stat-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #64748b;
+
+
+.progress-track-clean {
+    height: 8px !important; /* Ensure it has height */
+    background: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 100%;
 }
 
-.stat-value {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1e293b;
+.progress-fill-clean {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.stat-label { font-size: 11px; font-weight: 600; color: #64748b; }
+.stat-value { font-size: 12px; font-weight: 700; color: #1e293b; }
 
 .pct-label {
     font-weight: 800;
@@ -146,13 +161,7 @@
 }
 
 /* Update the container for consistent spacing */
-.live-container { 
-    padding: 20px 16px; /* Increased top/bottom padding */
-    display: flex; 
-    flex-direction: column; 
-    gap: 20px; /* Consistent gap between all tiles */
-    overflow-y: auto; 
-}
+
 
 /* 2x2 Grid for Financial Snapshot */
 .live-fin-grid-2x2 {
@@ -182,16 +191,9 @@
     letter-spacing: 0.5px;
 }
 
-/* Adjust progress spacing to be tighter */
-.progress-track-clean {
-    margin-bottom: 12px !important; /* Reduced from 20px */
-}
 
-.progress-fill-clean {
-    height: 100%;
-    border-radius: 10px;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
+
+
 /* Force 2x2 Grid for Financial Snapshot */
 .live-fin-grid-2x2 {
     display: grid !important;
@@ -918,28 +920,54 @@ window.refreshLiveUI = function() {
     const estMgn = indentGoal > 0 ? (estNet / indentGoal * 100).toFixed(1) : 0;
 
     // --- B. UI: LIVE PACKING ---
-    packContainer.parentElement.onclick = () => openLiveDetail();
-    packContainer.innerHTML = `
-        <div class="live-badge-row" style="margin-bottom: 16px;">
-            <div class="live-indicator"><div class="pulse-dot"></div> Live Packing</div>
-            <div style="background:#eef2f7; color:#475569; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">${formatDateFull(data.date)}</div>
+    // ... inside window.refreshLiveUI ...
+
+// --- B. UI: LIVE PACKING ---
+packContainer.parentElement.onclick = () => openLiveDetail();
+packContainer.innerHTML = `
+    <div class="live-badge-row" style="margin-bottom: 16px;">
+        <div class="live-indicator">
+            <div class="pulse-dot"></div> Live Packing
         </div>
-        <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <span class="stat-label">Unique Items</span>
-                <span class="stat-value">${packedCount} / ${itemCount} <span style="color:var(--primary); font-weight:800; margin-left:5px;">${itemPct}%</span></span>
-            </div>
-            <div class="progress-track-clean"><div class="progress-fill-clean" style="width:${itemPct}%; background:var(--primary)"></div></div>
+        <div style="background:#eef2f7; color:#475569; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">
+            ${formatDateFull(data.date)} 
         </div>
-        <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <span class="stat-label">Total Packets</span>
-                <span class="stat-value">${totalPackedPkts} / ${totalOrdPkts} <span style="color:#f59e0b; font-weight:800; margin-left:5px;">${pktPct}%</span></span>
-            </div>
-            <div class="progress-track-clean" style="margin-bottom:4px !important;"><div class="progress-fill-clean" style="width:${pktPct}%; background:#f59e0b"></div></div>
+    </div>
+
+    <!-- UNIQUE ITEMS PROGRESS -->
+    <div style="margin-bottom: 15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span class="stat-label" style="font-size:11px;">Unique Items</span>
+            <span class="stat-value" style="font-size:12px;">
+                ${packedCount} / ${itemCount} 
+                <span class="pct-label" style="color:var(--primary); margin-left:5px;">${itemPct}%</span>
+            </span>
         </div>
-        <div class="tap-hint" style="margin-top:12px;">Tap to monitor individual items</div>
-    `;
+        <div class="progress-track-clean">
+            <div class="progress-fill-clean" style="width:${itemPct}%; background:var(--primary)"></div>
+        </div>
+    </div>
+
+    <!-- TOTAL PACKETS PROGRESS -->
+    <div style="margin-bottom: 5px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span class="stat-label" style="font-size:11px;">Total Packets</span>
+            <span class="stat-value" style="font-size:12px;">
+                ${totalPackedPkts} / ${totalOrdPkts} 
+                <span class="pct-label" style="color:#f59e0b; margin-left:5px;">${pktPct}%</span>
+            </span>
+        </div>
+        <div class="progress-track-clean" style="margin-bottom: 0 !important;">
+            <div class="progress-fill-clean" style="width:${pktPct}%; background:#f59e0b"></div>
+        </div>
+    </div>
+
+    <div class="tap-hint" style="margin-top: 15px; border-top: 1px solid #f1f1f1; padding-top: 10px;">
+        Tap to monitor individual items
+    </div>
+`;
+
+// ... keep Expected Profit and Attendance sections ...
 
     // --- C. UI: EXPECTED PROFIT (Updated to 2x2) ---
     // ... inside window.refreshLiveUI ...
