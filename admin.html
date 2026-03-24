@@ -745,7 +745,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, child, onValue, query, orderByChild, startAt } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB6OFRosamp5U5lKnAxl0wptGt5-eHL6ZQ",
@@ -1217,10 +1217,18 @@ rows.forEach(r => {
     window.loadAttModalHistory = loadAttModalHistory;
 
         async function loadData() {
-    try {
-        // 1. Fetch historical indents
-        const snap = await get(ref(db, 'indents'));
-        if(snap.exists()) allIndents = Object.values(snap.val()).sort((a,b) => b.id - a.id);
+            try {
+                // 1. Fetch historical indents (Limited to 45 days)
+                const d = new Date();
+                d.setDate(d.getDate() - 31);
+                const cutoffDate = d.toISOString().split('T')[0];
+
+                const indentsQuery = query(ref(db, 'indents'), orderByChild('date'), startAt(cutoffDate));
+                const snap = await get(indentsQuery);
+                
+                if(snap.exists()) allIndents = Object.values(snap.val()).sort((a,b) => b.id - a.id);
+
+                // 2. Fetch global expense settings
 
         // 2. Fetch global expense settings
         const expSnap = await get(ref(db, 'settings/expenses'));

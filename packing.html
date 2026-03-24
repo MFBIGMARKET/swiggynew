@@ -856,11 +856,11 @@
                 img.src = e.target.result;
                 img.onload = async function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; const scaleSize = MAX_WIDTH / img.width;
+                    const MAX_WIDTH = 400; const scaleSize = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
                     const idx = findItemIndex(code);
                     if(idx !== -1) { await set(ref(db, `active_indent/items/${idx}/savedImg`), dataUrl); }
                 }

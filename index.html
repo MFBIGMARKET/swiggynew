@@ -1120,12 +1120,15 @@ body.role-data-entry .tab[onclick*="view-history"] { display: none !important; }
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     // REPLACE THE IMPORT LINE
-import { getDatabase, ref, set, get, child, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, set, get, child, onValue, remove, update, query, orderByChild, startAt } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // ADD THESE TO WINDOW OBJECT (Below the imports)
 window.dbOnValue = onValue;
 window.dbRemove = remove;
 window.dbUpdate = update;
+    window.dbQuery = query;
+    window.dbOrderByChild = orderByChild;
+    window.dbStartAt = startAt;
 
     // --- ⚠️ PASTE YOUR FIREBASE CONFIG HERE ---
     const firebaseConfig = {
@@ -1197,18 +1200,31 @@ window.dbUpdate = update;
         if (!window.db) { console.warn("DB not ready"); return; }
         const dbRef = window.dbRef(window.db);
         try {
-            // Load Data
+            // Load Products
             const pSnap = await window.dbGet(window.dbChild(dbRef, `products`));
-            const iSnap = await window.dbGet(window.dbChild(dbRef, `indents`));
+            
+            // Calculate date 45 days ago
+            const d = new Date();
+            d.setDate(d.getDate() - 31);
+            const cutoffDate = d.toISOString().split('T')[0];
+
+            // Use the window attached query functions
+            const indentsQuery = window.dbQuery(window.dbChild(dbRef, `indents`), window.dbOrderByChild('date'), window.dbStartAt(cutoffDate));
+            const iSnap = await window.dbGet(indentsQuery);
+            
             const eSnap = await window.dbGet(window.dbChild(dbRef, `settings/expenses`));
             const tSnap = await window.dbGet(window.dbChild(dbRef, `settings/lastErpUpdate`));
 
             products = pSnap.exists() ? pSnap.val() : [];
             
-            // UPDATED INDENT LOADING (Handles Map/Array safely)
             const iVal = iSnap.exists() ? iSnap.val() : [];
             indents = Object.values(iVal); // Force convert to array for UI
             indents.sort((a,b) => b.id - a.id); // Sort Newest First
+            
+            // RUN THE CLEANUP HERE
+            if (Object.keys(iVal).length > 0) {
+                cleanupOldImages(iVal);
+            }
 
             if(eSnap.exists()) expenseSettings = eSnap.val();
             if(tSnap.exists()) lastErpUpdate = tSnap.val();
@@ -1350,6 +1366,45 @@ async function autoFinalizeBill(data) {
         if (!window.db) return;
         window.dbSet(window.dbRef(window.db, key), data);
     }
+
+    // --- NEW: AUTO CLEANUP IMAGES OLDER THAN 5 DAYS ---
+async function cleanupOldImages(indentsData) {
+    const dbRef = window.dbRef(window.db);
+    const updates = {};
+    const today = new Date();
+    let cleanupCount = 0;
+
+    Object.values(indentsData).forEach(indent => {
+        if (!indent.date || !indent.items) return;
+
+        // Parse date (Format is YYYY-MM-DD)
+        const indentDate = new Date(indent.date);
+        const diffTime = Math.abs(today - indentDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // If older than 5 days, strip the images
+        if (diffDays > 5) {
+            indent.items.forEach((item, idx) => {
+                // Check both 'img' (history) and 'savedImg' (active) just in case
+                if (item.img || item.savedImg) {
+                    updates[`indents/${indent.id}/items/${idx}/img`] = null;
+                    updates[`indents/${indent.id}/items/${idx}/savedImg`] = null;
+                    cleanupCount++;
+                }
+            });
+        }
+    });
+
+    // If there are images to delete, send the update to Firebase
+    if (Object.keys(updates).length > 0) {
+        console.log(`Cleaning up ${cleanupCount} old images to save space...`);
+        try {
+            await window.dbUpdate(dbRef, updates);
+        } catch(e) {
+            console.error("Cleanup failed:", e);
+        }
+    }
+}
 
     // --- NEW BATCH UPLOAD HELPER (For large indents/reverts) ---
     async function uploadBatchedData(nodePath, dataObj) {
