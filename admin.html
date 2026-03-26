@@ -579,7 +579,8 @@
                             <tr>
                                 <th class="sticky-col">Bill No</th>
                                 <th class="w-date">Date</th>
-                                <th class="w-num">Amount</th>
+                                <th class="w-num">Bill Amt</th>
+                                <th class="w-num">Rcvd Amt</th>
                                 <th class="w-date">Rcvd Date</th>
                                 <th class="w-num">Days</th>
                                 <th class="w-num">MTR Bill</th>
@@ -1178,27 +1179,35 @@ window.viewLivePhoto = function(src) {
 
                 // Inside loadAttModalHistory rows.forEach loop
 rows.forEach(r => {
-    const day = r.date.split('-')[2];
-    const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-    const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-    
-    // THE MATH FOR DISPLAY
-    let otDisplay = `<span style="color:#ccc">-</span>`;
-    if (r.ot && r.ot > 0) { 
-        const h = Math.floor(r.ot / 60); 
-        const m = r.ot % 60; 
-        otDisplay = `<span style="color:var(--orange); font-weight:700;">${h}h ${m}m</span>`; 
-    }
+                    const day = r.date.split('-')[2];
+                    const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+                    const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+                    
+                    let otDisplay = `<span style="color:#ccc">-</span>`;
+                    
+                    if (r.out && r.ot !== undefined) { 
+                        const absOT = Math.abs(r.ot);
+                        const h = Math.floor(absOT / 60); 
+                        const m = absOT % 60; 
+                        
+                        if (r.ot > 0) { 
+                            otDisplay = `<span style="color:var(--orange); font-weight:700; background:#fff3e0; padding:2px 6px; border-radius:4px;">+${h}h ${m}m</span>`; 
+                        } else if (r.ot < 0) {
+                            otDisplay = `<span style="color:var(--green); font-weight:700; background:#e8f5e9; padding:2px 6px; border-radius:4px;">-${h}h ${m}m</span>`; 
+                        } else {
+                            otDisplay = `<span style="color:#888; font-weight:700; background:#f1f3f4; padding:2px 6px; border-radius:4px;">0h 0m</span>`; 
+                        }
+                    }
 
-    html += `
-        <tr style="border-bottom:1px solid #eee;">
-            <td style="padding:8px; font-weight:500; text-align:center;">${day}</td>
-            <td style="padding:8px; text-align:center;">${inT}</td>
-            <td style="padding:8px; text-align:center;">${outT}</td>
-            <td style="padding:8px; text-align:center;">${otDisplay}</td>
-        </tr>
-    `;
-});
+                    html += `
+                        <tr style="border-bottom:1px solid #eee;">
+                            <td style="padding:8px; font-weight:500; text-align:center;">${day}</td>
+                            <td style="padding:8px; text-align:center;">${inT}</td>
+                            <td style="padding:8px; text-align:center;">${outT}</td>
+                            <td style="padding:8px; text-align:center;">${otDisplay}</td>
+                        </tr>
+                    `;
+                });
 
                 html += '</tbody></table>';
                 container.innerHTML = html;
@@ -1294,24 +1303,67 @@ window.renderDashboard = function() {
     const container = document.getElementById('profitability-container');
     
     if (dashViewMode === 'summary') {
-        // --- SUMMARY VIEW (Your existing logic) ---
+        // --- SUMMARY VIEW ---
         let mfRev=0, mfCost=0, mfPack=0, mfTrans=0;
-        let mtrRev=0, mtrCost=0, mtrWage=0;
+        let mtrRev=0, mtrCost=0, mtrWage=0, mtrWastage=0;
+        
         allIndents.forEach(rec => {
             if (rec.date < from || rec.date > to) return;
             if (!rec.mtrBill || rec.mtrBill <= 0) return;
+            
             const bill = rec.totalBillAmt || 0;
             const mtrBill = rec.mtrBill || 0; 
-            let pack=0, trans=0, wage=0;
-            if(rec.expenseDetails) { pack=rec.expenseDetails.packing; trans=rec.expenseDetails.transport; wage=rec.expenseDetails.wage; }
-            mfRev += bill; mfCost += mtrBill; mfPack += pack; mfTrans += trans;
-            mtrRev += mtrBill; mtrCost += (rec.totalCost || 0); mtrWage += wage;
+            
+            let pack=0, trans=0, wage=0, wastage=0;
+            if(rec.expenseDetails) { 
+                pack = rec.expenseDetails.packing || 0; 
+                trans = rec.expenseDetails.transport || 0; 
+                wage = rec.expenseDetails.wage || 0; 
+                wastage = rec.expenseDetails.wastage || 0;
+            }
+            
+            mfRev += bill; 
+            mfCost += mtrBill; 
+            mfPack += pack; 
+            mfTrans += trans;
+            
+            mtrRev += mtrBill; 
+            mtrCost += (rec.totalCost || 0); 
+            mtrWage += wage;
+            mtrWastage += wastage; // Tally Wastage specifically for Mattannur
         });
-        const mfGross = mfRev-mfCost; const mfExp = mfPack+mfTrans; const mfNet = mfGross-mfExp;
-        const mtrGross = mtrRev-mtrCost; const mtrExp = mtrWage; const mtrNet = mtrGross-mtrExp;
+        
+        const mfGross = mfRev - mfCost; 
+        const mfExp = mfPack + mfTrans; 
+        const mfNet = mfGross - mfExp;
+        
+        const mtrGross = mtrRev - mtrCost; 
+        const mtrExp = mtrWage + mtrWastage; // Mattannur Expense = Wage + Wastage
+        const mtrNet = mtrGross - mtrExp;
+        
         container.innerHTML = `
-            <div class="profit-card"><div class="profit-header" style="color:var(--primary)">MF BIGMARKET</div><div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div><div class="prof-row"><div>Revenue</div><div>₹${mfRev.toFixed(0)}</div><div>100%</div></div><div class="prof-row"><div>(-) MTR Bill</div><div style="color:#555">₹${mfCost.toFixed(0)}</div><div>${mfRev>0?((mfCost/mfRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>= Gross Profit</div><div>₹${mfGross.toFixed(0)}</div><div>${mfRev>0?((mfGross/mfRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>(-) Packing</div><div style="color:orange">₹${mfPack.toFixed(0)}</div><div></div></div><div class="prof-row"><div>(-) Transport</div><div style="color:orange">₹${mfTrans.toFixed(0)}</div><div></div></div><div class="prof-row total"><div>NET PROFIT</div><div style="color:${mfNet>=0?'green':'red'}">₹${mfNet.toFixed(0)}</div><div>${mfRev>0?((mfNet/mfRev)*100).toFixed(1):0}%</div></div></div>
-            <div class="profit-card"><div class="profit-header" style="color:var(--purple)">MATTANNUR</div><div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div><div class="prof-row"><div>Revenue (Bill)</div><div>₹${mtrRev.toFixed(0)}</div><div>100%</div></div><div class="prof-row"><div>(-) RM Cost</div><div style="color:#555">₹${mtrCost.toFixed(0)}</div><div>${mtrRev>0?((mtrCost/mtrRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>= Gross Profit</div><div>₹${mtrGross.toFixed(0)}</div><div>${mtrRev>0?((mtrGross/mtrRev)*100).toFixed(0):0}%</div></div><div class="prof-row"><div>(-) Salary</div><div style="color:orange">₹${mtrExp.toFixed(0)}</div><div></div></div><div class="prof-row total"><div>NET PROFIT</div><div style="color:${mtrNet>=0?'green':'red'}">₹${mtrNet.toFixed(0)}</div><div>${mtrRev>0?((mtrNet/mtrRev)*100).toFixed(1):0}%</div></div></div>`;
+            <div class="profit-card">
+                <div class="profit-header" style="color:var(--primary)">MF BIGMARKET</div>
+                <div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div>
+                <div class="prof-row"><div>Revenue</div><div>₹${mfRev.toFixed(0)}</div><div>100%</div></div>
+                <div class="prof-row"><div>(-) MTR Bill</div><div style="color:#555">₹${mfCost.toFixed(0)}</div><div>${mfRev>0?((mfCost/mfRev)*100).toFixed(0):0}%</div></div>
+                <div class="prof-row"><div>= Gross Profit</div><div>₹${mfGross.toFixed(0)}</div><div>${mfRev>0?((mfGross/mfRev)*100).toFixed(0):0}%</div></div>
+                <div class="prof-row"><div>(-) Packing</div><div style="color:orange">₹${mfPack.toFixed(0)}</div><div></div></div>
+                <div class="prof-row"><div>(-) Transport</div><div style="color:orange">₹${mfTrans.toFixed(0)}</div><div></div></div>
+                <div class="prof-row total"><div>NET PROFIT</div><div style="color:${mfNet>=0?'green':'red'}">₹${mfNet.toFixed(0)}</div><div>${mfRev>0?((mfNet/mfRev)*100).toFixed(1):0}%</div></div>
+            </div>
+            
+            <div class="profit-card">
+                <div class="profit-header" style="color:var(--purple)">MATTANNUR</div>
+                <div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div>
+                <div class="prof-row"><div>Revenue (Bill)</div><div>₹${mtrRev.toFixed(0)}</div><div>100%</div></div>
+                <div class="prof-row"><div>(-) RM Cost</div><div style="color:#555">₹${mtrCost.toFixed(0)}</div><div>${mtrRev>0?((mtrCost/mtrRev)*100).toFixed(0):0}%</div></div>
+                <div class="prof-row"><div>= Gross Profit</div><div>₹${mtrGross.toFixed(0)}</div><div>${mtrRev>0?((mtrGross/mtrRev)*100).toFixed(0):0}%</div></div>
+                <div class="prof-row"><div>(-) Salary</div><div style="color:orange">₹${mtrWage.toFixed(0)}</div><div></div></div>
+                <div class="prof-row"><div>(-) Wastage</div><div style="color:var(--red); font-weight:bold;">₹${mtrWastage.toFixed(0)}</div><div></div></div>
+                <div class="prof-row total"><div>NET PROFIT</div><div style="color:${mtrNet>=0?'green':'red'}">₹${mtrNet.toFixed(0)}</div><div>${mtrRev>0?((mtrNet/mtrRev)*100).toFixed(1):0}%</div></div>
+            </div>
+        `;
     } else {
         // --- DETAILED BILL-WISE TABLE ---
         let html = `
@@ -1339,12 +1391,16 @@ window.renderDashboard = function() {
             const mtrBill = parseFloat(rec.mtrBill);
             const rmCost = parseFloat(rec.totalCost || 0);
 
-            let pack=0, trans=0, wage=0;
+            let pack=0, trans=0, wage=0, wastage=0;
             if(rec.expenseDetails) { 
-                pack=rec.expenseDetails.packing; trans=rec.expenseDetails.transport; wage=rec.expenseDetails.wage; 
+                pack = rec.expenseDetails.packing || 0; 
+                trans = rec.expenseDetails.transport || 0; 
+                wage = rec.expenseDetails.wage || 0; 
+                wastage = rec.expenseDetails.wastage || 0;
             } else if(expenseSettings) {
                 const d = new Date(rec.date); const ds = expenseSettings.days[d.getDay()];
                 pack = (bill/1000) * expenseSettings.packingRate; trans = ds.transport; wage = ds.wage;
+                wastage = 0;
             }
 
             // Calculations
@@ -1354,7 +1410,7 @@ window.renderDashboard = function() {
             const mfMgn = bill > 0 ? (mfNet/bill*100).toFixed(0) : 0;
 
             const mtrGross = mtrBill - rmCost;
-            const mtrExp = wage;
+            const mtrExp = wage + wastage;
             const mtrNet = mtrGross - mtrExp;
             const mtrMgn = mtrBill > 0 ? (mtrNet/mtrBill*100).toFixed(0) : 0;
 
@@ -1438,7 +1494,44 @@ window.renderDashboard = function() {
         window.toggleMenu = function() { document.getElementById('detail-menu').classList.toggle('show'); }
         window.downloadBillPDF = function() { document.getElementById('detail-menu').classList.remove('show'); if(!currentRec) return; const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' }); const validItems = (currentRec.items || []).filter(i => i.qty > 0).sort((a, b) => (a.name || "").localeCompare(b.name || "")); const dateParts = currentRec.date.split('-'); const invoiceNo = `MFB${dateParts[2]}${dateParts[1]}${dateParts[0].slice(-2)}`; const displayDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; const margin = 20; const pageW = 210; const contentW = pageW - (margin * 2); let y = 15; doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(40, 40, 40); doc.text("INVOICE", margin, y); doc.setFontSize(10); doc.setTextColor(0, 0, 0); doc.text("MF BIGMARKET IRITTY", margin, y + 5); doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(80, 80, 80); doc.text("Ground Floor, City Center", margin, y + 9); doc.text("Iritty, Kerala", margin, y + 13); doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0); doc.text("To: SPWAVE PVT LTD", pageW - margin, y, { align: 'right' }); let metaY = y + 7; doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 100, 100); doc.text("Invoice No:", pageW - margin - 35, metaY); doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(invoiceNo, pageW - margin, metaY, { align: 'right' }); metaY += 5; doc.setTextColor(100, 100, 100); doc.setFont("helvetica", "normal"); doc.text("Date:", pageW - margin - 35, metaY); doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(displayDate, pageW - margin, metaY, { align: 'right' }); y = metaY + 8; const wSl=10, wCode=15, wUom=15, wQty=20, wCost=25, wTotal=30; const wName = contentW - (wSl+wCode+wUom+wQty+wCost+wTotal); const xSl=margin, xCode=xSl+wSl, xName=xCode+wCode, xUom=xName+wName, xQty=xUom+wUom, xCost=xQty+wQty, xTotal=xCost+wCost; const rowH = 7; const headH = 8; const vLines = [xCode, xName, xUom, xQty, xCost, xTotal]; function drawHeader(yPos) { doc.setFillColor(235, 237, 240); doc.setDrawColor(0); doc.setLineWidth(0.3); doc.rect(margin, yPos, contentW, headH, 'FD'); doc.setLineWidth(0.1); vLines.forEach(x => doc.line(x, yPos, x, yPos + headH)); doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(0); const ty = yPos + 5; doc.text("SL", xSl+2, ty); doc.text("CODE", xCode+2, ty); doc.text("ITEM NAME", xName+2, ty); doc.text("UOM", xUom+2, ty); doc.text("QTY", xQty+wQty-2, ty, {align:'right'}); doc.text("COST", xCost+wCost-2, ty, {align:'right'}); doc.text("TOTAL", xTotal+wTotal-2, ty, {align:'right'}); } drawHeader(y); y += headH; doc.setFont("helvetica", "normal"); doc.setFontSize(9); let totalAmount = 0; validItems.forEach((item, index) => { if (y > 270) { doc.addPage(); y = 15; drawHeader(y); y += headH; doc.setFont("helvetica", "normal"); doc.setFontSize(9); } if (index % 2 === 1) { doc.setFillColor(250, 250, 250); doc.rect(margin, y, contentW, rowH, 'F'); } doc.setDrawColor(0); doc.setLineWidth(0.1); doc.rect(margin, y, contentW, rowH, 'S'); vLines.forEach(x => doc.line(x, y, x, y + rowH)); const lineTotal = item.qty * item.poRate; totalAmount += lineTotal; const masterItem = masterMap[item.code] || {}; const uomStr = masterItem.uom || 'Unit'; const cy = y + 4.5; doc.setTextColor(0); doc.text((index + 1).toString(), xSl+2, cy); doc.text(item.code.toString(), xCode+2, cy); doc.text(item.name.substring(0,32), xName+2, cy); doc.text(uomStr, xUom+2, cy); doc.text(item.qty.toString(), xQty+wQty-2, cy, {align:'right'}); doc.text(fmt(item.poRate), xCost+wCost-2, cy, {align:'right'}); doc.text(fmt(lineTotal), xTotal+wTotal-2, cy, {align:'right'}); y += rowH; }); y += 2; doc.setLineWidth(0.5); doc.line(margin, y, pageW-margin, y); y+=7; doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.text("GRAND TOTAL", margin, y); doc.setFontSize(12); doc.text("Rs " + fmt(totalAmount), pageW-margin-2, y, {align:'right'}); y += 3; doc.setLineWidth(0.5); doc.line(margin, y, pageW-margin, y); doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(150); doc.text("Computer Generated Invoice", pageW/2, 285, {align:'center'}); doc.save(`Bill_${invoiceNo}.pdf`); }
         window.downloadReportPDF = function() { document.getElementById('detail-menu').classList.remove('show'); if(!currentRec) return; const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' }); const tBill = currentRec.totalBillAmt || 0; const tCost = currentRec.totalCost || 0; const tGross = currentRec.profit || 0; const tExp = currentRec.totalExpenses || 0; const tNet = currentRec.netProfit !== undefined ? currentRec.netProfit : (tGross - tExp); let expD = currentRec.expenseDetails; if (!expD && expenseSettings) { const d = new Date(currentRec.date); const ds = expenseSettings.days[d.getDay()]; expD = { total: tExp, wage: ds.wage, transport: ds.transport, packing: (tBill/1000)*expenseSettings.packingRate, misc: (tCost*expenseSettings.miscPercent)/100 }; } else if (!expD) { expD = {total:0, wage:0, transport:0, packing:0, misc:0}; } doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.text("SWIGGY REPORT", 105, 18, { align: 'center' }); doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text(formatDateFull(currentRec.date), 105, 25, { align: 'center' }); let y = 35; const kpis = [{l:'REVENUE', v:tBill}, {l:'COGS', v:tCost}, {l:'EXPENSES', v:tExp}, {l:'NET PROFIT', v:tNet}]; let x = 10; const kw = 45; kpis.forEach(k => { doc.setFillColor(245); doc.rect(x, y, kw, 20, 'F'); doc.setFontSize(8); doc.text(k.l, x+kw/2, y+6, {align:'center'}); doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text(k.v.toFixed(0), x+kw/2, y+15, {align:'center'}); x += kw + 3; }); y += 30; doc.setFontSize(10); doc.text("Profitability:", 10, y); y+=6; doc.setFont("helvetica", "normal"); doc.text(`Revenue: ${tBill.toFixed(0)}`, 15, y); y+=5; doc.text(`(-) Cost: ${tCost.toFixed(0)}`, 15, y); y+=5; doc.setFont("helvetica", "bold"); doc.text(`= Gross: ${tGross.toFixed(0)}`, 15, y); y+=5; doc.setFont("helvetica", "normal"); doc.text(`(-) Exp: ${tExp.toFixed(0)}`, 15, y); y+=6; doc.setFont("helvetica", "bold"); doc.setTextColor(0,100,0); doc.text(`= NET: ${tNet.toFixed(0)}`, 15, y); doc.setTextColor(0); y = 65; x = 110; doc.text("Expenses:", x, y); y+=6; doc.setFont("helvetica", "normal"); doc.text(`Wages: ${expD.wage}`, x+5, y); y+=5; doc.text(`Transport: ${expD.transport}`, x+5, y); y+=5; doc.text(`Packing: ${expD.packing.toFixed(0)}`, x+5, y); y+=5; doc.text(`Misc: ${expD.misc.toFixed(0)}`, x+5, y); doc.save(`Report_${currentRec.date}.pdf`); }
-        window.showExpenses = function() { if(!currentRec) return; let d = currentRec.expenseDetails; if(!d && expenseSettings) { const dateObj = new Date(currentRec.date); const dayIdx = dateObj.getDay(); const daySet = expenseSettings.days[dayIdx]; const billAmt = currentRec.totalBillAmt || 0; const billCost = currentRec.totalCost || 0; d = { wage: daySet.wage, transport: daySet.transport, packing: (billAmt/1000) * expenseSettings.packingRate, misc: (billCost * expenseSettings.miscPercent)/100, total: currentRec.totalExpenses }; } if(!d) { alert("N/A"); return; } const html = `<div class="modal-row"><span>Wages</span><span>₹${d.wage.toFixed(0)}</span></div><div class="modal-row"><span>Transport</span><span>₹${d.transport.toFixed(0)}</span></div><div class="modal-row"><span>Packing</span><span>₹${d.packing.toFixed(0)}</span></div><div class="modal-row"><span>Misc</span><span>₹${d.misc.toFixed(0)}</span></div><div class="modal-row total"><span>Total</span><span>₹${d.total.toFixed(0)}</span></div>`; openModal("Expenses", html); }
+        window.showExpenses = function() { 
+    if(!currentRec) return; 
+    
+    let d = currentRec.expenseDetails; 
+    
+    // Fallback if older bill doesn't have expenseDetails saved
+    if(!d && expenseSettings) { 
+        const dateObj = new Date(currentRec.date); 
+        const dayIdx = dateObj.getDay(); 
+        const daySet = expenseSettings.days[dayIdx]; 
+        const billAmt = currentRec.totalBillAmt || 0; 
+        const billCost = currentRec.totalCost || 0; 
+        
+        d = { 
+            wage: daySet.wage, 
+            transport: daySet.transport, 
+            packing: (billAmt/1000) * expenseSettings.packingRate, 
+            misc: (billCost * expenseSettings.miscPercent)/100, 
+            wastage: 0,
+            total: currentRec.totalExpenses 
+        }; 
+    } 
+    
+    if(!d) { alert("N/A"); return; } 
+
+    const wastageVal = d.wastage || 0;
+
+    const html = `
+        <div class="modal-row"><span>Wages</span><span>₹${d.wage.toFixed(0)}</span></div>
+        <div class="modal-row"><span>Transport</span><span>₹${d.transport.toFixed(0)}</span></div>
+        <div class="modal-row"><span>Packing</span><span>₹${d.packing.toFixed(0)}</span></div>
+        <div class="modal-row"><span>Misc</span><span>₹${d.misc.toFixed(0)}</span></div>
+        <div class="modal-row"><span style="color:var(--red); font-weight:bold;">Wastage</span><span style="color:var(--red); font-weight:bold;">₹${wastageVal.toFixed(0)}</span></div>
+        <div class="modal-row total"><span>Total</span><span>₹${d.total.toFixed(0)}</span></div>
+    `; 
+    
+    openModal("Expenses", html); 
+}
         window.showShortage = function() { if(!currentRec || !currentRec.items) return; const shortItems = currentRec.items.filter(i => { const ordered = i.originalQty !== undefined ? i.originalQty : (i.poQty || 0); return ordered > i.qty; }); if(shortItems.length === 0) { alert("No shortages found"); return; } let html = ''; shortItems.forEach(i => { const ord = i.originalQty !== undefined ? i.originalQty : i.poQty; const diff = ord - i.qty; const loss = diff * i.poRate; html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="color:#777; margin:0 10px;">${ord}->${i.qty}</span><span style="color:red; font-weight:700;">-${diff} (₹${loss})</span></div>`; }); openModal("Short Items", html); }
         window.showDump = function() { if(!currentRec || !currentRec.items) return; let dumpList = []; currentRec.items.forEach(i => { const master = masterMap[i.code]; if (master && master.conv > 0 && i.actualKg > 0) { const std = i.qty * master.conv; const diff = i.actualKg - std; if (diff > 0.05) { const costPerKg = i.frozenCostPerKg || master.costKg || 0; dumpList.push({ name: i.name, diff: diff, cost: diff * costPerKg }); } } }); if(dumpList.length === 0) { alert("No dump found"); return; } let html = ''; dumpList.forEach(i => { html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="color:orange;">+${i.diff.toFixed(2)}kg</span><span style="color:red; font-weight:700; margin-left:10px;">₹${i.cost.toFixed(0)}</span></div>`; }); openModal("Dump Breakdown", html); }
         function renderMarginBuckets(items) { const buckets = [{ l: 'Loss (<0%)', c: 0, s: 0, p:0, cls: 'bd-loss', items:[] }, { l: '0% - 5%', c: 0, s: 0, p:0, cls: 'bd-low', items:[] }, { l: '5% - 10%', c: 0, s: 0, p:0, cls: 'bd-mid', items:[] }, { l: '10% - 20%', c: 0, s: 0, p:0, cls: 'bd-ok', items:[] }, { l: '20% - 50%', c: 0, s: 0, p:0, cls: 'bd-good', items:[] }, { l: '> 50%', c: 0, s: 0, p:0, cls: 'bd-great', items:[] }]; items.filter(i => i.qty > 0).forEach(i => { const m = i.marginPct; const sale = i.qty * i.poRate; let idx = 0; if(m < 0) idx=0; else if(m<5) idx=1; else if(m<10) idx=2; else if(m<20) idx=3; else if(m<50) idx=4; else idx=5; buckets[idx].c++; buckets[idx].s += sale; buckets[idx].p += i.profit; buckets[idx].items.push(i); }); const container = document.getElementById('margin-container'); container.innerHTML = ''; buckets.forEach(b => { const div = document.createElement('div'); div.className = `ma-card ${b.cls}`; div.onclick = () => showCategoryItems(b.l, b.items); div.innerHTML = `<div class="ma-header">${b.l}</div><div class="ma-body"><div class="ma-row"><span>Items</span><span class="ma-val">${b.c}</span></div><div class="ma-row"><span>Sales</span><span class="ma-val">₹${b.s.toFixed(0)}</span></div><div class="ma-sep"></div><div class="ma-row"><span>Profit</span><span class="ma-prof">₹${b.p.toFixed(0)}</span></div></div>`; container.appendChild(div); }); }
@@ -1455,7 +1548,7 @@ window.renderDashboard = function() {
             const tbody = document.getElementById('finance-body');
             tbody.innerHTML = '';
             
-            // --- NEW VARIABLES FOR GLOBAL KPIs ---
+            // --- VARIABLES FOR GLOBAL KPIs ---
             let allTimeBilled = 0;
             let allTimePending = 0;
             let totalMtrPending = 0;
@@ -1463,7 +1556,7 @@ window.renderDashboard = function() {
             // Variables for Date-Filtered KPIs
             let totBilled=0, totRcvd=0, totPend=0;
             let creditDaysSum=0, creditCount=0, pendingCount=0;
-            let returnAmt = 0; // Shortage/Return (Bill - Rcvd) for paid bills
+            let returnAmt = 0; 
 
             allIndents.forEach(rec => {
                 const bill = rec.totalBillAmt || 0;
@@ -1474,8 +1567,6 @@ window.renderDashboard = function() {
                 allTimeBilled += bill;
                 allTimePending += (pending > 1 ? pending : 0);
                 
-                // MTR Pending: (MTR Bill Amount) only if (Swiggy Paid Full) AND (MTR Not Paid)
-                // Logic: "Pending to MTR on bills RCVD from Swiggy"
                 const isSwiggyPaid = rcvd >= (bill - 1);
                 if (isSwiggyPaid && !rec.mtrPaid) {
                     totalMtrPending += (rec.mtrBill || 0);
@@ -1505,23 +1596,30 @@ window.renderDashboard = function() {
                     totPend += pending; 
                     pendingCount++; 
                 } else {
-                    // If paid (pending <= 1), check for difference (Return/Short)
-                    // If Bill=100, Rcvd=90, Short=10. This 10 is 'Return Amount'
-                    // Note: If Rcvd > Bill (overpayment), diff is negative, we ignore or subtract.
-                    // Assuming 'Return' means deduction.
                     const diff = bill - rcvd;
                     if(diff > 0) returnAmt += diff; 
                 }
 
-                // Render Row
+                // --- ROW UI RENDERING ---
                 const mtrBillDisplay = rec.mtrBill ? `₹${rec.mtrBill}` : '-';
                 const mtrSts = rec.mtrPaid ? '<span style="color:green;font-weight:700">PAID</span>' : '<span style="color:red;font-weight:700">PEND</span>';
                 
+                // Smart Color Coding for Rcvd Amt
+                let rcvdDisplay = `<span style="color:#ccc">-</span>`;
+                if (rcvd > 0) {
+                    if (Math.abs(bill - rcvd) > 1) { // Highlights orange if there is a difference!
+                        rcvdDisplay = `<span style="color:var(--orange); font-weight:900;" title="Difference of ₹${(bill-rcvd).toFixed(0)}">₹${rcvd.toFixed(0)}</span>`;
+                    } else {
+                        rcvdDisplay = `<span style="color:var(--green); font-weight:900;">₹${rcvd.toFixed(0)}</span>`;
+                    }
+                }
+
                 tbody.innerHTML += `
                     <tr>
                         <td class="sticky-col" style="font-weight:500;">${billNo}</td>
                         <td class="w-date">${formatDate(rec.date)}</td>
                         <td class="w-num">₹${bill.toFixed(0)}</td>
+                        <td class="w-num">${rcvdDisplay}</td>
                         <td class="w-date" style="text-align:right;">${formatDate(rcvDate)}</td>
                         <td class="w-num" style="text-align:center;">${days}</td>
                         <td class="w-num">${mtrBillDisplay}</td>
@@ -1533,7 +1631,7 @@ window.renderDashboard = function() {
 
             const avgDays = creditCount > 0 ? (creditDaysSum/creditCount).toFixed(0) : 0;
 
-            // Update 9 KPIs
+            // Update KPIs
             document.getElementById('kpi-fin-total').innerText = `₹${totBilled.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
             document.getElementById('kpi-fin-rcvd').innerText = `₹${totRcvd.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
             document.getElementById('kpi-fin-pend').innerText = `₹${totPend.toLocaleString('en-IN', {maximumFractionDigits:0})}`;

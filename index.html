@@ -1327,7 +1327,8 @@ async function autoFinalizeBill(data) {
     });
     
     // Financials
-    const expenseObj = calculateTotalExpense(data.date, totalBillAmt, totalRealCost);
+    const wastageAmount = data.wastageAmt || 0;
+    const expenseObj = calculateTotalExpense(data.date, totalBillAmt, totalRealCost, 0, wastageAmount);
     const grossProfit = totalBillAmt - totalRealCost;
     const netProfit = grossProfit - expenseObj.total;
 
@@ -1511,30 +1512,23 @@ function hidePriceTooltip() {
         }
     }
 
-    // UPDATED: Accepts specific dump amount calculated from weight difference
-    // UPDATED: Calculates expense but EXCLUDES dump from the financial total
-    function calculateTotalExpense(dateStr, billAmount, billStandardCost, realDumpCost) {
-        if (!dateStr) return { total:0, wage:0, transport:0, packing:0, dump:0, misc:0 };
+    function calculateTotalExpense(dateStr, billAmount, billStandardCost, realDumpCost, wastageAmt = 0) {
+        if (!dateStr) return { total:0, wage:0, transport:0, packing:0, dump:0, misc:0, wastage:0 };
         const dateObj = new Date(dateStr);
         const dayIdx = dateObj.getDay(); 
-        
         const daySettings = expenseSettings.days[dayIdx];
+        
         const wage = daySettings.wage || 0;
         const transport = daySettings.transport || 0;
-        
-        // Packing: per 1000 rupees of Bill Amount
         const packing = (billAmount / 1000) * (expenseSettings.packingRate || 0);
-        
-        // Misc: % of Standard Bill Cost
         const misc = (billStandardCost * (expenseSettings.miscPercent || 0)) / 100;
-
-        // Dump: We record it, but we DO NOT add it to the total expense
         const dump = realDumpCost || 0;
+        const wastage = wastageAmt || 0;
         
-        // TOTAL = Wage + Transport + Packing + Misc (Dump is excluded from Financials)
-        const total = wage + transport + packing + misc;
+        // TOTAL includes wastage now
+        const total = wage + transport + packing + misc + wastage;
         
-        return { total, wage, transport, packing, dump, misc };
+        return { total, wage, transport, packing, dump, misc, wastage };
     }
 
     function positionTooltip(e, tooltipId) {
@@ -1660,6 +1654,7 @@ function applyRole(role) {
             <div class="exp-row"><span>Packing Charges</span><span>₹${details.packing.toFixed(0)}</span></div>
             <div class="exp-row"><span>Dump Cost</span><span>₹${details.dump.toFixed(0)}</span></div>
             <div class="exp-row"><span>Misc Cost</span><span>₹${details.misc.toFixed(0)}</span></div>
+            <div class="exp-row"><span style="color:var(--red)">Wastage</span><span style="color:var(--red)">₹${(details.wastage || 0).toFixed(0)}</span></div>
             <div class="exp-row total"><span>Total</span><span>₹${details.total.toFixed(0)}</span></div>
         `;
         positionTooltip(e, 'expense-tooltip');
