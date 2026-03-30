@@ -913,7 +913,7 @@
                                 const updates = {};
                                 updates[`active_indent/items/${idx}/savedImg`] = downloadURL;
                                 updates[`active_indent/items/${idx}/storagePath`] = fileName;
-                                await update(dbdbRef(db), updates); 
+                                await update(dbRef(db), updates); 
                             }
                         } catch(err) {
                             console.error(err);
@@ -944,7 +944,7 @@
                 const updates = {};
                 updates[`active_indent/items/${idx}/savedImg`] = null;
                 updates[`active_indent/items/${idx}/storagePath`] = null;
-                await update(dbdbRef(db), updates); 
+                await update(dbRef(db), updates); 
                 
             } catch (e) {
                 console.error(e);
