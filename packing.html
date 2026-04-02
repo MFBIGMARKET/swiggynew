@@ -444,16 +444,25 @@
 
 <div id="img-modal" onclick="this.style.display='none'"><span class="close-img">&times;</span><img id="img-content"></div>
 <!-- WASTAGE MODAL -->
+<!-- WASTAGE MODAL -->
 <div id="wastage-modal" class="modal-overlay hidden">
     <div class="modal-box">
         <div style="padding:20px; text-align:center;">
             <h3 style="margin-top:0; color:var(--orange);">Add Daily Wastage</h3>
-            <p style="font-size:12px; color:#666;">Enter the total wastage amount (₹) for today.</p>
-            <input type="number" id="wastage-input" class="login-input" placeholder="Amount (₹)" style="font-size:24px; text-align:center; font-weight:bold;">
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">Enter the total wastage amount (₹), an optional note, and a photo.</p>
+            
+            <input type="number" id="wastage-input" class="login-input" placeholder="Amount (₹)" style="font-size:24px; text-align:center; font-weight:bold; margin-bottom:10px;">
+            <textarea id="wastage-note" class="login-input" placeholder="Reason for wastage..." rows="2" style="font-size:13px; font-weight:normal; margin-bottom:10px;"></textarea>
+            
+            <div class="cam-btn" id="wastage-cam-btn" style="margin-bottom:10px; position:relative;">
+                <span class="material-icons">camera_alt</span> 
+                <span id="wastage-cam-text" style="font-size:13px; margin-left:8px;">Add Photo</span>
+                <input type="file" accept="image/*" capture="environment" class="cam-input" onchange="handleWastageImage(this)">
+            </div>
         </div>
         <div style="display:flex; border-top:1px solid #eee;">
             <button onclick="document.getElementById('wastage-modal').classList.add('hidden')" style="flex:1; padding:15px; background:white; border:none; border-right:1px solid #eee; color:#666; font-weight:bold; cursor:pointer;">CANCEL</button>
-            <button onclick="saveWastage()" style="flex:1; padding:15px; background:var(--orange); border:none; color:white; font-weight:bold; cursor:pointer;">SAVE</button>
+            <button id="wastage-save-btn" onclick="saveWastage()" style="flex:1; padding:15px; background:var(--orange); border:none; color:white; font-weight:bold; cursor:pointer;">SAVE</button>
         </div>
     </div>
 </div>
@@ -475,6 +484,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const storage = getStorage(app);
+    let tempWastageImg = null;
+let tempWastagePath = null;
     let activeIndent = null;
     let currentFilterMode = 'all'; 
     let masterMap = {}; 
@@ -1430,21 +1441,100 @@
         link.click();
         document.body.removeChild(link);
     }
-    window.openWastageModal = function() {
-        const val = activeIndent && activeIndent.wastageAmt ? activeIndent.wastageAmt : '';
-        document.getElementById('wastage-input').value = val;
-        document.getElementById('wastage-modal').classList.remove('hidden');
-    }
+    
 
-    window.saveWastage = async function() {
-        if(!activeIndent) return;
-        const amt = parseFloat(document.getElementById('wastage-input').value) || 0;
-        try {
-            await update(dbRef(db), { 'active_indent/wastageAmt': amt });
-            document.getElementById('wastage-modal').classList.add('hidden');
-            alert("Wastage saved: ₹" + amt);
-        } catch(e) { alert(e.message); }
-    }
+            window.openWastageModal = function() {
+            const amt = activeIndent && activeIndent.wastageAmt ? activeIndent.wastageAmt : '';
+            const note = activeIndent && activeIndent.wastageNote ? activeIndent.wastageNote : '';
+            tempWastageImg = activeIndent && activeIndent.wastageImg ? activeIndent.wastageImg : null;
+            tempWastagePath = activeIndent && activeIndent.wastageStoragePath ? activeIndent.wastageStoragePath : null;
+
+            document.getElementById('wastage-input').value = amt;
+            document.getElementById('wastage-note').value = note;
+
+            const camBtn = document.getElementById('wastage-cam-btn');
+            const camText = document.getElementById('wastage-cam-text');
+            if (tempWastageImg) {
+                camBtn.classList.add('has-img');
+                camText.innerText = "Photo Added";
+            } else {
+                camBtn.classList.remove('has-img');
+                camText.innerText = "Add Photo";
+            }
+
+            document.getElementById('wastage-modal').classList.remove('hidden');
+        }
+
+        window.handleWastageImage = function(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const camBtn = document.getElementById('wastage-cam-btn');
+                const camText = document.getElementById('wastage-cam-text');
+                
+                camText.innerText = "UPLOADING...";
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 400; 
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH; 
+                        canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        canvas.toBlob(async (blob) => {
+                            try {
+                                const fileName = `wastage_images/wastage_${Date.now()}.jpg`;
+                                const storageReference = sRef(storage, fileName);
+                                await uploadBytes(storageReference, blob);
+                                const downloadURL = await getDownloadURL(storageReference);
+                                
+                                tempWastageImg = downloadURL;
+                                tempWastagePath = fileName;
+                                
+                                camBtn.classList.add('has-img');
+                                camText.innerText = "Photo Added";
+                            } catch(err) {
+                                console.error(err);
+                                alert("Upload failed.");
+                                camText.innerText = "Add Photo";
+                            }
+                        }, 'image/jpeg', 0.6);
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        window.saveWastage = async function() {
+            if(!activeIndent) return;
+            const btn = document.getElementById('wastage-save-btn');
+            btn.innerText = "SAVING...";
+            
+            const amt = parseFloat(document.getElementById('wastage-input').value) || 0;
+            const note = document.getElementById('wastage-note').value;
+            
+            const updates = {
+                'active_indent/wastageAmt': amt,
+                'active_indent/wastageNote': note,
+                'active_indent/wastageImg': tempWastageImg,
+                'active_indent/wastageStoragePath': tempWastagePath
+            };
+
+            try {
+                await update(dbRef(db), updates);
+                document.getElementById('wastage-modal').classList.add('hidden');
+                alert("Wastage saved!");
+            } catch(e) { 
+                alert(e.message); 
+            } finally {
+                btn.innerText = "SAVE";
+            }
+        }
 
     // UPDATE the executeFinalSubmit function to include wastage:
     window.executeFinalSubmit = async function() {
@@ -1456,9 +1546,20 @@
                 qty: item.savedQty !== undefined ? item.savedQty : item.poQty,
                 actualKg: item.savedKg || 0, img: item.savedImg || null, packedBy: item.packedBy || ''
             }));
-            // Grab the wastage amount before deleting
+            
+            // Grab the wastage data before deleting
             const wastageAmt = activeIndent.wastageAmt || 0;
-            const reviewData = { date: activeIndent.date, items: reviewItems, wastageAmt: wastageAmt, timestamp: Date.now() };
+            const wastageNote = activeIndent.wastageNote || "";
+            const wastageImg = activeIndent.wastageImg || null;
+
+            const reviewData = { 
+                date: activeIndent.date, 
+                items: reviewItems, 
+                wastageAmt: wastageAmt,
+                wastageNote: wastageNote,
+                wastageImg: wastageImg,
+                timestamp: Date.now() 
+            };
             
             await set(dbRef(db, 'completed_packing'), reviewData);
             await remove(dbRef(db, 'active_indent'));

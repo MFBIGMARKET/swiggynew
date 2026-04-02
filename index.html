@@ -1326,8 +1326,13 @@ async function autoFinalizeBill(data) {
         };
     });
     
+    // Extract Wastage Data from Packing App
+    const wastageAmount = parseFloat(data.wastageAmt) || 0;
+    const wastageNote = data.wastageNote || "";
+    const wastageImg = data.wastageImg || null;
+
     // Financials
-    const wastageAmount = data.wastageAmt || 0;
+    // Pass wastageAmount as the 5th parameter so it gets added to total expenses
     const expenseObj = calculateTotalExpense(data.date, totalBillAmt, totalRealCost, 0, wastageAmount);
     const grossProfit = totalBillAmt - totalRealCost;
     const netProfit = grossProfit - expenseObj.total;
@@ -1345,7 +1350,12 @@ async function autoFinalizeBill(data) {
         margin: totalBillAmt > 0 ? (grossProfit/totalBillAmt)*100 : 0,
         totalExpenses: expenseObj.total,
         expenseDetails: expenseObj,
-        netProfit: netProfit
+        netProfit: netProfit,
+        
+        // Include Wastage details to be saved permanently
+        wastageAmt: wastageAmount,
+        wastageNote: wastageNote,
+        wastageImg: wastageImg
     };
 
     // Save & Clean
@@ -1353,8 +1363,9 @@ async function autoFinalizeBill(data) {
         await window.dbSet(window.dbRef(window.db, `indents/${historyRecord.id}`), historyRecord);
         await window.dbRemove(window.dbRef(window.db, 'completed_packing'));
         
+        // Add to local array to update UI without refreshing
         indents.unshift(historyRecord);
-        alert(`New Bill Processed for ${data.date}!\nRevenue: ₹${totalBillAmt.toFixed(0)}\nProfit: ₹${netProfit.toFixed(0)}`);
+        alert(`New Bill Processed for ${data.date}!\nRevenue: ₹${totalBillAmt.toFixed(0)}\nNet Profit: ₹${netProfit.toFixed(0)}`);
         
         if (currentTabId === 'view-history') renderIndentHistory();
     } catch(e) {
@@ -1626,22 +1637,23 @@ function applyRole(role) {
 
     // --- SPECIFIC TOOLTIPS ---
     
-    function showExpenseTooltip(e, context) {
+        function showExpenseTooltip(e, context) {
         clearTooltipTimer('expense');
         let details = null;
+        let wNote = "";
+        let wImg = "";
         
         if (context === 'current') {
             details = currentExpenseDetails;
+            // From Indent Upload - Usually manual, so blank here unless implemented elsewhere
         } else if (context === 'history' && currentViewedHistory) {
             if (currentViewedHistory.expenseDetails) {
                 details = currentViewedHistory.expenseDetails;
             } else {
-                details = calculateTotalExpense(
-                    currentViewedHistory.date, 
-                    currentViewedHistory.totalBillAmt || currentViewedHistory.totalRev,
-                    currentViewedHistory.totalCost
-                );
+                details = calculateTotalExpense(currentViewedHistory.date, currentViewedHistory.totalBillAmt || currentViewedHistory.totalRev, currentViewedHistory.totalCost);
             }
+            if(currentViewedHistory.wastageNote) wNote = `<div style="font-size:10px; color:#888; margin-top:2px;"><i>"${currentViewedHistory.wastageNote}"</i></div>`;
+            if(currentViewedHistory.wastageImg) wImg = `<span class="material-icons" style="font-size:14px; color:var(--primary); cursor:pointer; margin-left:5px; vertical-align:middle;" onclick="openImgModalDirect('${currentViewedHistory.wastageImg}')">image</span>`;
         }
 
         if(!details) return;
@@ -1652,12 +1664,24 @@ function applyRole(role) {
             <div class="exp-row"><span>Daily Wages</span><span>₹${details.wage.toFixed(0)}</span></div>
             <div class="exp-row"><span>Transport</span><span>₹${details.transport.toFixed(0)}</span></div>
             <div class="exp-row"><span>Packing Charges</span><span>₹${details.packing.toFixed(0)}</span></div>
-            <div class="exp-row"><span>Dump Cost</span><span>₹${details.dump.toFixed(0)}</span></div>
             <div class="exp-row"><span>Misc Cost</span><span>₹${details.misc.toFixed(0)}</span></div>
-            <div class="exp-row"><span style="color:var(--red)">Wastage</span><span style="color:var(--red)">₹${(details.wastage || 0).toFixed(0)}</span></div>
+            <div class="exp-row" style="flex-direction:column; align-items:flex-start;">
+                <div style="display:flex; justify-content:space-between; width:100%;">
+                    <span style="color:var(--red)">Wastage ${wImg}</span>
+                    <span style="color:var(--red)">₹${(details.wastage || 0).toFixed(0)}</span>
+                </div>
+                ${wNote}
+            </div>
             <div class="exp-row total"><span>Total</span><span>₹${details.total.toFixed(0)}</span></div>
         `;
         positionTooltip(e, 'expense-tooltip');
+    }
+
+        window.openImgModalDirect = function(url) {
+        const modal = document.getElementById('img-modal');
+        const modalImg = document.getElementById('img-content');
+        modal.style.display = "block";
+        modalImg.src = url;
     }
 
     function hideExpenseTooltip() {

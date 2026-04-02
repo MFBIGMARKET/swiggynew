@@ -29,7 +29,8 @@
         /* --- HEADER --- */
         .header { height: 60px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 50; }
         .header h2 { font-size: 18px; margin: 0; color: var(--primary); }
-        .icon-btn { background: none; border: none; padding: 8px; color: var(--text-sub); border-radius: 50%; cursor: pointer; }
+        .icon-btn { background: none; border: none; padding: 8px; color: var(--text-sub); border-radius: 50%; cursor: pointer; transition: 0.2s; }
+        .icon-btn:active { background: #f1f3f4; }
 
         .header-title-box { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
         .h-main { font-size: 16px; font-weight: 700; color: var(--text-main); }
@@ -80,148 +81,47 @@
         .col-head { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; background: #fff; border-bottom: 1px solid #eee; justify-content: center !important;}
 
         /* --- LIVE TAB STYLES --- */
-        
-        
         .live-head { font-size: 14px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        
         .pack-status { text-align: center; margin-bottom: 15px; }
         .pack-pct { font-size: 32px; font-weight: 900; color: var(--primary); }
         .pack-sub { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
         
-        /* --- CLEAN LIVE TILE STYLES --- */
-/* --- COMPACT LIVE TAB SPACING --- */
-.live-container { 
-    padding: 12px 16px; /* Reduced from 20px */
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px; /* Reduced from 20px - this handles the distance between tiles */
-    overflow-y: auto; 
-}
+        .live-container { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+        .live-card { background: #ffffff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid #edf2f7; position: relative; }
+        .live-card:active { transform: scale(0.98); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .live-badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pulse-dot { width: 6px; height: 6px; background: #1a73e8; border-radius: 50%; box-shadow: 0 0 0 rgba(26, 115, 232, 0.4); animation: pulse-blue 2s infinite; }
+        @keyframes pulse-blue { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(26, 115, 232, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); } }
 
-.live-card { 
-    background: #ffffff; 
-    border-radius: 12px; /* Slightly tighter radius for compact look */
-    padding: 16px; /* Tightened internal padding */
-    box-shadow: 0 2px 12px rgba(0,0,0,0.04); 
-    border: 1px solid #edf2f7; 
-    position: relative;
-}
+        .progress-track-clean { height: 8px !important; background: #f1f5f9; border-radius: 10px; overflow: hidden; width: 100%; }
+        .progress-fill-clean { height: 100%; border-radius: 10px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .stat-label { font-size: 11px; font-weight: 600; color: #64748b; }
+        .stat-value { font-size: 12px; font-weight: 700; color: #1e293b; }
+        .pct-label { font-weight: 800; margin-left: 4px; }
 
-.live-card:active {
-    transform: scale(0.98);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-}
+        .live-fin-grid-2x2 { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px; }
+        .live-card .live-head { display: none !important; }
+        #tab-live .live-card { padding: 16px !important; margin-bottom: 12px; }
+        .live-indicator { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: #1a73e8; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.live-badge-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-
-
-.pulse-dot {
-    width: 6px;
-    height: 6px;
-    background: #1a73e8;
-    border-radius: 50%;
-    box-shadow: 0 0 0 rgba(26, 115, 232, 0.4);
-    animation: pulse-blue 2s infinite;
-}
-
-@keyframes pulse-blue {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(26, 115, 232, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
-}
-
-
-
-.progress-track-clean {
-    height: 8px !important; /* Ensure it has height */
-    background: #f1f5f9;
-    border-radius: 10px;
-    overflow: hidden;
-    width: 100%;
-}
-
-.progress-fill-clean {
-    height: 100%;
-    border-radius: 10px;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.stat-label { font-size: 11px; font-weight: 600; color: #64748b; }
-.stat-value { font-size: 12px; font-weight: 700; color: #1e293b; }
-
-.pct-label {
-    font-weight: 800;
-    margin-left: 4px;
-}
-
-/* Update the container for consistent spacing */
-
-
-/* 2x2 Grid for Financial Snapshot */
-.live-fin-grid-2x2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-/* Ensure cards don't have overlapping old headers */
-.live-card .live-head { display: none !important; }
-
-/* Make the card more compact */
-#tab-live .live-card {
-    padding: 16px !important; /* Reduced from 24px */
-    margin-bottom: 12px;
-}
-
-/* Remove pulse animation from the text and keep it only on the dot for a cleaner look */
-.live-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px; /* Slightly larger as it's now the header */
-    font-weight: 800;
-    color: #1a73e8;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-
-
-
-/* Force 2x2 Grid for Financial Snapshot */
-.live-fin-grid-2x2 {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important; /* Exactly 2 columns */
-    gap: 10px;
-}
-
-/* Polishing the tiles for a 2x2 look */
-.live-fin-tile {
-    text-align: center;
-    padding: 12px 5px;
-    background: #ffffff;
-    border-radius: 10px;
-    border: 1px solid #edf2f7;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 60px;
-}
-
-.tap-hint {
-    text-align: center;
-    font-size: 11px;
-    color: #94a3b8;
-    margin-top: 8px;
-    font-weight: 500;
-}
+        .live-fin-tile { text-align: center; padding: 12px 5px; background: #ffffff; border-radius: 10px; border: 1px solid #edf2f7; display: flex; flex-direction: column; justify-content: center; min-height: 60px; }
+        .tap-hint { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 8px; font-weight: 500; }
         .no-order { text-align: center; color: #999; padding: 20px; font-style: italic; }
+
+        /* PERFORMANCE TILE STYLES */
+        .perf-row { display: flex; align-items: center; margin-bottom: 14px; }
+        .perf-row:last-child { margin-bottom: 0; }
+        .perf-name { width: 75px; font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .perf-bar-bg { flex: 1; height: 10px; background: #f1f5f9; border-radius: 6px; margin: 0 10px; overflow: hidden; position: relative; }
+        .perf-bar-fill { height: 100%; background: var(--primary); border-radius: 6px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .perf-val { min-width: 35px; text-align: right; font-size: 13px; font-weight: 800; color: var(--text-main); }
+        .perf-edits { font-size: 9px; color: var(--red); font-weight: 700; margin-top: 2px; }
+
+        /* HISTORY LIST IN ADMIN */
+        .history-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: transform 0.2s; }
+        .history-card:active { transform: scale(0.98); background: #f8f9fa; }
+        .hist-date { font-weight: 700; font-size: 15px; color: var(--text-main); }
+        .hist-sub { color: var(--text-sub); font-size: 12px; margin-top: 4px; }
 
         .att-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .att-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; background: #f8f9fa; border: 1px solid #f1f3f4; }
@@ -231,115 +131,35 @@
         .att-name { font-weight: 700; font-size: 13px; color: var(--text-main); }
         .att-time { font-size: 11px; color: var(--text-sub); }
 
+        .live-fin-tile { text-align: center; padding: 10px 5px; background: #f8f9fa; border-radius: 10px; border: 1px solid #eee; }
+        .fin-label { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+        .fin-val { font-size: 14px; font-weight: 800; color: #1e293b; }
 
-        .live-fin-tile {
-    text-align: center;
-    padding: 10px 5px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    border: 1px solid #eee;
-}
-.fin-label { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
-.fin-val { font-size: 14px; font-weight: 800; color: #1e293b; }
+        #page-live-detail .content, #page-live-history .content { display: block !important; overflow-y: auto !important; padding: 12px !important; background-color: #f0f2f5 !important; }
+        #live-detail-list, #live-history-content { display: block !important; width: 100% !important; }
 
-/* --- THE FINAL "THIN LINE" KILLER CSS --- */
+        .live-item-card { display: flex !important; flex-direction: column !important; height: auto !important; min-height: 100px !important; background: #ffffff !important; border-radius: 12px !important; margin-bottom: 15px !important; border: 1px solid #e0e0e0 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important; overflow: visible !important; }
+        .live-item-card.packed { border-left: 6px solid #28a745 !important; }
+        .live-item-card.overpacked { border: 2px solid #dc3545 !important; background: #fff8f8 !important; }
 
-#page-live-detail .content {
-    display: block !important; /* Prevents flex-squashing */
-    overflow-y: auto !important;
-    padding: 12px !important;
-    background-color: #f0f2f5 !important;
-}
+        .li-header { display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 10px 15px !important; border-bottom: 1px solid #eee !important; height: 40px !important; }
+        .li-name { font-weight: 700; font-size: 14px; color: #1a1a1b; }
+        .li-code { font-size: 11px; color: #6c757d; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; }
 
-#live-detail-list {
-    display: block !important;
-    width: 100% !important;
-}
+        .li-body { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; padding: 12px 15px !important; height: auto !important; }
+        
+        .att-table th { background: #f8f9fa; color: #666; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 12px 10px; border-bottom: 1px solid #eee; text-align: center !important; }
 
-.live-item-card {
-    display: flex !important; /* Force it to show its rows */
-    flex-direction: column !important;
-    height: auto !important; /* Overrides any zero-height settings */
-    min-height: 100px !important; /* Guarantees visibility */
-    background: #ffffff !important;
-    border-radius: 12px !important;
-    margin-bottom: 15px !important;
-    border: 1px solid #e0e0e0 !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
-    overflow: visible !important;
-}
+        .li-val { font-size: 15px; font-weight: 700; color: #1a73e8; background: #e8f0fe; width: 100%; text-align: center; padding: 10px 0; border-radius: 8px; border: 1px solid #d2e3fc; }
+        .li-target-info { font-size: 11px; color: #5f6368; margin-top: 2px; font-weight: 500; }
+        .li-col { display: flex !important; flex-direction: column !important; align-items: center !important; }
+        .li-label { font-size: 9px; color: #8e8e93; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
 
-/* Status Borders */
-.live-item-card.packed { border-left: 6px solid #28a745 !important; }
-.live-item-card.overpacked { border: 2px solid #dc3545 !important; background: #fff8f8 !important; }
+        .live-img-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: #e7f1ff; border-radius: 8px; color: #007bff; cursor: pointer; }
+        .li-footer { font-size: 10px; padding: 0 15px 10px; color: #999; text-align: right; }
 
-.li-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 10px 15px !important;
-    border-bottom: 1px solid #eee !important;
-    height: 40px !important; /* Fixed height for header */
-}
-
-.li-name { font-weight: 700; font-size: 14px; color: #1a1a1b; }
-.li-code { font-size: 11px; color: #6c757d; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; }
-
-.li-body {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 10px !important;
-    padding: 12px 15px !important;
-    height: auto !important;
-}
-/* --- ATTENDANCE MODAL FIX --- */
-.att-table th { 
-    background: #f8f9fa; 
-    color: #666; 
-    font-size: 11px; 
-    font-weight: 700; 
-    text-transform: uppercase; 
-    padding: 12px 10px; 
-    border-bottom: 1px solid #eee; 
-    text-align: center !important; /* Forces the DATE header to center */
-}
-
-/* --- LIVE MONITOR POLISH --- */
-.li-val { 
-    font-size: 15px; 
-    font-weight: 700; 
-    color: #1a73e8; /* Primary color like packing app */
-    background: #e8f0fe; /* Light blue background */
-    width: 100%; 
-    text-align: center; 
-    padding: 10px 0; 
-    border-radius: 8px; 
-    border: 1px solid #d2e3fc; 
-}
-
-/* Style for the target weight sub-text */
-.li-target-info {
-    font-size: 11px;
-    color: #5f6368;
-    margin-top: 2px;
-    font-weight: 500;
-}
-
-.li-col { display: flex !important; flex-direction: column !important; align-items: center !important; }
-.li-label { font-size: 9px; color: #8e8e93; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
-
-
-.live-img-btn {
-    width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
-    background: #e7f1ff; border-radius: 8px; color: #007bff; cursor: pointer;
-}
-
-.li-footer {
-    font-size: 10px; padding: 0 15px 10px; color: #999; text-align: right;
-}
-
-.live-filter-pending { background: var(--orange) !important; color: white !important; }
-.live-filter-packed { background: var(--green) !important; color: white !important; }
+        .live-filter-pending { background: var(--orange) !important; color: white !important; }
+        .live-filter-packed { background: var(--green) !important; color: white !important; }
 
         /* --- MARGIN DISTRIBUTION --- */
         .margin-dist-container { padding: 0 12px 10px 12px; display: flex; gap: 10px; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; }
@@ -364,64 +184,33 @@
         .table-wrapper { flex: 1; overflow: auto; position: relative; background: var(--surface); border-top: 1px solid var(--border); }
         table { border-collapse: collapse; width: 100%; border-spacing: 0; }
         
-        th, td { 
-            padding: 12px 8px; font-size: 12px; white-space: nowrap; vertical-align: middle; 
-            text-align: center; 
-            border-bottom: 1px solid var(--border);
-            border-right: 1px solid var(--border); 
-        }
+        th, td { padding: 12px 8px; font-size: 12px; white-space: nowrap; vertical-align: middle; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
         th:last-child, td:last-child { border-right: none; }
 
-        th { 
-            position: sticky; top: 0; z-index: 20; background: #f8f9fa; color: var(--text-sub); 
-            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        
+        th { position: sticky; top: 0; z-index: 20; background: #f8f9fa; color: var(--text-sub); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         th.sortable { cursor: pointer; user-select: none; }
         th.sortable:active { background: #e8f0fe; color: var(--primary); }
 
         tbody tr:nth-child(even) { background-color: #fafafa; }
         tbody tr:active { background-color: #e8f0fe; }
 
-        .sticky-col, th.sticky-col { 
-            position: sticky; left: 0; background: var(--surface); z-index: 15; 
-            border-right: 2px solid #dadce0 !important; width: 45vw; max-width: 160px; 
-            overflow: hidden; text-overflow: ellipsis; 
-            text-align: left !important; padding-left: 12px;
-        }
+        .sticky-col, th.sticky-col { position: sticky; left: 0; background: var(--surface); z-index: 15; border-right: 2px solid #dadce0 !important; width: 45vw; max-width: 160px; overflow: hidden; text-overflow: ellipsis; text-align: left !important; padding-left: 12px; }
         th.sticky-col { z-index: 25; background: #f8f9fa; }
         
         .w-num { min-width: 75px; }
         .w-date { min-width: 85px; color: var(--text-sub); }
 
         /* Detailed Profit Table Styling */
-.prof-table { width: 100%; border-collapse: collapse; text-align: center; }
-.prof-table th, .prof-table td { 
-    padding: 8px 4px; 
-    border: 1px solid #eee; 
-    font-size: 11px; 
-    min-width: 65px;
-    white-space: nowrap;
-}
+        .prof-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .prof-table th, .prof-table td { padding: 8px 4px; border: 1px solid #eee; font-size: 11px; min-width: 65px; white-space: nowrap; }
+        .prof-table thead th { position: sticky; top: 0; z-index: 30; background: #f8f9fa; font-weight: 900; color: #5f6368; }
+        .prof-table .sticky-col { position: sticky; left: 0; z-index: 40; background: white !important; border-right: 2px solid #ddd !important; text-align: left; padding-left: 10px; width: 85px; min-width: 85px; }
 
-.prof-table thead th { 
-    position: sticky; top: 0; z-index: 30; 
-    background: #f8f9fa; font-weight: 900; color: #5f6368;
-}
-
-.prof-table .sticky-col { 
-    position: sticky; left: 0; z-index: 40; 
-    background: white !important; border-right: 2px solid #ddd !important;
-    text-align: left; padding-left: 10px; width: 85px; min-width: 85px;
-}
-
-.bg-mf { background-color: #f1f8ff !important; }
-.bg-mtr { background-color: #fdf2ff !important; }
-.bg-total { background-color: #e8f5e9 !important; font-weight: 900; }
-
-.val-small { font-size: 9px; color: #888; display: block; font-weight: 400; }
-.txt-net { font-weight: 800; }
-        
+        .bg-mf { background-color: #f1f8ff !important; }
+        .bg-mtr { background-color: #fdf2ff !important; }
+        .bg-total { background-color: #e8f5e9 !important; font-weight: 900; }
+        .val-small { font-size: 9px; color: #888; display: block; font-weight: 400; }
+        .txt-net { font-weight: 800; }
 
         /* --- MODALS --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 5000; display: flex; align-items: center; justify-content: center; }
@@ -442,12 +231,6 @@
         .login-box { width: 80%; max-width: 300px; text-align: center; }
         .login-inp { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 15px; font-size: 16px; outline:none; }
         .login-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 16px; }
-
-        @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
     </style>
 </head>
 <body>
@@ -487,29 +270,45 @@
                             <div class="no-order">Loading...</div>
                         </div>
                     </div>
-                            <!-- 2. NEW: LIVE FINANCIAL SNAPSHOT -->
-        <div class="live-card" id="card-live-fin" style="display:none;">
-            <div class="live-badge-row" style="margin-bottom: 12px;">
-                <div class="live-indicator" style="color:var(--purple)">
-                    <span class="material-icons" style="font-size:16px;">payments</span>
-                    Expected Profit
-                </div>
-            </div>
-            <div id="live-fin-grid" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-                <!-- Injected by JS -->
-            </div>
-        </div>
+                    
+                    <!-- 2. LIVE FINANCIAL SNAPSHOT -->
+                    <div class="live-card" id="card-live-fin" style="display:none;">
+                        <div class="live-badge-row" style="margin-bottom: 12px;">
+                            <div class="live-indicator" style="color:var(--purple)">
+                                <span class="material-icons" style="font-size:16px;">payments</span>
+                                Expected Profit
+                            </div>
+                        </div>
+                        <div id="live-fin-grid" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- 2.5 LIVE EMPLOYEE PERFORMANCE -->
+                    <div class="live-card" id="card-live-perf" style="display:none;">
+                        <div class="live-badge-row" style="margin-bottom: 12px;">
+                            <div class="live-indicator" style="color:#00796b;">
+                                <span class="material-icons" style="font-size:16px;">emoji_events</span>
+                                Packer Performance
+                            </div>
+                            <div style="font-size:10px; color:#94a3b8; font-weight:700;">PACKETS</div>
+                        </div>
+                        <div id="live-perf-content">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                    
                     <!-- 3. ATTENDANCE -->
-<div class="live-card">
-    <div class="live-badge-row" style="margin-bottom: 16px;">
-        <div class="live-indicator" style="color:var(--text-sub)">
-            <span class="material-icons" style="font-size:16px;">groups</span>
-            Staff Attendance
-        </div>
-        <div style="font-size:11px; color:#94a3b8; font-weight:700;">TODAY</div>
-    </div>
-    <div id="live-att-grid" class="att-grid"></div>
-</div>
+                    <div class="live-card">
+                        <div class="live-badge-row" style="margin-bottom: 16px;">
+                            <div class="live-indicator" style="color:var(--text-sub)">
+                                <span class="material-icons" style="font-size:16px;">groups</span>
+                                Staff Attendance
+                            </div>
+                            <div style="font-size:11px; color:#94a3b8; font-weight:700;">TODAY</div>
+                        </div>
+                        <div id="live-att-grid" class="att-grid"></div>
+                    </div>
                 </div>
             </div>
 
@@ -556,7 +355,6 @@
                     <input type="date" id="fin-to" class="date-input" onchange="renderFinance()">
                 </div>
 
-                <!-- UPDATED 3x3 GRID -->
                 <div class="kpi-container">
                     <div class="kpi-grid-3x3">
                         <div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-val" id="kpi-fin-total">₹0</div></div>
@@ -567,8 +365,8 @@
                         <div class="kpi-card"><div class="kpi-label">Returns</div><div class="kpi-val val-warn" id="kpi-fin-return">₹0</div></div>
                         <div class="kpi-card"><div class="kpi-label">Pending Bills</div><div class="kpi-val" id="kpi-fin-count">0</div></div>
                         
-                        <div class="kpi-card"><div class="kpi-label">All Billed</div><div class="kpi-val" id="kpi-fin-all-bill">₹0</div></div>
-                        <div class="kpi-card"><div class="kpi-label">All Pending</div><div class="kpi-val val-neg" id="kpi-fin-all-pend">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">MTR Total Bill</div><div class="kpi-val" id="kpi-fin-mtr-total">₹0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">MTR Paid</div><div class="kpi-val val-pos" id="kpi-fin-mtr-paid">₹0</div></div>
                         <div class="kpi-card"><div class="kpi-label">MTR Pending</div><div class="kpi-val val-neg" id="kpi-fin-mtr-pend">₹0</div></div>
                     </div>
                 </div>
@@ -592,35 +390,6 @@
                     </table>
                 </div>
             </div>
-            <!-- LIVE DETAIL PAGE -->
-<div id="page-live-detail" class="page">
-    <div class="header">
-        <button class="icon-btn" onclick="closeLiveDetail()"><span class="material-icons">arrow_back</span></button>
-        <div class="header-title-box">
-            <div class="h-main">Live Packing Monitor</div>
-            <div id="live-detail-date" class="h-sub">Loading...</div>
-        </div>
-        <div style="width:40px"></div> <!-- Spacer for symmetry -->
-    </div>
-    
-    <!-- Filter Bar -->
-    <div class="filter-bar" style="padding: 10px 16px;">
-        <input type="text" id="liveSearch" class="date-input" style="flex:1" placeholder="Search item..." onkeyup="renderLiveDetailList()">
-        <button id="live-filter-btn" class="icon-btn" onclick="toggleLiveFilter()" style="border: 1px solid var(--border); border-radius: 8px; margin-left: 8px;">
-            <span class="material-icons" id="live-filter-icon">filter_list</span>
-        </button>
-    </div>
-
-    <div class="content" style="overflow-y: auto; padding: 12px;" id="live-detail-list">
-        <!-- Live Items will be injected here -->
-    </div>
-</div>
-
-<!-- IMAGE VIEW MODAL (Standalone for Admin) -->
-<div id="admin-img-modal" class="modal-overlay hidden" onclick="this.classList.add('hidden')">
-    <span class="material-icons" style="position:absolute; top:20px; right:20px; color:white; font-size:40px; cursor:pointer;">close</span>
-    <img id="admin-img-content" style="max-width:90%; max-height:80vh; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.5);">
-</div>
 
             <!-- TAB 4: MASTER -->
             <div id="tab-master" class="tab-content">
@@ -645,38 +414,65 @@
             </div>
 
             <!-- TAB 5: DASHBOARD (PROFITABILITY) -->
-<div id="tab-dashboard" class="tab-content">
-    <div class="filter-bar">
-        <div style="display:flex; gap:8px; flex:1;">
-            <input type="date" id="dash-from" class="date-input" onchange="renderDashboard()">
-            <input type="date" id="dash-to" class="date-input" onchange="renderDashboard()">
-        </div>
-        <!-- ADD THIS BUTTON -->
-        <!-- Circular Toggle in tab-dashboard filter-bar -->
-<button class="icon-btn" onclick="toggleDashboardView()" style="width: 36px; height: 36px; border-radius: 50% !important; border: 1px solid #dadce0 !important; background: white !important; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <span class="material-icons" id="dash-toggle-icon" style="font-size: 20px; color: var(--primary);">table_chart</span>
-</button>
-    </div>
-    
-    <div id="profitability-container" style="overflow-y:auto; padding:10px;"></div>
-</div>
+            <div id="tab-dashboard" class="tab-content">
+                <div class="filter-bar">
+                    <div style="display:flex; gap:8px; flex:1;">
+                        <input type="date" id="dash-from" class="date-input" onchange="renderDashboard()">
+                        <input type="date" id="dash-to" class="date-input" onchange="renderDashboard()">
+                    </div>
+                    <button class="icon-btn" onclick="toggleDashboardView()" style="width: 36px; height: 36px; border-radius: 50% !important; border: 1px solid #dadce0 !important; background: white !important; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <span class="material-icons" id="dash-toggle-icon" style="font-size: 20px; color: var(--primary);">table_chart</span>
+                    </button>
+                </div>
+                <div id="profitability-container" style="overflow-y:auto; padding:10px;"></div>
+            </div>
+
+        </div> <!-- End of .content -->
 
         <div class="bottom-nav">
-            <div class="nav-item" onclick="switchTab('live', this)">
-                <span class="material-icons">dashboard</span><span>Live</span>
+            <div class="nav-item" onclick="switchTab('live', this)"><span class="material-icons">dashboard</span><span>Live</span></div>
+            <div class="nav-item active" onclick="switchTab('report', this)"><span class="material-icons">assessment</span><span>Report</span></div>
+            <div class="nav-item" onclick="switchTab('finance', this)"><span class="material-icons">account_balance</span><span>Finance</span></div>
+            <div class="nav-item" onclick="switchTab('master', this)"><span class="material-icons">sell</span><span>Master</span></div>
+            <div class="nav-item" onclick="switchTab('dashboard', this)"><span class="material-icons">attach_money</span><span>Profit</span></div>
+        </div>
+    </div>
+
+    <!-- LIVE DETAIL PAGE -->
+    <div id="page-live-detail" class="page">
+        <div class="header">
+            <button class="icon-btn" onclick="closeLiveDetail()"><span class="material-icons">arrow_back</span></button>
+            <div class="header-title-box">
+                <div class="h-main">Live Packing Monitor</div>
+                <div id="live-detail-date" class="h-sub">Loading...</div>
             </div>
-            <div class="nav-item active" onclick="switchTab('report', this)">
-                <span class="material-icons">assessment</span><span>Report</span>
+            <button class="icon-btn" onclick="openLiveHistory()"><span class="material-icons" style="color:var(--primary);">history</span></button>
+        </div>
+        
+        <div class="filter-bar" style="padding: 10px 16px;">
+            <input type="text" id="liveSearch" class="date-input" style="flex:1" placeholder="Search item..." onkeyup="renderLiveDetailList()">
+            <button id="live-filter-btn" class="icon-btn" onclick="toggleLiveFilter()" style="border: 1px solid var(--border); border-radius: 8px; margin-left: 8px;">
+                <span class="material-icons" id="live-filter-icon">filter_list</span>
+            </button>
+        </div>
+
+        <div class="content" style="overflow-y: auto; padding: 12px;" id="live-detail-list">
+            <!-- Live Items will be injected here -->
+        </div>
+    </div>
+
+    <!-- LIVE HISTORY PAGE -->
+    <div id="page-live-history" class="page">
+        <div class="header">
+            <button class="icon-btn" onclick="closeLiveHistory()"><span class="material-icons">arrow_back</span></button>
+            <div class="header-title-box">
+                <div class="h-main">Packing History</div>
+                <div class="h-sub">Last 5 Days</div>
             </div>
-            <div class="nav-item" onclick="switchTab('finance', this)">
-                <span class="material-icons">account_balance</span><span>Finance</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('master', this)">
-                <span class="material-icons">sell</span><span>Master</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('dashboard', this)">
-                <span class="material-icons">attach_money</span><span>Profit</span>
-            </div>
+            <div style="width:40px"></div>
+        </div>
+        <div class="content" style="overflow-y: auto; padding: 12px; background-color: #f0f2f5;" id="live-history-content">
+            <!-- History list injected here -->
         </div>
     </div>
 
@@ -733,6 +529,12 @@
         </div>
     </div>
 
+    <!-- IMAGE VIEW MODAL (Standalone for Admin) -->
+    <div id="admin-img-modal" class="modal-overlay hidden" onclick="this.classList.add('hidden')">
+        <span class="material-icons" style="position:absolute; top:20px; right:20px; color:white; font-size:40px; cursor:pointer;">close</span>
+        <img id="admin-img-content" style="max-width:90%; max-height:80vh; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+    </div>
+
     <!-- INFO MODAL -->
     <div id="info-modal" class="hidden modal-overlay" onclick="closeModal(event)">
         <div class="modal-box" onclick="event.stopPropagation()">
@@ -741,6 +543,22 @@
                 <span class="material-icons" onclick="document.getElementById('info-modal').classList.add('hidden')" style="cursor:pointer">close</span>
             </div>
             <div id="modal-content" class="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- ATTENDANCE HISTORY MODAL -->
+    <div id="att-modal" class="hidden modal-overlay" onclick="closeModal(event)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <div class="modal-head">
+                <span id="att-modal-title">Employee History</span>
+                <span class="material-icons" onclick="document.getElementById('att-modal').classList.add('hidden')" style="cursor:pointer">close</span>
+            </div>
+            <div style="padding:10px; background:#f8f9fa; border-bottom:1px solid #eee;">
+                <input type="month" id="att-modal-month" class="date-input" style="width:100%; box-sizing:border-box;" onchange="loadAttModalHistory()">
+            </div>
+            <div id="att-modal-body" class="modal-body" style="max-height:60vh; overflow-y:auto;">
+                <!-- Table Injected Here -->
+            </div>
         </div>
     </div>
 
@@ -762,9 +580,8 @@
         const db = getDatabase(app);
         
         let allIndents = [];
-        
-let liveFilterMode = 'all'; // all, pending, packed
-let activeIndentData = null;
+        let liveFilterMode = 'all'; 
+        let activeIndentData = null;
         let allProducts = [];
         let masterMap = {};
         let expenseSettings = null; 
@@ -815,465 +632,527 @@ let activeIndentData = null;
         }
 
         function setupLiveListeners() {
-    // 1. Real-time listener for Active Packing
-    onValue(ref(db, 'active_indent'), (snap) => {
-        activeIndentData = snap.val();
-        
-        // Refresh the Live Tab UI (Progress + Financials)
-        refreshLiveUI();
-        
-        // If Admin is currently in "Monitor Mode" (Detailed Item List), refresh that too
-        if(document.getElementById('page-live-detail').classList.contains('active')) {
-            renderLiveDetailList();
-        }
-    });
-
-    // 2. Real-time listener for Today's Attendance
-    const today = new Date().toISOString().split('T')[0];
-    onValue(ref(db, `attendance/${today}`), (snap) => {
-        const data = snap.val() || {};
-        const staff = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU'];
-        const grid = document.getElementById('live-att-grid');
-        let html = '';
-        
-        staff.forEach(name => {
-            const user = data[name];
-            let dotClass = '', timeText = 'Absent';
-            
-            if(user) {
-                if(user.inTime && !user.outTime) {
-                    dotClass = 'st-in';
-                    const t = new Date(user.inTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                    timeText = `In: ${t}`;
-                } else if(user.outTime) {
-                    dotClass = 'st-out';
-                    timeText = 'Done';
+            onValue(ref(db, 'active_indent'), (snap) => {
+                activeIndentData = snap.val();
+                refreshLiveUI();
+                if(document.getElementById('page-live-detail').classList.contains('active')) {
+                    renderLiveDetailList();
                 }
-            }
-            
-            html += `
-                <div class="att-item" onclick="openAttHistory('${name}')" style="cursor:pointer">
-                    <div class="status-dot ${dotClass}"></div>
-                    <div>
-                        <div class="att-name">${name}</div>
-                        <div class="att-time">${timeText}</div>
-                    </div>
-                </div>
-            `;
-        });
-        grid.innerHTML = html;
-    });
-}
-        window.openLiveDetail = function() {
-    if(!activeIndentData) return;
-    document.getElementById('live-detail-date').innerText = formatDateFull(activeIndentData.date);
-    renderLiveDetailList();
-    document.getElementById('page-live-detail').classList.add('active');
-}
+            });
 
-window.closeLiveDetail = function() {
-    document.getElementById('page-live-detail').classList.remove('active');
-}
-
-window.refreshLiveUI = function() {
-    const data = activeIndentData;
-    const packContainer = document.getElementById('live-pack-content');
-    const finCard = document.getElementById('card-live-fin');
-    const finGrid = document.getElementById('live-fin-grid');
-    
-    if(!data || !packContainer) return;
-
-    // --- A. CALCULATIONS ---
-    const itemCount = data.items ? data.items.length : 0;
-    const packedCount = data.items ? data.items.filter(i => i.isPacked === true).length : 0;
-    const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
-    let totalOrdPkts = 0, totalPackedPkts = 0, indentGoal = 0, expectedCost = 0;
-
-    const masterLoaded = Object.keys(masterMap).length > 0;
-
-    if (data.items) {
-        data.items.forEach(i => {
-            totalOrdPkts += parseFloat(i.poQty) || 0;
-            if (i.isPacked) totalPackedPkts += parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
-            const itemRev = (parseFloat(i.poQty) || 0) * (parseFloat(i.poRate) || 0);
-            indentGoal += itemRev;
-            const master = masterMap[i.code];
-            if (master) {
-                const estKg = (parseFloat(i.poQty) || 0) * (parseFloat(master.conv) || 0);
-                expectedCost += (estKg * (parseFloat(master.costKg) || 0));
-            }
-        });
-    }
-
-    const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
-
-    let estExp = 0;
-    if (expenseSettings && data.date) {
-        const dObj = data.date.includes('-') && data.date.split('-')[0].length === 4 ? new Date(data.date) : new Date();
-        const dayIdx = dObj.getDay();
-        const daySet = expenseSettings.days[dayIdx];
-        const packExp = (indentGoal / 1000) * expenseSettings.packingRate;
-        estExp = (daySet.wage || 0) + (daySet.transport || 0) + packExp;
-    }
-
-    const estGross = indentGoal - expectedCost;
-    const estNet = estGross - estExp;
-    const estMgn = indentGoal > 0 ? (estNet / indentGoal * 100).toFixed(1) : 0;
-
-    // --- B. UI: LIVE PACKING ---
-    // ... inside window.refreshLiveUI ...
-
-// --- B. UI: LIVE PACKING ---
-packContainer.parentElement.onclick = () => openLiveDetail();
-packContainer.innerHTML = `
-    <div class="live-badge-row" style="margin-bottom: 16px;">
-        <div class="live-indicator">
-            <div class="pulse-dot"></div> Live Packing
-        </div>
-        <div style="background:#eef2f7; color:#475569; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">
-            ${formatDateFull(data.date)} 
-        </div>
-    </div>
-
-    <!-- UNIQUE ITEMS PROGRESS -->
-    <div style="margin-bottom: 15px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span class="stat-label" style="font-size:11px;">Unique Items</span>
-            <span class="stat-value" style="font-size:12px;">
-                ${packedCount} / ${itemCount} 
-                <span class="pct-label" style="color:var(--primary); margin-left:5px;">${itemPct}%</span>
-            </span>
-        </div>
-        <div class="progress-track-clean">
-            <div class="progress-fill-clean" style="width:${itemPct}%; background:var(--primary)"></div>
-        </div>
-    </div>
-
-    <!-- TOTAL PACKETS PROGRESS -->
-    <div style="margin-bottom: 5px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span class="stat-label" style="font-size:11px;">Total Packets</span>
-            <span class="stat-value" style="font-size:12px;">
-                ${totalPackedPkts} / ${totalOrdPkts} 
-                <span class="pct-label" style="color:#f59e0b; margin-left:5px;">${pktPct}%</span>
-            </span>
-        </div>
-        <div class="progress-track-clean" style="margin-bottom: 0 !important;">
-            <div class="progress-fill-clean" style="width:${pktPct}%; background:#f59e0b"></div>
-        </div>
-    </div>
-
-    <div class="tap-hint" style="margin-top: 15px; border-top: 1px solid #f1f1f1; padding-top: 10px;">
-        Tap to monitor individual items
-    </div>
-`;
-
-// ... keep Expected Profit and Attendance sections ...
-
-    // --- C. UI: EXPECTED PROFIT (Updated to 2x2) ---
-    // ... inside window.refreshLiveUI ...
-
-if(finCard && finGrid) {
-    finCard.style.display = 'block';
-    if (!masterLoaded) {
-        finGrid.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:20px; color:#999; font-size:12px;">Syncing Master Prices...</div>`;
-    } else {
-        // Apply the 2x2 class
-        finGrid.className = "live-fin-grid-2x2"; 
-        
-        // Update the card content with a clean header and 2x2 tiles
-        finCard.innerHTML = `
-            <div class="live-badge-row" style="margin-bottom: 15px;">
-                <div class="live-indicator" style="color:var(--purple)">
-                    <span class="material-icons" style="font-size:16px;">account_balance_wallet</span>
-                    Expected Profit
-                </div>
-                <div style="font-size:10px; color:#94a3b8; font-weight:700;">ESTIMATE</div>
-            </div>
-            
-            <div class="live-fin-grid-2x2" id="live-fin-grid">
-                <div class="live-fin-tile" style="background:#f8fafc;">
-                    <div class="fin-label">Indent Goal</div>
-                    <div class="fin-val">₹${indentGoal.toFixed(0)}</div>
-                </div>
-                <div class="live-fin-tile" style="background:#fffaf5; border-color:#ffeada;">
-                    <div class="fin-label" style="color:var(--orange)">Est. Expense</div>
-                    <div class="fin-val" style="color:var(--orange)">₹${estExp.toFixed(0)}</div>
-                </div>
-                <div class="live-fin-tile" style="background:#f0f7ff; border-color:#d0e3ff;">
-                    <div class="fin-label" style="color:var(--primary)">Net Profit</div>
-                    <div class="fin-val" style="color:var(--primary)">₹${estNet.toFixed(0)}</div>
-                </div>
-                <div class="live-fin-tile" style="background:#fafffa; border-color:#e0f0e0;">
-                    <div class="fin-label" style="color:var(--green)">Net Mgn</div>
-                    <div class="fin-val" style="color:var(--green)">${estMgn}%</div>
-                </div>
-            </div>
-        `;
-    }
-}
-}
-
-window.toggleLiveFilter = function() {
-    const btn = document.getElementById('live-filter-btn');
-    const icon = document.getElementById('live-filter-icon');
-    
-    if (liveFilterMode === 'all') { 
-        liveFilterMode = 'pending'; 
-        btn.className = 'icon-btn live-filter-pending'; 
-        icon.innerText = 'check_box_outline_blank'; 
-    } 
-    else if (liveFilterMode === 'pending') { 
-        liveFilterMode = 'packed'; 
-        btn.className = 'icon-btn live-filter-packed'; 
-        icon.innerText = 'check_box'; 
-    } 
-    else { 
-        liveFilterMode = 'all'; 
-        btn.className = 'icon-btn'; 
-        icon.innerText = 'filter_list'; 
-    }
-    renderLiveDetailList();
-}
-
-window.renderLiveDetailList = function() {
-    const container = document.getElementById('live-detail-list');
-    const searchTerm = document.getElementById('liveSearch').value.toLowerCase();
-    
-    if(!activeIndentData || !activeIndentData.items) return;
-    
-    container.innerHTML = '';
-    
-    const filteredItems = activeIndentData.items.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(searchTerm) || item.code.toString().includes(searchTerm);
-        let matchesFilter = true;
-        if(liveFilterMode === 'pending') matchesFilter = !item.isPacked;
-        if(liveFilterMode === 'packed') matchesFilter = item.isPacked;
-        return matchesSearch && matchesFilter;
-    }).sort((a, b) => a.name.localeCompare(b.name));
-
-    filteredItems.forEach(item => {
-        const isPacked = item.isPacked === true;
-        const valQty = parseFloat(item.savedQty !== undefined ? item.savedQty : item.poQty) || 0;
-        const valKg = parseFloat(item.savedKg) || 0;
-        
-        // 1. Target Weight Calculation (Like Packing App)
-        const master = masterMap[item.code];
-        let targetWeightHTML = '';
-        if (master && master.conv > 0) {
-            const targetKg = (item.poQty * master.conv).toFixed(2);
-            targetWeightHTML = `<div class="li-target-info">Target: ${targetKg}kg</div>`;
-        }
-
-        // 2. Overpacking logic
-        let cardClass = 'live-item-card';
-        if (isPacked) {
-            let isOver = (valQty > item.poQty);
-            if (!isOver && master && master.conv > 0 && valKg > 0) {
-                const stdWeight = valQty * master.conv;
-                if (valKg > (stdWeight + 0.05)) isOver = true;
-            }
-            cardClass += isOver ? ' overpacked' : ' packed';
-        }
-
-        const div = document.createElement('div');
-        div.className = cardClass;
-        div.innerHTML = `
-            <div class="li-header">
-                <div>
-                    <div class="li-name">${item.name}</div>
-                    ${targetWeightHTML}
-                </div>
-                <span class="li-code">#${item.code}</span>
-            </div>
-            <div class="li-body">
-                <div class="li-col"><span class="li-label">Order</span><span class="li-val" style="background:#f1f3f4; color:#555; border-color:#eee;">${item.poQty}</span></div>
-                <div class="li-col"><span class="li-label">Packed</span><span class="li-val" style="${isPacked ? 'background:#c8e6c9; color:#1b5e20; border-color:#a5d6a7;' : ''}">${isPacked ? valQty : '-'}</span></div>
-                <div class="li-col"><span class="li-label">Weight</span><span class="li-val" style="${valKg > 0 ? 'background:#e8f0fe; color:#1a73e8; border-color:#d2e3fc;' : ''}">${valKg > 0 ? valKg.toFixed(2) : '-'}</span></div>
-                <div class="li-col">
-                    <span class="li-label">Photo</span>
-                    ${item.savedImg ? 
-                        `<div class="live-img-btn" onclick="viewLivePhoto('${item.savedImg}')"><span class="material-icons">image</span></div>` : 
-                        `<div class="live-img-btn" style="background:#f5f5f5; color:#ccc; cursor:default;"><span class="material-icons">no_photography</span></div>`
-                    }
-                </div>
-            </div>
-            <div class="li-footer">
-                ${item.packedBy ? `Packed by: <b>${item.packedBy}</b>` : ''}
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
-
-window.viewLivePhoto = function(src) {
-    document.getElementById('admin-img-content').src = src;
-    document.getElementById('admin-img-modal').classList.remove('hidden');
-}
-
-        // --- ATTENDANCE MODAL LOGIC ---
-    let currentAttUser = null;
-
-    window.openAttHistory = function(name) {
-        currentAttUser = name;
-        document.getElementById('att-modal-title').innerText = `${name} - History`;
-        
-        // Default to current month
-        const now = new Date();
-        const m = String(now.getMonth() + 1).padStart(2, '0');
-        const y = now.getFullYear();
-        document.getElementById('att-modal-month').value = `${y}-${m}`;
-        
-        document.getElementById('att-modal').classList.remove('hidden');
-        loadAttModalHistory();
-    }
-
-    window.loadAttModalHistory = async function() {
-        if(!currentAttUser) return;
-        
-        const filterVal = document.getElementById('att-modal-month').value;
-        const container = document.getElementById('att-modal-body');
-        
-        container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Loading...</div>';
-
-        try {
-            const snap = await get(ref(db, 'attendance'));
-            if(snap.exists()) {
-                const allData = snap.val();
-                const rows = [];
+            const today = new Date().toISOString().split('T')[0];
+            onValue(ref(db, `attendance/${today}`), (snap) => {
+                const data = snap.val() || {};
+                const staff = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU'];
+                const grid = document.getElementById('live-att-grid');
+                let html = '';
                 
-                Object.keys(allData).forEach(date => {
-                    if (filterVal && date.substring(0, 7) !== filterVal) return;
+                staff.forEach(name => {
+                    const user = data[name];
+                    let dotClass = '', timeText = 'Absent';
                     
-                    const dayData = allData[date][currentAttUser];
-                    if (dayData) { 
-                        rows.push({ 
-                            date: date, 
-                            in: dayData.inTime, 
-                            out: dayData.outTime, 
-                            ot: dayData.otMinutes || 0 
-                        }); 
-                    }
-                });
-
-                rows.sort((a,b) => b.date.localeCompare(a.date)); // Descending order
-                
-                if(rows.length === 0) {
-                    container.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No records found for this month.</div>';
-                    return;
-                }
-
-                // Build Table
-                let html = `
-                    <table style="width:100%; border-collapse: collapse; font-size:13px;">
-                        <thead style="background:#f1f3f4; color:#666; font-size:11px;">
-                            <tr>
-                                <th style="padding:8px; text-align:left;">Date</th>
-                                <th style="padding:8px; text-align:center;">In</th>
-                                <th style="padding:8px; text-align:center;">Out</th>
-                                <th style="padding:8px; text-align:center;">OT</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-
-                // Inside loadAttModalHistory rows.forEach loop
-rows.forEach(r => {
-                    const day = r.date.split('-')[2];
-                    const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-                    const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-                    
-                    let otDisplay = `<span style="color:#ccc">-</span>`;
-                    
-                    if (r.out && r.ot !== undefined) { 
-                        const absOT = Math.abs(r.ot);
-                        const h = Math.floor(absOT / 60); 
-                        const m = absOT % 60; 
-                        
-                        if (r.ot > 0) { 
-                            otDisplay = `<span style="color:var(--orange); font-weight:700; background:#fff3e0; padding:2px 6px; border-radius:4px;">+${h}h ${m}m</span>`; 
-                        } else if (r.ot < 0) {
-                            otDisplay = `<span style="color:var(--green); font-weight:700; background:#e8f5e9; padding:2px 6px; border-radius:4px;">-${h}h ${m}m</span>`; 
-                        } else {
-                            otDisplay = `<span style="color:#888; font-weight:700; background:#f1f3f4; padding:2px 6px; border-radius:4px;">0h 0m</span>`; 
+                    if(user) {
+                        if(user.inTime && !user.outTime) {
+                            dotClass = 'st-in';
+                            const t = new Date(user.inTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                            timeText = `In: ${t}`;
+                        } else if(user.outTime) {
+                            dotClass = 'st-out';
+                            timeText = 'Done';
                         }
                     }
-
+                    
                     html += `
-                        <tr style="border-bottom:1px solid #eee;">
-                            <td style="padding:8px; font-weight:500; text-align:center;">${day}</td>
-                            <td style="padding:8px; text-align:center;">${inT}</td>
-                            <td style="padding:8px; text-align:center;">${outT}</td>
-                            <td style="padding:8px; text-align:center;">${otDisplay}</td>
-                        </tr>
+                        <div class="att-item" onclick="openAttHistory('${name}')" style="cursor:pointer">
+                            <div class="status-dot ${dotClass}"></div>
+                            <div>
+                                <div class="att-name">${name}</div>
+                                <div class="att-time">${timeText}</div>
+                            </div>
+                        </div>
                     `;
                 });
-
-                html += '</tbody></table>';
-                container.innerHTML = html;
-
-            } else {
-                container.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No data available.</div>';
-            }
-        } catch(e) {
-            console.error(e);
-            container.innerHTML = '<div style="padding:20px; text-align:center; color:red">Error loading data.</div>';
+                grid.innerHTML = html;
+            });
         }
-    }
-    
-    // Add to window exports
-    window.openAttHistory = openAttHistory;
-    window.loadAttModalHistory = loadAttModalHistory;
+
+        window.openLiveDetail = function() {
+            if(!activeIndentData) return;
+            document.getElementById('live-detail-date').innerText = formatDateFull(activeIndentData.date);
+            renderLiveDetailList();
+            document.getElementById('page-live-detail').classList.add('active');
+        }
+
+        window.closeLiveDetail = function() {
+            document.getElementById('page-live-detail').classList.remove('active');
+        }
+
+        // STEP 1: Select Date for History
+        window.openLiveHistory = function() {
+            const container = document.getElementById('live-history-content');
+            document.getElementById('page-live-history').classList.add('active');
+
+            const today = new Date();
+            today.setDate(today.getDate() - 5);
+            const cutoffDate = today.toISOString().split('T')[0];
+
+            const recentIndents = allIndents.filter(rec => rec.date >= cutoffDate).sort((a,b) => b.date.localeCompare(a.date));
+
+            if (recentIndents.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">No packing records found for the last 5 days.</div>';
+                return;
+            }
+
+            let html = '<div style="margin-bottom:15px; font-size:12px; color:var(--text-sub); font-weight:700; text-transform:uppercase;">Select a Date</div>';
+            recentIndents.forEach(rec => {
+                html += `<div class="history-card" onclick="renderLiveHistoryDate('${rec.date}')">
+                            <div>
+                                <div class="hist-date">${formatDateFull(rec.date)}</div>
+                                <div class="hist-sub">${rec.items ? rec.items.length : 0} items processed</div>
+                            </div>
+                            <span class="material-icons" style="color:#ccc;">chevron_right</span>
+                         </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // STEP 2: Show items for selected date
+        window.renderLiveHistoryDate = function(dateStr) {
+            const container = document.getElementById('live-history-content');
+            const rec = allIndents.find(r => r.date === dateStr);
+            if(!rec) return;
+
+            let html = `
+                <div style="display:flex; align-items:center; margin-bottom:15px; gap:10px;">
+                    <button class="icon-btn" onclick="openLiveHistory()" style="background:#e8f0fe; color:var(--primary); padding:4px; border-radius:8px;"><span class="material-icons">arrow_back</span></button>
+                    <div style="font-size:15px; font-weight:700; color:var(--text-main);">${formatDateFull(rec.date)}</div>
+                </div>
+            `;
+
+            const validItems = (rec.items || []).filter(i => (i.qty > 0) || (parseFloat(i.actualKg) > 0));
+            
+            if (validItems.length === 0) {
+                html += `<div style="font-size:12px; color:#999; padding:10px; background:#fff; border-radius:8px; border:1px solid #eee; text-align:center;">No items packed.</div>`;
+                container.innerHTML = html;
+                return;
+            }
+
+            validItems.sort((a,b) => (a.name||"").localeCompare(b.name||""));
+
+            validItems.forEach(item => {
+                const imgData = item.img || item.savedImg;
+                const photoHtml = imgData ? 
+                    `<div class="live-img-btn" onclick="viewLivePhoto('${imgData}')"><span class="material-icons">image</span></div>` : 
+                    `<div class="live-img-btn" style="background:#f5f5f5; color:#ccc; cursor:default;"><span class="material-icons">no_photography</span></div>`;
+                
+                const valQty = item.qty !== undefined ? item.qty : 0;
+                const valKg = parseFloat(item.actualKg) || 0;
+                const ordQty = item.originalQty !== undefined ? item.originalQty : (item.poQty || 0);
+
+                html += `
+                <div class="live-item-card packed">
+                    <div class="li-header">
+                        <div>
+                            <div class="li-name">${item.name}</div>
+                        </div>
+                        <span class="li-code">#${item.code}</span>
+                    </div>
+                    <div class="li-body">
+                        <div class="li-col"><span class="li-label">Order</span><span class="li-val" style="background:#f1f3f4; color:#555; border-color:#eee;">${ordQty}</span></div>
+                        <div class="li-col"><span class="li-label">Packed</span><span class="li-val" style="background:#c8e6c9; color:#1b5e20; border-color:#a5d6a7;">${valQty}</span></div>
+                        <div class="li-col"><span class="li-label">Weight</span><span class="li-val" style="${valKg > 0 ? 'background:#e8f0fe; color:#1a73e8; border-color:#d2e3fc;' : ''}">${valKg > 0 ? valKg.toFixed(2) : '-'}</span></div>
+                        <div class="li-col"><span class="li-label">Photo</span>${photoHtml}</div>
+                    </div>
+                    <div class="li-footer">
+                        ${item.packedBy ? `Packed by: <b>${item.packedBy}</b>` : ''}
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        };
+
+        window.closeLiveHistory = function() {
+            document.getElementById('page-live-history').classList.remove('active');
+        }
+
+        window.refreshLiveUI = function() {
+            const data = activeIndentData;
+            const packContainer = document.getElementById('live-pack-content');
+            const finCard = document.getElementById('card-live-fin');
+            const finGrid = document.getElementById('live-fin-grid');
+            const perfCard = document.getElementById('card-live-perf');
+            const perfContent = document.getElementById('live-perf-content');
+            
+            if(!data || !packContainer) return;
+
+            const itemCount = data.items ? data.items.length : 0;
+            const packedCount = data.items ? data.items.filter(i => i.isPacked === true).length : 0;
+            const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
+            let totalOrdPkts = 0, totalPackedPkts = 0, indentGoal = 0, expectedCost = 0;
+
+            const masterLoaded = Object.keys(masterMap).length > 0;
+            
+            // For Employee Performance Tile
+            const perfData = {};
+            let maxPkts = 0;
+
+            if (data.items) {
+                data.items.forEach(i => {
+                    const poQ = parseFloat(i.poQty) || 0;
+                    const savedQ = parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
+                    
+                    totalOrdPkts += poQ;
+                    if (i.isPacked) {
+                        totalPackedPkts += savedQ;
+                        
+                        // Accumulate Performance Data
+                        if (i.packedBy) {
+                            if (!perfData[i.packedBy]) perfData[i.packedBy] = { pkts: 0, edits: 0 };
+                            perfData[i.packedBy].pkts += savedQ;
+                            if (i.editedBy) perfData[i.packedBy].edits += 1;
+                        }
+                    }
+                    
+                    const itemRev = poQ * (parseFloat(i.poRate) || 0);
+                    indentGoal += itemRev;
+                    
+                    const master = masterMap[i.code];
+                    if (master) {
+                        const estKg = poQ * (parseFloat(master.conv) || 0);
+                        expectedCost += (estKg * (parseFloat(master.costKg) || 0));
+                    }
+                });
+            }
+
+            // Pack Progress
+            const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
+            
+            packContainer.parentElement.onclick = () => openLiveDetail();
+            packContainer.innerHTML = `
+                <div class="live-badge-row" style="margin-bottom: 16px;">
+                    <div class="live-indicator">
+                        <div class="pulse-dot"></div> Live Packing
+                    </div>
+                    <div style="background:#eef2f7; color:#475569; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">
+                        ${formatDateFull(data.date)} 
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span class="stat-label" style="font-size:11px;">Unique Items</span>
+                        <span class="stat-value" style="font-size:12px;">
+                            ${packedCount} / ${itemCount} 
+                            <span class="pct-label" style="color:var(--primary); margin-left:5px;">${itemPct}%</span>
+                        </span>
+                    </div>
+                    <div class="progress-track-clean">
+                        <div class="progress-fill-clean" style="width:${itemPct}%; background:var(--primary)"></div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 5px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span class="stat-label" style="font-size:11px;">Total Packets</span>
+                        <span class="stat-value" style="font-size:12px;">
+                            ${totalPackedPkts} / ${totalOrdPkts} 
+                            <span class="pct-label" style="color:#f59e0b; margin-left:5px;">${pktPct}%</span>
+                        </span>
+                    </div>
+                    <div class="progress-track-clean" style="margin-bottom: 0 !important;">
+                        <div class="progress-fill-clean" style="width:${pktPct}%; background:#f59e0b"></div>
+                    </div>
+                </div>
+
+                <div class="tap-hint" style="margin-top: 15px; border-top: 1px solid #f1f1f1; padding-top: 10px;">
+                    Tap to monitor individual items
+                </div>
+            `;
+
+            // Employee Performance Render
+            if (perfCard && perfContent) {
+                perfCard.style.display = 'block';
+                let perfHtml = '';
+                
+                if(Object.keys(perfData).length === 0) {
+                    perfHtml = '<div style="text-align:center; color:#999; font-size:12px; padding:10px;">No items packed yet.</div>';
+                } else {
+                    Object.values(perfData).forEach(d => { if(d.pkts > maxPkts) maxPkts = d.pkts; });
+                    
+                    for (const [name, stats] of Object.entries(perfData)) {
+                        const pct = maxPkts > 0 ? (stats.pkts / maxPkts) * 100 : 0;
+                        const editHtml = stats.edits > 0 ? `<div class="perf-edits">${stats.edits} item(s) edited by Admin</div>` : '';
+                        perfHtml += `
+                        <div class="perf-row">
+                            <div style="display:flex; flex-direction:column; width:75px;">
+                                <div class="perf-name">${name}</div>
+                                ${editHtml}
+                            </div>
+                            <div class="perf-bar-bg">
+                                <div class="perf-bar-fill" style="width:${pct}%;"></div>
+                            </div>
+                            <div class="perf-val">${stats.pkts} <span style="font-size:9px; color:#888; font-weight:500;">pkts</span></div>
+                        </div>`;
+                    }
+                }
+                perfContent.innerHTML = perfHtml;
+            }
+
+            // Expected Profit Render (With Live Wastage Alert)
+            let estExp = 0;
+            const activeWastage = parseFloat(data.wastageAmt) || 0;
+
+            if (expenseSettings && data.date) {
+                const dObj = data.date.includes('-') && data.date.split('-')[0].length === 4 ? new Date(data.date) : new Date();
+                const dayIdx = dObj.getDay();
+                const daySet = expenseSettings.days[dayIdx];
+                const packExp = (indentGoal / 1000) * expenseSettings.packingRate;
+                estExp = (daySet.wage || 0) + (daySet.transport || 0) + packExp + activeWastage;
+            }
+
+            const estGross = indentGoal - expectedCost;
+            const estNet = estGross - estExp;
+            const estMgn = indentGoal > 0 ? (estNet / indentGoal * 100).toFixed(1) : 0;
+
+            if(finCard && finGrid) {
+                finCard.style.display = 'block';
+                if (!masterLoaded) {
+                    finGrid.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:20px; color:#999; font-size:12px;">Syncing Master Prices...</div>`;
+                } else {
+                    finGrid.className = "live-fin-grid-2x2"; 
+                    
+                    // Wastage Banner
+                    const wastageBannerHtml = activeWastage > 0 ? `
+                        <div style="background:#fff3e0; color:var(--orange); padding:8px; border-radius:6px; font-size:11px; font-weight:700; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                            <span>Wastage Recorded: ₹${activeWastage}</span> 
+                            ${data.wastageImg ? `<span class="material-icons" style="font-size:16px; cursor:pointer; color:var(--primary);" onclick="viewLivePhoto('${data.wastageImg}')">image</span>` : ''}
+                        </div>` : '';
+
+                    finCard.innerHTML = `
+                        <div class="live-badge-row" style="margin-bottom: 15px;">
+                            <div class="live-indicator" style="color:var(--purple)">
+                                <span class="material-icons" style="font-size:16px;">payments</span>
+                                Expected Profit
+                            </div>
+                            <div style="font-size:10px; color:#94a3b8; font-weight:700;">ESTIMATE</div>
+                        </div>
+                        ${wastageBannerHtml}
+                        <div class="live-fin-grid-2x2" id="live-fin-grid">
+                            <div class="live-fin-tile" style="background:#f8fafc;">
+                                <div class="fin-label">Indent Goal</div>
+                                <div class="fin-val">₹${indentGoal.toFixed(0)}</div>
+                            </div>
+                            <div class="live-fin-tile" style="background:#fffaf5; border-color:#ffeada;">
+                                <div class="fin-label" style="color:var(--orange)">Est. Expense</div>
+                                <div class="fin-val" style="color:var(--orange)">₹${estExp.toFixed(0)}</div>
+                            </div>
+                            <div class="live-fin-tile" style="background:#f0f7ff; border-color:#d0e3ff;">
+                                <div class="fin-label" style="color:var(--primary)">Net Profit</div>
+                                <div class="fin-val" style="color:var(--primary)">₹${estNet.toFixed(0)}</div>
+                            </div>
+                            <div class="live-fin-tile" style="background:#fafffa; border-color:#e0f0e0;">
+                                <div class="fin-label" style="color:var(--green)">Net Mgn</div>
+                                <div class="fin-val" style="color:var(--green)">${estMgn}%</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        window.toggleLiveFilter = function() {
+            const btn = document.getElementById('live-filter-btn');
+            const icon = document.getElementById('live-filter-icon');
+            
+            if (liveFilterMode === 'all') { liveFilterMode = 'pending'; btn.className = 'icon-btn live-filter-pending'; icon.innerText = 'check_box_outline_blank'; } 
+            else if (liveFilterMode === 'pending') { liveFilterMode = 'packed'; btn.className = 'icon-btn live-filter-packed'; icon.innerText = 'check_box'; } 
+            else { liveFilterMode = 'all'; btn.className = 'icon-btn'; icon.innerText = 'filter_list'; }
+            renderLiveDetailList();
+        }
+
+        window.renderLiveDetailList = function() {
+            const container = document.getElementById('live-detail-list');
+            const searchTerm = document.getElementById('liveSearch').value.toLowerCase();
+            
+            if(!activeIndentData || !activeIndentData.items) return;
+            
+            container.innerHTML = '';
+            
+            const filteredItems = activeIndentData.items.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm) || item.code.toString().includes(searchTerm);
+                let matchesFilter = true;
+                if(liveFilterMode === 'pending') matchesFilter = !item.isPacked;
+                if(liveFilterMode === 'packed') matchesFilter = item.isPacked;
+                return matchesSearch && matchesFilter;
+            }).sort((a, b) => a.name.localeCompare(b.name));
+
+            filteredItems.forEach(item => {
+                const isPacked = item.isPacked === true;
+                const valQty = parseFloat(item.savedQty !== undefined ? item.savedQty : item.poQty) || 0;
+                const valKg = parseFloat(item.savedKg) || 0;
+                
+                const master = masterMap[item.code];
+                let targetWeightHTML = '';
+                if (master && master.conv > 0) {
+                    const targetKg = (item.poQty * master.conv).toFixed(2);
+                    targetWeightHTML = `<div class="li-target-info">Target: ${targetKg}kg</div>`;
+                }
+
+                let cardClass = 'live-item-card';
+                if (isPacked) {
+                    let isOver = (valQty > item.poQty);
+                    if (!isOver && master && master.conv > 0 && valKg > 0) {
+                        const stdWeight = valQty * master.conv;
+                        if (valKg > (stdWeight + 0.05)) isOver = true;
+                    }
+                    cardClass += isOver ? ' overpacked' : ' packed';
+                }
+
+                const div = document.createElement('div');
+                div.className = cardClass;
+                div.innerHTML = `
+                    <div class="li-header">
+                        <div>
+                            <div class="li-name">${item.name}</div>
+                            ${targetWeightHTML}
+                        </div>
+                        <span class="li-code">#${item.code}</span>
+                    </div>
+                    <div class="li-body">
+                        <div class="li-col"><span class="li-label">Order</span><span class="li-val" style="background:#f1f3f4; color:#555; border-color:#eee;">${item.poQty}</span></div>
+                        <div class="li-col"><span class="li-label">Packed</span><span class="li-val" style="${isPacked ? 'background:#c8e6c9; color:#1b5e20; border-color:#a5d6a7;' : ''}">${isPacked ? valQty : '-'}</span></div>
+                        <div class="li-col"><span class="li-label">Weight</span><span class="li-val" style="${valKg > 0 ? 'background:#e8f0fe; color:#1a73e8; border-color:#d2e3fc;' : ''}">${valKg > 0 ? valKg.toFixed(2) : '-'}</span></div>
+                        <div class="li-col">
+                            <span class="li-label">Photo</span>
+                            ${item.savedImg ? `<div class="live-img-btn" onclick="viewLivePhoto('${item.savedImg}')"><span class="material-icons">image</span></div>` : `<div class="live-img-btn" style="background:#f5f5f5; color:#ccc; cursor:default;"><span class="material-icons">no_photography</span></div>`}
+                        </div>
+                    </div>
+                    <div class="li-footer">
+                        ${item.packedBy ? `Packed by: <b>${item.packedBy}</b>` : ''}
+                        ${item.editedBy ? `<span style="color:var(--red); margin-left:10px;">Edited by: <b>${item.editedBy}</b></span>` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        window.viewLivePhoto = function(src) {
+            document.getElementById('admin-img-content').src = src;
+            document.getElementById('admin-img-modal').classList.remove('hidden');
+        }
+
+        let currentAttUser = null;
+
+        window.openAttHistory = function(name) {
+            currentAttUser = name;
+            document.getElementById('att-modal-title').innerText = `${name} - History`;
+            const now = new Date();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const y = now.getFullYear();
+            document.getElementById('att-modal-month').value = `${y}-${m}`;
+            document.getElementById('att-modal').classList.remove('hidden');
+            loadAttModalHistory();
+        }
+
+        window.loadAttModalHistory = async function() {
+            if(!currentAttUser) return;
+            const filterVal = document.getElementById('att-modal-month').value;
+            const container = document.getElementById('att-modal-body');
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Loading...</div>';
+
+            try {
+                const snap = await get(ref(db, 'attendance'));
+                if(snap.exists()) {
+                    const allData = snap.val();
+                    const rows = [];
+                    
+                    Object.keys(allData).forEach(date => {
+                        if (filterVal && date.substring(0, 7) !== filterVal) return;
+                        const dayData = allData[date][currentAttUser];
+                        if (dayData) { rows.push({ date: date, in: dayData.inTime, out: dayData.outTime, ot: dayData.otMinutes || 0 }); }
+                    });
+
+                    rows.sort((a,b) => b.date.localeCompare(a.date)); 
+                    if(rows.length === 0) { container.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No records found for this month.</div>'; return; }
+
+                    let html = `
+                        <table style="width:100%; border-collapse: collapse; font-size:13px;">
+                            <thead style="background:#f1f3f4; color:#666; font-size:11px;">
+                                <tr>
+                                    <th style="padding:8px; text-align:left;">Date</th>
+                                    <th style="padding:8px; text-align:center;">In</th>
+                                    <th style="padding:8px; text-align:center;">Out</th>
+                                    <th style="padding:8px; text-align:center;">OT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    rows.forEach(r => {
+                        const day = r.date.split('-')[2];
+                        const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+                        const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+                        let otDisplay = `<span style="color:#ccc">-</span>`;
+                        
+                        if (r.out && r.ot !== undefined) { 
+                            const absOT = Math.abs(r.ot);
+                            const h = Math.floor(absOT / 60); const m = absOT % 60; 
+                            if (r.ot > 0) otDisplay = `<span style="color:var(--orange); font-weight:700; background:#fff3e0; padding:2px 6px; border-radius:4px;">+${h}h ${m}m</span>`; 
+                            else if (r.ot < 0) otDisplay = `<span style="color:var(--green); font-weight:700; background:#e8f5e9; padding:2px 6px; border-radius:4px;">-${h}h ${m}m</span>`; 
+                            else otDisplay = `<span style="color:#888; font-weight:700; background:#f1f3f4; padding:2px 6px; border-radius:4px;">0h 0m</span>`; 
+                        }
+
+                        html += `
+                            <tr style="border-bottom:1px solid #eee;">
+                                <td style="padding:8px; font-weight:500; text-align:center;">${day}</td>
+                                <td style="padding:8px; text-align:center;">${inT}</td>
+                                <td style="padding:8px; text-align:center;">${outT}</td>
+                                <td style="padding:8px; text-align:center;">${otDisplay}</td>
+                            </tr>
+                        `;
+                    });
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div style="padding:20px; text-align:center; color:#ccc">No data available.</div>';
+                }
+            } catch(e) { container.innerHTML = '<div style="padding:20px; text-align:center; color:red">Error loading data.</div>'; }
+        }
 
         async function loadData() {
             try {
-                // 1. Fetch historical indents (Limited to 45 days)
                 const d = new Date();
                 d.setDate(d.getDate() - 31);
                 const cutoffDate = d.toISOString().split('T')[0];
 
                 const indentsQuery = query(ref(db, 'indents'), orderByChild('date'), startAt(cutoffDate));
                 const snap = await get(indentsQuery);
-                
                 if(snap.exists()) allIndents = Object.values(snap.val()).sort((a,b) => b.id - a.id);
 
-                // 2. Fetch global expense settings
+                const expSnap = await get(ref(db, 'settings/expenses'));
+                if(expSnap.exists()) expenseSettings = expSnap.val();
 
-        // 2. Fetch global expense settings
-        const expSnap = await get(ref(db, 'settings/expenses'));
-        if(expSnap.exists()) expenseSettings = expSnap.val();
+                const timeSnap = await get(ref(db, 'settings/lastErpUpdate'));
+                if(timeSnap.exists()) {
+                    const rawDate = timeSnap.val();
+                    document.getElementById('master-updated').innerText = "Last Updated: " + formatLastUpdated(rawDate);
+                }
 
-        // 3. Fetch ERP update timestamp
-        const timeSnap = await get(ref(db, 'settings/lastErpUpdate'));
-        if(timeSnap.exists()) {
-            const rawDate = timeSnap.val();
-            document.getElementById('master-updated').innerText = "Last Updated: " + formatLastUpdated(rawDate);
+                const prodSnap = await get(ref(db, 'products'));
+                if(prodSnap.exists()) {
+                    allProducts = prodSnap.val();
+                    masterMap = {}; 
+                    allProducts.forEach(p => { if(p) masterMap[p.id] = p; });
+                    if (activeIndentData) refreshLiveUI();
+                }
+
+                renderReport();
+                renderFinance();
+                renderMaster();
+                renderDashboard();
+            } catch(e) { console.error("Data Load Error:", e); alert("Error loading data from database."); }
         }
-
-        // 4. Fetch Products and build the Cost Map
-        const prodSnap = await get(ref(db, 'products'));
-        if(prodSnap.exists()) {
-            allProducts = prodSnap.val();
-            masterMap = {}; // Reset map
-            allProducts.forEach(p => { 
-                if(p) masterMap[p.id] = p; 
-            });
-
-            // TRIGGER: Now that costs are loaded, if we already have indent data, calculate profit
-            if (activeIndentData) refreshLiveUI();
-        }
-
-        // 5. Render other static tabs
-        renderReport();
-        renderFinance();
-        renderMaster();
-        renderDashboard();
-
-    } catch(e) { 
-        console.error("Data Load Error:", e); 
-        alert("Error loading data from database."); 
-    }
-}
 
         window.switchTab = function(tabName, el) {
             document.querySelectorAll('.tab-content').forEach(d => d.classList.remove('active'));
@@ -1283,160 +1162,105 @@ rows.forEach(r => {
         }
 
         let dashViewMode = 'summary'; 
+        window.toggleDashboardView = function() {
+            const icon = document.getElementById('dash-toggle-icon');
+            if (dashViewMode === 'summary') { dashViewMode = 'billwise'; icon.innerText = 'pie_chart'; } 
+            else { dashViewMode = 'summary'; icon.innerText = 'table_chart'; }
+            renderDashboard();
+        };
 
-window.toggleDashboardView = function() {
-    const icon = document.getElementById('dash-toggle-icon');
-    
-    if (dashViewMode === 'summary') {
-        dashViewMode = 'billwise';
-        icon.innerText = 'pie_chart'; // Change icon to Pie when in Table mode
-    } else {
-        dashViewMode = 'summary';
-        icon.innerText = 'table_chart'; // Change icon to Table when in Summary mode
-    }
-    renderDashboard();
-};
+        window.renderDashboard = function() {
+            const from = document.getElementById('dash-from').value;
+            const to = document.getElementById('dash-to').value;
+            const container = document.getElementById('profitability-container');
+            
+            if (dashViewMode === 'summary') {
+                let mfRev=0, mfCost=0, mfPack=0, mfTrans=0;
+                let mtrRev=0, mtrCost=0, mtrWage=0, mtrWastage=0;
+                
+                allIndents.forEach(rec => {
+                    if (rec.date < from || rec.date > to) return;
+                    if (!rec.mtrBill || rec.mtrBill <= 0) return;
+                    
+                    const bill = rec.totalBillAmt || 0;
+                    const mtrBill = rec.mtrBill || 0; 
+                    
+                    let pack=0, trans=0, wage=0, wastage=0;
+                    if(rec.expenseDetails) { 
+                        pack = rec.expenseDetails.packing || 0; trans = rec.expenseDetails.transport || 0; 
+                        wage = rec.expenseDetails.wage || 0; wastage = rec.expenseDetails.wastage || 0;
+                    }
+                    
+                    mfRev += bill; mfCost += mtrBill; mfPack += pack; mfTrans += trans;
+                    mtrRev += mtrBill; mtrCost += (rec.totalCost || 0); mtrWage += wage; mtrWastage += wastage;
+                });
+                
+                const mfGross = mfRev - mfCost; const mfExp = mfPack + mfTrans; const mfNet = mfGross - mfExp;
+                const mtrGross = mtrRev - mtrCost; const mtrExp = mtrWage + mtrWastage; const mtrNet = mtrGross - mtrExp;
+                
+                container.innerHTML = `
+                    <div class="profit-card">
+                        <div class="profit-header" style="color:var(--primary)">MF BIGMARKET</div>
+                        <div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div>
+                        <div class="prof-row"><div>Revenue</div><div>₹${mfRev.toFixed(0)}</div><div>100%</div></div>
+                        <div class="prof-row"><div>(-) MTR Bill</div><div style="color:#555">₹${mfCost.toFixed(0)}</div><div>${mfRev>0?((mfCost/mfRev)*100).toFixed(0):0}%</div></div>
+                        <div class="prof-row"><div>= Gross Profit</div><div>₹${mfGross.toFixed(0)}</div><div>${mfRev>0?((mfGross/mfRev)*100).toFixed(0):0}%</div></div>
+                        <div class="prof-row"><div>(-) Packing</div><div style="color:orange">₹${mfPack.toFixed(0)}</div><div></div></div>
+                        <div class="prof-row"><div>(-) Transport</div><div style="color:orange">₹${mfTrans.toFixed(0)}</div><div></div></div>
+                        <div class="prof-row total"><div>NET PROFIT</div><div style="color:${mfNet>=0?'green':'red'}">₹${mfNet.toFixed(0)}</div><div>${mfRev>0?((mfNet/mfRev)*100).toFixed(1):0}%</div></div>
+                    </div>
+                    <div class="profit-card">
+                        <div class="profit-header" style="color:var(--purple)">MATTANNUR</div>
+                        <div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div>
+                        <div class="prof-row"><div>Revenue (Bill)</div><div>₹${mtrRev.toFixed(0)}</div><div>100%</div></div>
+                        <div class="prof-row"><div>(-) RM Cost</div><div style="color:#555">₹${mtrCost.toFixed(0)}</div><div>${mtrRev>0?((mtrCost/mtrRev)*100).toFixed(0):0}%</div></div>
+                        <div class="prof-row"><div>= Gross Profit</div><div>₹${mtrGross.toFixed(0)}</div><div>${mtrRev>0?((mtrGross/mtrRev)*100).toFixed(0):0}%</div></div>
+                        <div class="prof-row"><div>(-) Salary</div><div style="color:orange">₹${mtrWage.toFixed(0)}</div><div></div></div>
+                        <div class="prof-row"><div>(-) Wastage</div><div style="color:var(--red); font-weight:bold;">₹${mtrWastage.toFixed(0)}</div><div></div></div>
+                        <div class="prof-row total"><div>NET PROFIT</div><div style="color:${mtrNet>=0?'green':'red'}">₹${mtrNet.toFixed(0)}</div><div>${mtrRev>0?((mtrNet/mtrRev)*100).toFixed(1):0}%</div></div>
+                    </div>
+                `;
+            } else {
+                let html = `
+                    <div class="table-wrapper">
+                        <table class="prof-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="sticky-col">Bill No</th>
+                                    <th colspan="3" class="bg-mf">MF Bigmarket (Retail)</th>
+                                    <th colspan="3" class="bg-mtr">Mattannur (Supply)</th>
+                                    <th rowspan="2" class="bg-total">Total Net</th>
+                                </tr>
+                                <tr>
+                                    <th class="bg-mf">Gross</th><th class="bg-mf">Exp</th><th class="bg-mf">Net</th>
+                                    <th class="bg-mtr">Gross</th><th class="bg-mtr">Exp</th><th class="bg-mtr">Net</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                allIndents.forEach(rec => {
+                    if (rec.date < from || rec.date > to) return;
+                    if (!rec.mtrBill || parseFloat(rec.mtrBill) <= 0) return;
 
-window.renderDashboard = function() {
-    const from = document.getElementById('dash-from').value;
-    const to = document.getElementById('dash-to').value;
-    const container = document.getElementById('profitability-container');
-    
-    if (dashViewMode === 'summary') {
-        // --- SUMMARY VIEW ---
-        let mfRev=0, mfCost=0, mfPack=0, mfTrans=0;
-        let mtrRev=0, mtrCost=0, mtrWage=0, mtrWastage=0;
-        
-        allIndents.forEach(rec => {
-            if (rec.date < from || rec.date > to) return;
-            if (!rec.mtrBill || rec.mtrBill <= 0) return;
-            
-            const bill = rec.totalBillAmt || 0;
-            const mtrBill = rec.mtrBill || 0; 
-            
-            let pack=0, trans=0, wage=0, wastage=0;
-            if(rec.expenseDetails) { 
-                pack = rec.expenseDetails.packing || 0; 
-                trans = rec.expenseDetails.transport || 0; 
-                wage = rec.expenseDetails.wage || 0; 
-                wastage = rec.expenseDetails.wastage || 0;
+                    const bill = parseFloat(rec.totalBillAmt || 0);
+                    const mtrBill = parseFloat(rec.mtrBill);
+                    const rmCost = parseFloat(rec.totalCost || 0);
+
+                    let pack=0, trans=0, wage=0, wastage=0;
+                    if(rec.expenseDetails) { pack = rec.expenseDetails.packing || 0; trans = rec.expenseDetails.transport || 0; wage = rec.expenseDetails.wage || 0; wastage = rec.expenseDetails.wastage || 0; } 
+                    else if(expenseSettings) { const d = new Date(rec.date); const ds = expenseSettings.days[d.getDay()]; pack = (bill/1000) * expenseSettings.packingRate; trans = ds.transport; wage = ds.wage; wastage = 0; }
+
+                    const mfGross = bill - mtrBill; const mfExp = pack + trans; const mfNet = mfGross - mfExp; const mfMgn = bill > 0 ? (mfNet/bill*100).toFixed(0) : 0;
+                    const mtrGross = mtrBill - rmCost; const mtrExp = wage + wastage; const mtrNet = mtrGross - mtrExp; const mtrMgn = mtrBill > 0 ? (mtrNet/mtrBill*100).toFixed(0) : 0;
+                    const totalNet = mfNet + mtrNet;
+
+                    html += `<tr><td class="sticky-col">${getBillNo(rec)}<span class="val-small">${formatDate(rec.date)}</span></td><td class="bg-mf">₹${mfGross.toFixed(0)}</td><td class="bg-mf" style="color:orange">₹${mfExp.toFixed(0)}</td><td class="bg-mf txt-net" style="color:var(--primary)">₹${mfNet.toFixed(0)}<span class="val-small">${mfMgn}%</span></td><td class="bg-mtr">₹${mtrGross.toFixed(0)}</td><td class="bg-mtr" style="color:orange">₹${mtrExp.toFixed(0)}</td><td class="bg-mtr txt-net" style="color:var(--purple)">₹${mtrNet.toFixed(0)}<span class="val-small">${mtrMgn}%</span></td><td class="bg-total" style="color:${totalNet>=0?'green':'red'}">₹${totalNet.toFixed(0)}</td></tr>`;
+                });
+                html += `</tbody></table></div>`;
+                container.innerHTML = html;
             }
-            
-            mfRev += bill; 
-            mfCost += mtrBill; 
-            mfPack += pack; 
-            mfTrans += trans;
-            
-            mtrRev += mtrBill; 
-            mtrCost += (rec.totalCost || 0); 
-            mtrWage += wage;
-            mtrWastage += wastage; // Tally Wastage specifically for Mattannur
-        });
-        
-        const mfGross = mfRev - mfCost; 
-        const mfExp = mfPack + mfTrans; 
-        const mfNet = mfGross - mfExp;
-        
-        const mtrGross = mtrRev - mtrCost; 
-        const mtrExp = mtrWage + mtrWastage; // Mattannur Expense = Wage + Wastage
-        const mtrNet = mtrGross - mtrExp;
-        
-        container.innerHTML = `
-            <div class="profit-card">
-                <div class="profit-header" style="color:var(--primary)">MF BIGMARKET</div>
-                <div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div>
-                <div class="prof-row"><div>Revenue</div><div>₹${mfRev.toFixed(0)}</div><div>100%</div></div>
-                <div class="prof-row"><div>(-) MTR Bill</div><div style="color:#555">₹${mfCost.toFixed(0)}</div><div>${mfRev>0?((mfCost/mfRev)*100).toFixed(0):0}%</div></div>
-                <div class="prof-row"><div>= Gross Profit</div><div>₹${mfGross.toFixed(0)}</div><div>${mfRev>0?((mfGross/mfRev)*100).toFixed(0):0}%</div></div>
-                <div class="prof-row"><div>(-) Packing</div><div style="color:orange">₹${mfPack.toFixed(0)}</div><div></div></div>
-                <div class="prof-row"><div>(-) Transport</div><div style="color:orange">₹${mfTrans.toFixed(0)}</div><div></div></div>
-                <div class="prof-row total"><div>NET PROFIT</div><div style="color:${mfNet>=0?'green':'red'}">₹${mfNet.toFixed(0)}</div><div>${mfRev>0?((mfNet/mfRev)*100).toFixed(1):0}%</div></div>
-            </div>
-            
-            <div class="profit-card">
-                <div class="profit-header" style="color:var(--purple)">MATTANNUR</div>
-                <div class="prof-row"><div class="col-head">TYPE</div><div class="col-head">AMOUNT</div><div class="col-head">MGN%</div></div>
-                <div class="prof-row"><div>Revenue (Bill)</div><div>₹${mtrRev.toFixed(0)}</div><div>100%</div></div>
-                <div class="prof-row"><div>(-) RM Cost</div><div style="color:#555">₹${mtrCost.toFixed(0)}</div><div>${mtrRev>0?((mtrCost/mtrRev)*100).toFixed(0):0}%</div></div>
-                <div class="prof-row"><div>= Gross Profit</div><div>₹${mtrGross.toFixed(0)}</div><div>${mtrRev>0?((mtrGross/mtrRev)*100).toFixed(0):0}%</div></div>
-                <div class="prof-row"><div>(-) Salary</div><div style="color:orange">₹${mtrWage.toFixed(0)}</div><div></div></div>
-                <div class="prof-row"><div>(-) Wastage</div><div style="color:var(--red); font-weight:bold;">₹${mtrWastage.toFixed(0)}</div><div></div></div>
-                <div class="prof-row total"><div>NET PROFIT</div><div style="color:${mtrNet>=0?'green':'red'}">₹${mtrNet.toFixed(0)}</div><div>${mtrRev>0?((mtrNet/mtrRev)*100).toFixed(1):0}%</div></div>
-            </div>
-        `;
-    } else {
-        // --- DETAILED BILL-WISE TABLE ---
-        let html = `
-            <div class="table-wrapper">
-                <table class="prof-table">
-                    <thead>
-                        <tr>
-                            <th rowspan="2" class="sticky-col">Bill No</th>
-                            <th colspan="3" class="bg-mf">MF Bigmarket (Retail)</th>
-                            <th colspan="3" class="bg-mtr">Mattannur (Supply)</th>
-                            <th rowspan="2" class="bg-total">Total Net</th>
-                        </tr>
-                        <tr>
-                            <th class="bg-mf">Gross</th><th class="bg-mf">Exp</th><th class="bg-mf">Net</th>
-                            <th class="bg-mtr">Gross</th><th class="bg-mtr">Exp</th><th class="bg-mtr">Net</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
+        };
 
-        allIndents.forEach(rec => {
-            if (rec.date < from || rec.date > to) return;
-            if (!rec.mtrBill || parseFloat(rec.mtrBill) <= 0) return;
-
-            const bill = parseFloat(rec.totalBillAmt || 0);
-            const mtrBill = parseFloat(rec.mtrBill);
-            const rmCost = parseFloat(rec.totalCost || 0);
-
-            let pack=0, trans=0, wage=0, wastage=0;
-            if(rec.expenseDetails) { 
-                pack = rec.expenseDetails.packing || 0; 
-                trans = rec.expenseDetails.transport || 0; 
-                wage = rec.expenseDetails.wage || 0; 
-                wastage = rec.expenseDetails.wastage || 0;
-            } else if(expenseSettings) {
-                const d = new Date(rec.date); const ds = expenseSettings.days[d.getDay()];
-                pack = (bill/1000) * expenseSettings.packingRate; trans = ds.transport; wage = ds.wage;
-                wastage = 0;
-            }
-
-            // Calculations
-            const mfGross = bill - mtrBill;
-            const mfExp = pack + trans;
-            const mfNet = mfGross - mfExp;
-            const mfMgn = bill > 0 ? (mfNet/bill*100).toFixed(0) : 0;
-
-            const mtrGross = mtrBill - rmCost;
-            const mtrExp = wage + wastage;
-            const mtrNet = mtrGross - mtrExp;
-            const mtrMgn = mtrBill > 0 ? (mtrNet/mtrBill*100).toFixed(0) : 0;
-
-            const totalNet = mfNet + mtrNet;
-
-            html += `
-                <tr>
-                    <td class="sticky-col">${getBillNo(rec)}<span class="val-small">${formatDate(rec.date)}</span></td>
-                    <td class="bg-mf">₹${mfGross.toFixed(0)}</td>
-                    <td class="bg-mf" style="color:orange">₹${mfExp.toFixed(0)}</td>
-                    <td class="bg-mf txt-net" style="color:var(--primary)">₹${mfNet.toFixed(0)}<span class="val-small">${mfMgn}%</span></td>
-                    <td class="bg-mtr">₹${mtrGross.toFixed(0)}</td>
-                    <td class="bg-mtr" style="color:orange">₹${mtrExp.toFixed(0)}</td>
-                    <td class="bg-mtr txt-net" style="color:var(--purple)">₹${mtrNet.toFixed(0)}<span class="val-small">${mtrMgn}%</span></td>
-                    <td class="bg-total" style="color:${totalNet>=0?'green':'red'}">₹${totalNet.toFixed(0)}</td>
-                </tr>`;
-        });
-
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
-    }
-};
-
-        window.sortMaster = function(key) {
-            if(masterSort.key === key) masterSort.dir *= -1; else { masterSort.key = key; masterSort.dir = 1; } renderMaster();
-        }
+        window.sortMaster = function(key) { if(masterSort.key === key) masterSort.dir *= -1; else { masterSort.key = key; masterSort.dir = 1; } renderMaster(); }
         window.renderMaster = function() {
             const tbody = document.getElementById('master-body'); tbody.innerHTML = '';
             const validProducts = allProducts.filter(p => p && p.spPiece > 0);
@@ -1492,55 +1316,74 @@ window.renderDashboard = function() {
         }
         window.closeDetail = function() { document.getElementById('detail-menu').classList.remove('show'); document.getElementById('page-detail').classList.remove('active'); }
         window.toggleMenu = function() { document.getElementById('detail-menu').classList.toggle('show'); }
+        
         window.downloadBillPDF = function() { document.getElementById('detail-menu').classList.remove('show'); if(!currentRec) return; const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' }); const validItems = (currentRec.items || []).filter(i => i.qty > 0).sort((a, b) => (a.name || "").localeCompare(b.name || "")); const dateParts = currentRec.date.split('-'); const invoiceNo = `MFB${dateParts[2]}${dateParts[1]}${dateParts[0].slice(-2)}`; const displayDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; const margin = 20; const pageW = 210; const contentW = pageW - (margin * 2); let y = 15; doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(40, 40, 40); doc.text("INVOICE", margin, y); doc.setFontSize(10); doc.setTextColor(0, 0, 0); doc.text("MF BIGMARKET IRITTY", margin, y + 5); doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(80, 80, 80); doc.text("Ground Floor, City Center", margin, y + 9); doc.text("Iritty, Kerala", margin, y + 13); doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0); doc.text("To: SPWAVE PVT LTD", pageW - margin, y, { align: 'right' }); let metaY = y + 7; doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 100, 100); doc.text("Invoice No:", pageW - margin - 35, metaY); doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(invoiceNo, pageW - margin, metaY, { align: 'right' }); metaY += 5; doc.setTextColor(100, 100, 100); doc.setFont("helvetica", "normal"); doc.text("Date:", pageW - margin - 35, metaY); doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.text(displayDate, pageW - margin, metaY, { align: 'right' }); y = metaY + 8; const wSl=10, wCode=15, wUom=15, wQty=20, wCost=25, wTotal=30; const wName = contentW - (wSl+wCode+wUom+wQty+wCost+wTotal); const xSl=margin, xCode=xSl+wSl, xName=xCode+wCode, xUom=xName+wName, xQty=xUom+wUom, xCost=xQty+wQty, xTotal=xCost+wCost; const rowH = 7; const headH = 8; const vLines = [xCode, xName, xUom, xQty, xCost, xTotal]; function drawHeader(yPos) { doc.setFillColor(235, 237, 240); doc.setDrawColor(0); doc.setLineWidth(0.3); doc.rect(margin, yPos, contentW, headH, 'FD'); doc.setLineWidth(0.1); vLines.forEach(x => doc.line(x, yPos, x, yPos + headH)); doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(0); const ty = yPos + 5; doc.text("SL", xSl+2, ty); doc.text("CODE", xCode+2, ty); doc.text("ITEM NAME", xName+2, ty); doc.text("UOM", xUom+2, ty); doc.text("QTY", xQty+wQty-2, ty, {align:'right'}); doc.text("COST", xCost+wCost-2, ty, {align:'right'}); doc.text("TOTAL", xTotal+wTotal-2, ty, {align:'right'}); } drawHeader(y); y += headH; doc.setFont("helvetica", "normal"); doc.setFontSize(9); let totalAmount = 0; validItems.forEach((item, index) => { if (y > 270) { doc.addPage(); y = 15; drawHeader(y); y += headH; doc.setFont("helvetica", "normal"); doc.setFontSize(9); } if (index % 2 === 1) { doc.setFillColor(250, 250, 250); doc.rect(margin, y, contentW, rowH, 'F'); } doc.setDrawColor(0); doc.setLineWidth(0.1); doc.rect(margin, y, contentW, rowH, 'S'); vLines.forEach(x => doc.line(x, y, x, y + rowH)); const lineTotal = item.qty * item.poRate; totalAmount += lineTotal; const masterItem = masterMap[item.code] || {}; const uomStr = masterItem.uom || 'Unit'; const cy = y + 4.5; doc.setTextColor(0); doc.text((index + 1).toString(), xSl+2, cy); doc.text(item.code.toString(), xCode+2, cy); doc.text(item.name.substring(0,32), xName+2, cy); doc.text(uomStr, xUom+2, cy); doc.text(item.qty.toString(), xQty+wQty-2, cy, {align:'right'}); doc.text(fmt(item.poRate), xCost+wCost-2, cy, {align:'right'}); doc.text(fmt(lineTotal), xTotal+wTotal-2, cy, {align:'right'}); y += rowH; }); y += 2; doc.setLineWidth(0.5); doc.line(margin, y, pageW-margin, y); y+=7; doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.text("GRAND TOTAL", margin, y); doc.setFontSize(12); doc.text("Rs " + fmt(totalAmount), pageW-margin-2, y, {align:'right'}); y += 3; doc.setLineWidth(0.5); doc.line(margin, y, pageW-margin, y); doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(150); doc.text("Computer Generated Invoice", pageW/2, 285, {align:'center'}); doc.save(`Bill_${invoiceNo}.pdf`); }
         window.downloadReportPDF = function() { document.getElementById('detail-menu').classList.remove('show'); if(!currentRec) return; const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' }); const tBill = currentRec.totalBillAmt || 0; const tCost = currentRec.totalCost || 0; const tGross = currentRec.profit || 0; const tExp = currentRec.totalExpenses || 0; const tNet = currentRec.netProfit !== undefined ? currentRec.netProfit : (tGross - tExp); let expD = currentRec.expenseDetails; if (!expD && expenseSettings) { const d = new Date(currentRec.date); const ds = expenseSettings.days[d.getDay()]; expD = { total: tExp, wage: ds.wage, transport: ds.transport, packing: (tBill/1000)*expenseSettings.packingRate, misc: (tCost*expenseSettings.miscPercent)/100 }; } else if (!expD) { expD = {total:0, wage:0, transport:0, packing:0, misc:0}; } doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.text("SWIGGY REPORT", 105, 18, { align: 'center' }); doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.text(formatDateFull(currentRec.date), 105, 25, { align: 'center' }); let y = 35; const kpis = [{l:'REVENUE', v:tBill}, {l:'COGS', v:tCost}, {l:'EXPENSES', v:tExp}, {l:'NET PROFIT', v:tNet}]; let x = 10; const kw = 45; kpis.forEach(k => { doc.setFillColor(245); doc.rect(x, y, kw, 20, 'F'); doc.setFontSize(8); doc.text(k.l, x+kw/2, y+6, {align:'center'}); doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.text(k.v.toFixed(0), x+kw/2, y+15, {align:'center'}); x += kw + 3; }); y += 30; doc.setFontSize(10); doc.text("Profitability:", 10, y); y+=6; doc.setFont("helvetica", "normal"); doc.text(`Revenue: ${tBill.toFixed(0)}`, 15, y); y+=5; doc.text(`(-) Cost: ${tCost.toFixed(0)}`, 15, y); y+=5; doc.setFont("helvetica", "bold"); doc.text(`= Gross: ${tGross.toFixed(0)}`, 15, y); y+=5; doc.setFont("helvetica", "normal"); doc.text(`(-) Exp: ${tExp.toFixed(0)}`, 15, y); y+=6; doc.setFont("helvetica", "bold"); doc.setTextColor(0,100,0); doc.text(`= NET: ${tNet.toFixed(0)}`, 15, y); doc.setTextColor(0); y = 65; x = 110; doc.text("Expenses:", x, y); y+=6; doc.setFont("helvetica", "normal"); doc.text(`Wages: ${expD.wage}`, x+5, y); y+=5; doc.text(`Transport: ${expD.transport}`, x+5, y); y+=5; doc.text(`Packing: ${expD.packing.toFixed(0)}`, x+5, y); y+=5; doc.text(`Misc: ${expD.misc.toFixed(0)}`, x+5, y); doc.save(`Report_${currentRec.date}.pdf`); }
-        window.showExpenses = function() { 
-    if(!currentRec) return; 
-    
-    let d = currentRec.expenseDetails; 
-    
-    // Fallback if older bill doesn't have expenseDetails saved
-    if(!d && expenseSettings) { 
-        const dateObj = new Date(currentRec.date); 
-        const dayIdx = dateObj.getDay(); 
-        const daySet = expenseSettings.days[dayIdx]; 
-        const billAmt = currentRec.totalBillAmt || 0; 
-        const billCost = currentRec.totalCost || 0; 
         
-        d = { 
-            wage: daySet.wage, 
-            transport: daySet.transport, 
-            packing: (billAmt/1000) * expenseSettings.packingRate, 
-            misc: (billCost * expenseSettings.miscPercent)/100, 
-            wastage: 0,
-            total: currentRec.totalExpenses 
-        }; 
-    } 
-    
-    if(!d) { alert("N/A"); return; } 
+        window.showExpenses = function() { 
+            if(!currentRec) return; 
+            let d = currentRec.expenseDetails; 
+            if(!d && expenseSettings) { 
+                const dateObj = new Date(currentRec.date); 
+                const dayIdx = dateObj.getDay(); 
+                const daySet = expenseSettings.days[dayIdx]; 
+                const billAmt = currentRec.totalBillAmt || 0; 
+                const billCost = currentRec.totalCost || 0; 
+                d = { wage: daySet.wage, transport: daySet.transport, packing: (billAmt/1000) * expenseSettings.packingRate, misc: (billCost * expenseSettings.miscPercent)/100, wastage: 0, total: currentRec.totalExpenses }; 
+            } 
+            if(!d) { alert("N/A"); return; } 
+            
+            const wastageVal = d.wastage || currentRec.wastageAmt || 0; 
+            const wNote = currentRec.wastageNote ? `<div style="font-size:11px; color:#888; font-weight:normal; margin-top:4px;"><i>"${currentRec.wastageNote}"</i></div>` : '';
+            const wImg = currentRec.wastageImg ? `<span class="material-icons" style="font-size:16px; color:var(--primary); cursor:pointer; margin-left:8px; vertical-align:middle;" onclick="viewLivePhoto('${currentRec.wastageImg}')">image</span>` : '';
 
-    const wastageVal = d.wastage || 0;
-
-    const html = `
-        <div class="modal-row"><span>Wages</span><span>₹${d.wage.toFixed(0)}</span></div>
-        <div class="modal-row"><span>Transport</span><span>₹${d.transport.toFixed(0)}</span></div>
-        <div class="modal-row"><span>Packing</span><span>₹${d.packing.toFixed(0)}</span></div>
-        <div class="modal-row"><span>Misc</span><span>₹${d.misc.toFixed(0)}</span></div>
-        <div class="modal-row"><span style="color:var(--red); font-weight:bold;">Wastage</span><span style="color:var(--red); font-weight:bold;">₹${wastageVal.toFixed(0)}</span></div>
-        <div class="modal-row total"><span>Total</span><span>₹${d.total.toFixed(0)}</span></div>
-    `; 
-    
-    openModal("Expenses", html); 
-}
+            const html = `
+                <div class="modal-row"><span>Wages</span><span>₹${d.wage.toFixed(0)}</span></div>
+                <div class="modal-row"><span>Transport</span><span>₹${d.transport.toFixed(0)}</span></div>
+                <div class="modal-row"><span>Packing</span><span>₹${d.packing.toFixed(0)}</span></div>
+                <div class="modal-row"><span>Misc</span><span>₹${d.misc.toFixed(0)}</span></div>
+                <div class="modal-row" style="flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; width:100%;">
+                        <span style="color:var(--red); font-weight:bold;">Wastage ${wImg}</span>
+                        <span style="color:var(--red); font-weight:bold;">₹${wastageVal.toFixed(0)}</span>
+                    </div>
+                    ${wNote}
+                </div>
+                <div class="modal-row total"><span>Total</span><span>₹${d.total.toFixed(0)}</span></div>
+            `; 
+            openModal("Expenses", html); 
+        }
+        
         window.showShortage = function() { if(!currentRec || !currentRec.items) return; const shortItems = currentRec.items.filter(i => { const ordered = i.originalQty !== undefined ? i.originalQty : (i.poQty || 0); return ordered > i.qty; }); if(shortItems.length === 0) { alert("No shortages found"); return; } let html = ''; shortItems.forEach(i => { const ord = i.originalQty !== undefined ? i.originalQty : i.poQty; const diff = ord - i.qty; const loss = diff * i.poRate; html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="color:#777; margin:0 10px;">${ord}->${i.qty}</span><span style="color:red; font-weight:700;">-${diff} (₹${loss})</span></div>`; }); openModal("Short Items", html); }
-        window.showDump = function() { if(!currentRec || !currentRec.items) return; let dumpList = []; currentRec.items.forEach(i => { const master = masterMap[i.code]; if (master && master.conv > 0 && i.actualKg > 0) { const std = i.qty * master.conv; const diff = i.actualKg - std; if (diff > 0.05) { const costPerKg = i.frozenCostPerKg || master.costKg || 0; dumpList.push({ name: i.name, diff: diff, cost: diff * costPerKg }); } } }); if(dumpList.length === 0) { alert("No dump found"); return; } let html = ''; dumpList.forEach(i => { html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="color:orange;">+${i.diff.toFixed(2)}kg</span><span style="color:red; font-weight:700; margin-left:10px;">₹${i.cost.toFixed(0)}</span></div>`; }); openModal("Dump Breakdown", html); }
+        
+        window.showDump = function() { 
+            if(!currentRec || !currentRec.items) return; 
+            let dumpList = []; 
+            currentRec.items.forEach(i => { 
+                const master = masterMap[i.code]; 
+                if (master && master.conv > 0 && i.actualKg > 0) { 
+                    const std = i.qty * master.conv; 
+                    const diff = i.actualKg - std; 
+                    if (diff > 0.05) { 
+                        const costPerKg = i.frozenCostPerKg || master.costKg || 0; 
+                        dumpList.push({ name: i.name, diff: diff, cost: diff * costPerKg }); 
+                    } 
+                } 
+            }); 
+            if(dumpList.length === 0) { alert("No dump found"); return; } 
+            
+            // SORT Dump by cost descending
+            dumpList.sort((a,b) => b.cost - a.cost);
+
+            let html = ''; 
+            dumpList.forEach(i => { html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="color:orange;">+${i.diff.toFixed(2)}kg</span><span style="color:red; font-weight:700; margin-left:10px;">₹${i.cost.toFixed(0)}</span></div>`; }); 
+            openModal("Dump Breakdown", html); 
+        }
+        
         function renderMarginBuckets(items) { const buckets = [{ l: 'Loss (<0%)', c: 0, s: 0, p:0, cls: 'bd-loss', items:[] }, { l: '0% - 5%', c: 0, s: 0, p:0, cls: 'bd-low', items:[] }, { l: '5% - 10%', c: 0, s: 0, p:0, cls: 'bd-mid', items:[] }, { l: '10% - 20%', c: 0, s: 0, p:0, cls: 'bd-ok', items:[] }, { l: '20% - 50%', c: 0, s: 0, p:0, cls: 'bd-good', items:[] }, { l: '> 50%', c: 0, s: 0, p:0, cls: 'bd-great', items:[] }]; items.filter(i => i.qty > 0).forEach(i => { const m = i.marginPct; const sale = i.qty * i.poRate; let idx = 0; if(m < 0) idx=0; else if(m<5) idx=1; else if(m<10) idx=2; else if(m<20) idx=3; else if(m<50) idx=4; else idx=5; buckets[idx].c++; buckets[idx].s += sale; buckets[idx].p += i.profit; buckets[idx].items.push(i); }); const container = document.getElementById('margin-container'); container.innerHTML = ''; buckets.forEach(b => { const div = document.createElement('div'); div.className = `ma-card ${b.cls}`; div.onclick = () => showCategoryItems(b.l, b.items); div.innerHTML = `<div class="ma-header">${b.l}</div><div class="ma-body"><div class="ma-row"><span>Items</span><span class="ma-val">${b.c}</span></div><div class="ma-row"><span>Sales</span><span class="ma-val">₹${b.s.toFixed(0)}</span></div><div class="ma-sep"></div><div class="ma-row"><span>Profit</span><span class="ma-prof">₹${b.p.toFixed(0)}</span></div></div>`; container.appendChild(div); }); }
         window.showCategoryItems = function(label, items) { if(items.length === 0) return; let html = ''; items.forEach(i => { html += `<div class="modal-row"><span style="flex:1;">${i.name}</span><span style="font-weight:700; color:${i.profit<0?'red':'green'}">₹${i.profit.toFixed(0)} (${i.marginPct.toFixed(0)}%)</span></div>`; }); openModal(label, html); }
         function openModal(title, content) { document.getElementById('modal-title').innerText = title; document.getElementById('modal-content').innerHTML = content; document.getElementById('info-modal').classList.remove('hidden'); }
-        window.closeModal = function(e) { 
-            if(e.target.id === 'info-modal') document.getElementById('info-modal').classList.add('hidden');
-            if(e.target.id === 'att-modal') document.getElementById('att-modal').classList.add('hidden');
-        }
+        window.closeModal = function(e) { if(e.target.id === 'info-modal') document.getElementById('info-modal').classList.add('hidden'); if(e.target.id === 'att-modal') document.getElementById('att-modal').classList.add('hidden'); }
 
         window.renderFinance = function() {
             const from = document.getElementById('fin-from').value;
@@ -1548,141 +1391,81 @@ window.renderDashboard = function() {
             const tbody = document.getElementById('finance-body');
             tbody.innerHTML = '';
             
-            // --- VARIABLES FOR GLOBAL KPIs ---
-            let allTimeBilled = 0;
-            let allTimePending = 0;
-            let totalMtrPending = 0;
-            
-            // Variables for Date-Filtered KPIs
-            let totBilled=0, totRcvd=0, totPend=0;
-            let creditDaysSum=0, creditCount=0, pendingCount=0;
-            let returnAmt = 0; 
+            let allBilled=0, allRcvd=0, allPend=0, allReturns=0;
+            let allDaysSum=0, allDaysCount=0, allPendCount=0;
+            let mtrTotal=0, mtrPaid=0, mtrPend=0;
 
             allIndents.forEach(rec => {
-                const bill = rec.totalBillAmt || 0;
-                const rcvd = rec.receivedAmount || 0;
+                // --- TIME INVARIANT KPIs ---
+                const bill = parseFloat(rec.totalBillAmt || 0); 
+                const rcvd = parseFloat(rec.receivedAmount || 0); 
                 const pending = bill - rcvd;
-                
-                // --- 1. GLOBAL KPIs (Date Independent) ---
-                allTimeBilled += bill;
-                allTimePending += (pending > 1 ? pending : 0);
-                
-                const isSwiggyPaid = rcvd >= (bill - 1);
-                if (isSwiggyPaid && !rec.mtrPaid) {
-                    totalMtrPending += (rec.mtrBill || 0);
+                const mtrBill = parseFloat(rec.mtrBill || 0);
+
+                allBilled += bill; 
+                allRcvd += rcvd;
+
+                if (pending > 1) { 
+                    allPend += pending; 
+                    allPendCount++; 
+                } else if (pending > 0) { 
+                    allReturns += pending; 
                 }
 
-                // --- 2. FILTERED KPIs & TABLE ---
+                const rcvDate = rec.receivedDate || '';
+                let days = '-';
+                if(rcvDate && rec.date) { 
+                    const start = new Date(rec.date); 
+                    const end = new Date(rcvDate); 
+                    days = Math.ceil(Math.abs(end-start)/(1000*60*60*24)); 
+                    if(rcvd > 0) { allDaysSum += days; allDaysCount++; } 
+                }
+
+                mtrTotal += mtrBill;
+                if (rec.mtrPaid) {
+                    mtrPaid += mtrBill;
+                } else if (mtrBill > 0) {
+                    mtrPend += mtrBill;
+                }
+
+                // --- DATE FILTER FOR TABLE ---
                 if (rec.date < from || rec.date > to) return;
 
-                const billNo = getBillNo(rec);
-                const note = rec.financeNote || '';
-                const rcvDate = rec.receivedDate || '';
-
-                // Days Logic
-                let days = '-';
-                if(rcvDate && rec.date) {
-                    const start = new Date(rec.date);
-                    const end = new Date(rcvDate);
-                    days = Math.ceil(Math.abs(end-start)/(1000*60*60*24));
-                    if(rcvd > 0) { creditDaysSum += days; creditCount++; }
-                }
+                const billNo = getBillNo(rec); 
+                const note = rec.financeNote || ''; 
                 
-                // Filtered Aggregates
-                totBilled += bill; 
-                totRcvd += rcvd; 
-                
-                if(pending > 1) { 
-                    totPend += pending; 
-                    pendingCount++; 
-                } else {
-                    const diff = bill - rcvd;
-                    if(diff > 0) returnAmt += diff; 
-                }
-
-                // --- ROW UI RENDERING ---
                 const mtrBillDisplay = rec.mtrBill ? `₹${rec.mtrBill}` : '-';
                 const mtrSts = rec.mtrPaid ? '<span style="color:green;font-weight:700">PAID</span>' : '<span style="color:red;font-weight:700">PEND</span>';
-                
-                // Smart Color Coding for Rcvd Amt
                 let rcvdDisplay = `<span style="color:#ccc">-</span>`;
-                if (rcvd > 0) {
-                    if (Math.abs(bill - rcvd) > 1) { // Highlights orange if there is a difference!
-                        rcvdDisplay = `<span style="color:var(--orange); font-weight:900;" title="Difference of ₹${(bill-rcvd).toFixed(0)}">₹${rcvd.toFixed(0)}</span>`;
-                    } else {
-                        rcvdDisplay = `<span style="color:var(--green); font-weight:900;">₹${rcvd.toFixed(0)}</span>`;
-                    }
+                if (rcvd > 0) { 
+                    if (Math.abs(bill - rcvd) > 1) { 
+                        rcvdDisplay = `<span style="color:var(--orange); font-weight:900;" title="Difference of ₹${(bill-rcvd).toFixed(0)}">₹${rcvd.toFixed(0)}</span>`; 
+                    } else { 
+                        rcvdDisplay = `<span style="color:var(--green); font-weight:900;">₹${rcvd.toFixed(0)}</span>`; 
+                    } 
                 }
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="sticky-col" style="font-weight:500;">${billNo}</td>
-                        <td class="w-date">${formatDate(rec.date)}</td>
-                        <td class="w-num">₹${bill.toFixed(0)}</td>
-                        <td class="w-num">${rcvdDisplay}</td>
-                        <td class="w-date" style="text-align:right;">${formatDate(rcvDate)}</td>
-                        <td class="w-num" style="text-align:center;">${days}</td>
-                        <td class="w-num">${mtrBillDisplay}</td>
-                        <td class="w-num">${mtrSts}</td>
-                        <td style="font-style:italic; color:#666; font-size:11px; padding-left:10px;">${note}</td>
-                    </tr>
-                `;
+                tbody.innerHTML += `<tr><td class="sticky-col" style="font-weight:500;">${billNo}</td><td class="w-date">${formatDate(rec.date)}</td><td class="w-num">₹${bill.toFixed(0)}</td><td class="w-num">${rcvdDisplay}</td><td class="w-date" style="text-align:right;">${formatDate(rcvDate)}</td><td class="w-num" style="text-align:center;">${days}</td><td class="w-num">${mtrBillDisplay}</td><td class="w-num">${mtrSts}</td><td style="font-style:italic; color:#666; font-size:11px; padding-left:10px;">${note}</td></tr>`;
             });
 
-            const avgDays = creditCount > 0 ? (creditDaysSum/creditCount).toFixed(0) : 0;
-
-            // Update KPIs
-            document.getElementById('kpi-fin-total').innerText = `₹${totBilled.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
-            document.getElementById('kpi-fin-rcvd').innerText = `₹${totRcvd.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
-            document.getElementById('kpi-fin-pend').innerText = `₹${totPend.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
-            
+            const avgDays = allDaysCount > 0 ? (allDaysSum/allDaysCount).toFixed(0) : 0;
+            document.getElementById('kpi-fin-total').innerText = `₹${allBilled.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-fin-rcvd').innerText = `₹${allRcvd.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-fin-pend').innerText = `₹${allPend.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
             document.getElementById('kpi-fin-days').innerText = avgDays;
-            document.getElementById('kpi-fin-return').innerText = `₹${returnAmt.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
-            document.getElementById('kpi-fin-count').innerText = pendingCount;
-            
-            document.getElementById('kpi-fin-all-bill').innerText = `₹${allTimeBilled.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
-            document.getElementById('kpi-fin-all-pend').innerText = `₹${allTimePending.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
-            document.getElementById('kpi-fin-mtr-pend').innerText = `₹${totalMtrPending.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-fin-return').innerText = `₹${allReturns.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-fin-count').innerText = allPendCount;
+            document.getElementById('kpi-fin-mtr-total').innerText = `₹${mtrTotal.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-fin-mtr-paid').innerText = `₹${mtrPaid.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+            document.getElementById('kpi-fin-mtr-pend').innerText = `₹${mtrPend.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
         }
 
-        function getBillNo(rec) {
-            if(rec.date) { const parts = rec.date.split('-'); if(parts.length === 3) return `MFB${parts[2]}${parts[1]}${parts[0].slice(-2)}`; }
-            return `#${rec.id.toString().slice(-4)}`;
-        }
-        function formatDate(dateStr) {
-            if(!dateStr) return '-'; const parts = dateStr.split('-'); return `${parts[2]}/${parts[1]}`;
-        }
-        function formatDateFull(dateStr) {
-            if(!dateStr) return '-'; const parts = dateStr.split('-'); return `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-        function formatLastUpdated(dateStr) {
-            if(!dateStr) return 'Never';
-            const d = new Date(dateStr);
-            if(isNaN(d.getTime())) return dateStr;
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = String(d.getFullYear()).slice(-2);
-            const hours = String(d.getHours()).padStart(2, '0');
-            const mins = String(d.getMinutes()).padStart(2, '0');
-            return `${day}/${month}/${year} ${hours}:${mins}`;
-        }
+        function getBillNo(rec) { if(rec.date) { const parts = rec.date.split('-'); if(parts.length === 3) return `MFB${parts[2]}${parts[1]}${parts[0].slice(-2)}`; } return `#${rec.id.toString().slice(-4)}`; }
+        function formatDate(dateStr) { if(!dateStr) return '-'; const parts = dateStr.split('-'); return `${parts[2]}/${parts[1]}`; }
+        function formatDateFull(dateStr) { if(!dateStr) return '-'; const parts = dateStr.split('-'); return `${parts[2]}-${parts[1]}-${parts[0]}`; }
+        function formatLastUpdated(dateStr) { if(!dateStr) return 'Never'; const d = new Date(dateStr); if(isNaN(d.getTime())) return dateStr; const day = String(d.getDate()).padStart(2, '0'); const month = String(d.getMonth() + 1).padStart(2, '0'); const year = String(d.getFullYear()).slice(-2); const hours = String(d.getHours()).padStart(2, '0'); const mins = String(d.getMinutes()).padStart(2, '0'); return `${day}/${month}/${year} ${hours}:${mins}`; }
 
         checkAuth();
     </script>
-    <!-- ATTENDANCE HISTORY MODAL -->
-<div id="att-modal" class="hidden modal-overlay" onclick="closeModal(event)">
-    <div class="modal-box" onclick="event.stopPropagation()">
-        <div class="modal-head">
-            <span id="att-modal-title">Employee History</span>
-            <span class="material-icons" onclick="document.getElementById('att-modal').classList.add('hidden')" style="cursor:pointer">close</span>
-        </div>
-        <div style="padding:10px; background:#f8f9fa; border-bottom:1px solid #eee;">
-            <input type="month" id="att-modal-month" class="date-input" style="width:100%; box-sizing:border-box;" onchange="loadAttModalHistory()">
-        </div>
-        <div id="att-modal-body" class="modal-body" style="max-height:60vh; overflow-y:auto;">
-            <!-- Table Injected Here -->
-        </div>
-    </div>
-</div>
 </body>
 </html>
