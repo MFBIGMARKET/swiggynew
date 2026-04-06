@@ -449,11 +449,24 @@
     <div class="modal-box">
         <div style="padding:20px; text-align:center;">
             <h3 style="margin-top:0; color:var(--orange);">Add Daily Wastage</h3>
-            <p style="font-size:12px; color:#666; margin-bottom:15px;">Enter the total wastage amount (₹), an optional note, and a photo.</p>
             
-            <input type="number" id="wastage-input" class="login-input" placeholder="Amount (₹)" style="font-size:24px; text-align:center; font-weight:bold; margin-bottom:10px;">
-            <textarea id="wastage-note" class="login-input" placeholder="Reason for wastage..." rows="2" style="font-size:13px; font-weight:normal; margin-bottom:10px;"></textarea>
-            
+            <!-- Item Selection Row -->
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <select id="wastage-item-select" class="login-input" style="flex:2; margin:0; padding:10px; font-size:13px;"></select>
+                <input type="number" id="wastage-qty" class="login-input" placeholder="Qty" style="flex:1; margin:0; padding:10px; text-align:center;">
+                <button onclick="addWastageItem()" style="background:var(--primary); color:white; border:none; border-radius:6px; padding:0 15px; font-weight:bold; cursor:pointer;">ADD</button>
+            </div>
+
+            <!-- List of added items -->
+            <div id="wastage-items-container" style="max-height:150px; overflow-y:auto; border:1px solid #eee; border-radius:6px; margin-bottom:15px; text-align:left; background:#fafafa;">
+                <!-- Items injected here by JS -->
+            </div>
+
+            <!-- Total & Photo -->
+            <div style="font-size:18px; font-weight:bold; margin-bottom:15px; color:var(--text-main);">
+                Total: ₹<span id="wastage-total-amt">0</span>
+            </div>
+
             <div class="cam-btn" id="wastage-cam-btn" style="margin-bottom:10px; position:relative;">
                 <span class="material-icons">camera_alt</span> 
                 <span id="wastage-cam-text" style="font-size:13px; margin-left:8px;">Add Photo</span>
@@ -461,6 +474,7 @@
             </div>
         </div>
         <div style="display:flex; border-top:1px solid #eee;">
+            <button id="wastage-clear-btn" onclick="clearWastage()" class="hidden" style="flex:1; padding:15px; background:white; border:none; border-right:1px solid #eee; color:var(--red); font-weight:bold; cursor:pointer;">CLEAR</button>
             <button onclick="document.getElementById('wastage-modal').classList.add('hidden')" style="flex:1; padding:15px; background:white; border:none; border-right:1px solid #eee; color:#666; font-weight:bold; cursor:pointer;">CANCEL</button>
             <button id="wastage-save-btn" onclick="saveWastage()" style="flex:1; padding:15px; background:var(--orange); border:none; color:white; font-weight:bold; cursor:pointer;">SAVE</button>
         </div>
@@ -486,6 +500,7 @@
     const storage = getStorage(app);
     let tempWastageImg = null;
 let tempWastagePath = null;
+let tempWastageItems = [];
     let activeIndent = null;
     let currentFilterMode = 'all'; 
     let masterMap = {}; 
@@ -1444,13 +1459,25 @@ let tempWastagePath = null;
     
 
             window.openWastageModal = function() {
-            const amt = activeIndent && activeIndent.wastageAmt ? activeIndent.wastageAmt : '';
-            const note = activeIndent && activeIndent.wastageNote ? activeIndent.wastageNote : '';
+            // Load existing data from DB state
+            tempWastageItems = activeIndent && activeIndent.wastageList ? [...activeIndent.wastageList] : [];
             tempWastageImg = activeIndent && activeIndent.wastageImg ? activeIndent.wastageImg : null;
             tempWastagePath = activeIndent && activeIndent.wastageStoragePath ? activeIndent.wastageStoragePath : null;
 
-            document.getElementById('wastage-input').value = amt;
-            document.getElementById('wastage-note').value = note;
+            // Populate the dropdown with items from today's order
+            const sel = document.getElementById('wastage-item-select');
+            sel.innerHTML = '<option value="">Select Item...</option>';
+            if(activeIndent && activeIndent.items) {
+                const sortedItems = [...activeIndent.items].sort((a,b) => a.name.localeCompare(b.name));
+                sortedItems.forEach(i => {
+                    sel.innerHTML += `<option value="${i.code}">${i.name}</option>`;
+                });
+            }
+
+            document.getElementById('wastage-qty').value = '';
+            
+            // Render UI
+            renderWastageList();
 
             const camBtn = document.getElementById('wastage-cam-btn');
             const camText = document.getElementById('wastage-cam-text');
@@ -1463,6 +1490,223 @@ let tempWastagePath = null;
             }
 
             document.getElementById('wastage-modal').classList.remove('hidden');
+        }
+
+        window.addWastageItem = function() {
+            const code = document.getElementById('wastage-item-select').value;
+            const qty = parseFloat(document.getElementById('wastage-qty').value);
+            
+            if(!code || isNaN(qty) || qty <= 0) {
+                alert("Please select an item and enter a valid quantity.");
+                return;
+            }
+
+            const item = activeIndent.items.find(i => i.code == code);
+            const master = masterMap[code];
+            
+            // Calculate cost (Cost Per Kg * Kg Per Piece)
+            let costPerPc = 0;
+            if(master && master.costKg && master.conv) {
+                costPerPc = master.costKg * master.conv;
+            } else if (item.myCost) {
+                costPerPc = item.myCost; // Fallback
+            }
+
+            const totalCost = costPerPc * qty;
+
+            tempWastageItems.push({
+                code: code,
+                name: item.name,
+                qty: qty,
+                cost: totalCost
+            });
+
+            document.getElementById('wastage-item-select').value = "";
+            document.getElementById('wastage-qty').value = "";
+            renderWastageList();
+        }
+
+        window.removeWastageItem = function(index) {
+            tempWastageItems.splice(index, 1);
+            renderWastageList();
+        }
+
+        window.renderWastageList = function() {
+            const container = document.getElementById('wastage-items-container');
+            const clearBtn = document.getElementById('wastage-clear-btn');
+            let html = '';
+            let total = 0;
+            
+            tempWastageItems.forEach((w, idx) => {
+                total += w.cost;
+                html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; font-size:12px;">
+                    <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${w.name} <b style="color:var(--primary)">(x${w.qty})</b></span>
+                    <span style="font-weight:bold; margin:0 10px;">₹${w.cost.toFixed(0)}</span>
+                    <span class="material-icons" style="font-size:16px; color:var(--red); cursor:pointer;" onclick="removeWastageItem(${idx})">close</span>
+                </div>`;
+            });
+
+            if(tempWastageItems.length === 0) {
+                html = '<div style="padding:15px; text-align:center; color:#999; font-size:12px;">No items added yet.</div>';
+            }
+
+            container.innerHTML = html;
+            document.getElementById('wastage-total-amt').innerText = total.toFixed(0);
+
+            // Show CLEAR button if data exists
+            if(tempWastageItems.length > 0 || tempWastageImg) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
+        }
+
+        window.handleWastageImage = function(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const camBtn = document.getElementById('wastage-cam-btn');
+                const camText = document.getElementById('wastage-cam-text');
+                
+                camText.innerText = "UPLOADING...";
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 400; 
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH; 
+                        canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        canvas.toBlob(async (blob) => {
+                            try {
+                                const fileName = `wastage_images/wastage_${Date.now()}.jpg`;
+                                const storageReference = sRef(storage, fileName);
+                                await uploadBytes(storageReference, blob);
+                                const downloadURL = await getDownloadURL(storageReference);
+                                
+                                tempWastageImg = downloadURL;
+                                tempWastagePath = fileName;
+                                
+                                camBtn.classList.add('has-img');
+                                camText.innerText = "Photo Added";
+                                renderWastageList(); // Refresh CLEAR button logic
+                            } catch(err) {
+                                console.error(err);
+                                alert("Upload failed.");
+                                camText.innerText = "Add Photo";
+                            }
+                        }, 'image/jpeg', 0.6);
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        window.saveWastage = async function() {
+            if(!activeIndent) return;
+            const btn = document.getElementById('wastage-save-btn');
+            btn.innerText = "SAVING...";
+            
+            let totalAmt = 0;
+            let noteArr = [];
+            
+            // Auto-generate total amount and readable text note
+            tempWastageItems.forEach(w => {
+                totalAmt += w.cost;
+                noteArr.push(`${w.name}: ${w.qty}`);
+            });
+
+            const finalNote = noteArr.length > 0 ? noteArr.join(", ") : "";
+
+            const updates = {
+                'active_indent/wastageList': tempWastageItems.length > 0 ? tempWastageItems : null,
+                'active_indent/wastageAmt': totalAmt > 0 ? totalAmt : null,
+                'active_indent/wastageNote': finalNote !== "" ? finalNote : null,
+                'active_indent/wastageImg': tempWastageImg,
+                'active_indent/wastageStoragePath': tempWastagePath
+            };
+
+            try {
+                await update(dbRef(db), updates);
+                document.getElementById('wastage-modal').classList.add('hidden');
+                alert(totalAmt > 0 ? "Wastage saved: ₹" + totalAmt.toFixed(0) : "Wastage photo saved.");
+            } catch(e) { 
+                alert(e.message); 
+            } finally {
+                btn.innerText = "SAVE";
+            }
+        }
+
+        window.clearWastage = async function() {
+            if(!activeIndent) return;
+            if(!confirm("Are you sure you want to completely remove the recorded wastage?")) return;
+
+            const btn = document.getElementById('wastage-clear-btn');
+            btn.innerText = "CLEARING...";
+
+            try {
+                if (tempWastagePath) {
+                    const storageReference = sRef(storage, tempWastagePath);
+                    await deleteObject(storageReference).catch(e => console.log("Storage delete ignored"));
+                }
+
+                const updates = {
+                    'active_indent/wastageList': null,
+                    'active_indent/wastageAmt': null,
+                    'active_indent/wastageNote': null,
+                    'active_indent/wastageImg': null,
+                    'active_indent/wastageStoragePath': null
+                };
+
+                await update(dbRef(db), updates);
+
+                tempWastageItems = [];
+                tempWastageImg = null;
+                tempWastagePath = null;
+                document.getElementById('wastage-modal').classList.add('hidden');
+                
+                alert("Wastage cleared successfully.");
+            } catch(e) {
+                alert("Error clearing wastage: " + e.message);
+            } finally {
+                btn.innerText = "CLEAR";
+            }
+        }
+
+        window.executeFinalSubmit = async function() {
+            const btn = document.querySelector('#confirm-modal button[onclick*="executeFinalSubmit"]');
+            btn.innerHTML = 'SENDING...'; btn.disabled = true;
+            try {
+                const reviewItems = activeIndent.items.map(item => ({
+                    code: item.code, name: item.name, poQty: item.poQty, poRate: item.poRate,
+                    qty: item.savedQty !== undefined ? item.savedQty : item.poQty,
+                    actualKg: item.savedKg || 0, img: item.savedImg || null, packedBy: item.packedBy || '',
+                    editedBy: item.editedBy || null
+                }));
+                
+                // Grab the wastage data before deleting
+                const wastageAmt = activeIndent.wastageAmt || 0;
+                const wastageNote = activeIndent.wastageNote || "";
+                const wastageImg = activeIndent.wastageImg || null;
+
+                const reviewData = { 
+                    date: activeIndent.date, 
+                    items: reviewItems, 
+                    wastageAmt: wastageAmt,
+                    wastageNote: wastageNote,
+                    wastageImg: wastageImg,
+                    timestamp: Date.now() 
+                };
+                
+                await set(dbRef(db, 'completed_packing'), reviewData);
+                await remove(dbRef(db, 'active_indent'));
+                document.getElementById('confirm-modal').classList.add('hidden');
+                alert("Order Submitted Successfully!");
+                closePage('page-packing');
+            } catch (e) { alert("Error: " + e.message); btn.innerHTML = 'SEND'; btn.disabled = false; }
         }
 
         window.handleWastageImage = function(input) {
