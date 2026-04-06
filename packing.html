@@ -443,7 +443,7 @@
 </div>
 
 <div id="img-modal" onclick="this.style.display='none'"><span class="close-img">&times;</span><img id="img-content"></div>
-<!-- WASTAGE MODAL -->
+
 <!-- WASTAGE MODAL -->
 <div id="wastage-modal" class="modal-overlay hidden">
     <div class="modal-box">
@@ -480,6 +480,7 @@
         </div>
     </div>
 </div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref as dbRef, set, get, child, remove, query, limitToLast, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -498,9 +499,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const storage = getStorage(app);
-    let tempWastageImg = null;
-let tempWastagePath = null;
-let tempWastageItems = [];
     let activeIndent = null;
     let currentFilterMode = 'all'; 
     let masterMap = {}; 
@@ -508,6 +506,11 @@ let tempWastageItems = [];
     let historyData = [];
     let currentHistoryRec = null;
     let histFilterMode = 'all';
+
+    // Wastage State Variables
+    let tempWastageImg = null;
+    let tempWastagePath = null;
+    let tempWastageItems = [];
 
     const USERS = {
         'VISHAKH': 'Vish@123',
@@ -580,7 +583,6 @@ let tempWastageItems = [];
         document.getElementById('prof-avatar').innerText = currentUser.charAt(0);
         document.getElementById('prof-name').innerText = currentUser;
         
-        // 1. ACCESS CONTROL: FINISH BUTTON
         // 1. ACCESS CONTROL: FINISH & WASTAGE BUTTONS
         const finishBtn = document.getElementById('header-finish-btn');
         const wastageBtn = document.getElementById('btn-add-wastage');
@@ -978,44 +980,6 @@ let tempWastageItems = [];
         }
     }
 
-    
-
-    function submitToReview() {
-        if(!activeIndent) {
-            alert("No active order loaded.");
-            return;
-        }
-        const total = activeIndent.items.length;
-        const packed = activeIndent.items.filter(i => i.isPacked === true).length;
-        const pending = total - packed;
-        document.getElementById('conf-packed').innerText = packed;
-        document.getElementById('conf-pending').innerText = pending;
-        document.getElementById('confirm-modal').classList.remove('hidden');
-    }
-
-    async function executeFinalSubmit() {
-        const btn = document.querySelector('#confirm-modal button[onclick*="executeFinalSubmit"]');
-        btn.innerHTML = 'SENDING...'; btn.disabled = true;
-        try {
-            const reviewItems = activeIndent.items.map(item => ({
-                code: item.code,
-                name: item.name,
-                poQty: item.poQty,
-                poRate: item.poRate,
-                qty: item.savedQty !== undefined ? item.savedQty : item.poQty,
-                actualKg: item.savedKg || 0,
-                img: item.savedImg || null,
-                packedBy: item.packedBy || ''
-            }));
-            const reviewData = { date: activeIndent.date, items: reviewItems, timestamp: Date.now() };
-            await set(dbRef(db, 'completed_packing'), reviewData);
-            await remove(dbRef(db, 'active_indent'));
-            document.getElementById('confirm-modal').classList.add('hidden');
-            alert("Order Submitted Successfully!");
-            closePage('page-packing');
-        } catch (e) { alert("Error: " + e.message); btn.innerHTML = 'SEND'; btn.disabled = false; }
-    }
-
     async function loadHistory() {
         const histContainer = document.getElementById('history-list');
         const filterVal = document.getElementById('hist-month-filter').value;
@@ -1137,6 +1101,7 @@ let tempWastageItems = [];
             }
         } catch (e) { console.error(e); }
     }
+    
     async function loadAttendanceHistory() {
         let targetUser = currentUser;
         if (currentUser === 'ADMIN') targetUser = document.getElementById('admin-user-filter').value;
@@ -1151,7 +1116,6 @@ let tempWastageItems = [];
                 const allData = snap.val();
                 const rows = [];
                 
-                // 1. Filter by Date and User
                 Object.keys(allData).forEach(date => {
                     if (filterVal && date.substring(0, 7) !== filterVal) return;
                     const dayData = allData[date][targetUser];
@@ -1173,7 +1137,6 @@ let tempWastageItems = [];
                     return; 
                 }
                 
-                // 2. Render Rows and Track Net OT
                 let totalNetOT = 0;
 
                 rows.forEach(r => {
@@ -1183,7 +1146,6 @@ let tempWastageItems = [];
 
                     let otDisplay = `<span style="color:#ccc">-</span>`;
                     
-                    // Only process OT if they have actually checked out
                     if (r.out && r.ot !== undefined) { 
                         totalNetOT += r.ot;
                         
@@ -1209,7 +1171,6 @@ let tempWastageItems = [];
                         </tr>`;
                 });
                 
-                // 3. Add the Total NET OT Footer Row
                 const absTotal = Math.abs(totalNetOT);
                 const th = Math.floor(absTotal / 60);
                 const tm = absTotal % 60;
@@ -1239,6 +1200,7 @@ let tempWastageItems = [];
             tbody.innerHTML = '<tr><td colspan="4" style="color:red; padding:20px;">Error loading history.</td></tr>';
         }
     }
+    
     async function loadAdminDashboard() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('admin-date').innerText = today;
@@ -1270,8 +1232,6 @@ let tempWastageItems = [];
         } catch(e) { console.error(e); }
     }
 
-    
-
     // --- ADMIN MANUAL ATTENDANCE LOGIC ---
     window.openAdminOverride = function() {
         const today = new Date().toISOString().split('T')[0];
@@ -1283,73 +1243,54 @@ let tempWastageItems = [];
     }
 
     window.saveAdminOverride = async function() {
-    const date = document.getElementById('override-date').value; // e.g., "2026-03-09"
-    const emp = document.getElementById('override-emp').value;
-    const timeIn = document.getElementById('override-time-in').value; // e.g., "09:00"
-    const timeOut = document.getElementById('override-time-out').value; // e.g., "00:30"
-    const statusEl = document.getElementById('override-status');
-    
-    // 1. Basic Validation
-    if(!date) { statusEl.innerText = "❌ Select Date"; return; }
-    if(!timeIn) { statusEl.innerText = "❌ Enter In-Time"; return; }
-    
-    statusEl.innerText = "Saving...";
-    const updates = {};
-    const path = `attendance/${date}/${emp}`;
+        const date = document.getElementById('override-date').value; 
+        const emp = document.getElementById('override-emp').value;
+        const timeIn = document.getElementById('override-time-in').value; 
+        const timeOut = document.getElementById('override-time-out').value; 
+        const statusEl = document.getElementById('override-status');
+        
+        if(!date) { statusEl.innerText = "❌ Select Date"; return; }
+        if(!timeIn) { statusEl.innerText = "❌ Enter In-Time"; return; }
+        
+        statusEl.innerText = "Saving...";
+        const updates = {};
+        const path = `attendance/${date}/${emp}`;
 
-    try {
-        // 2. Construct the Check-In DateTime Object
-        const checkInDateTime = new Date(`${date}T${timeIn}:00`);
-        updates[`${path}/inTime`] = checkInDateTime.toISOString();
-        updates[`${path}/name`] = emp;
+        try {
+            const checkInDateTime = new Date(`${date}T${timeIn}:00`);
+            updates[`${path}/inTime`] = checkInDateTime.toISOString();
+            updates[`${path}/name`] = emp;
 
-        // 3. Handle Check-Out and Midnight Logic
-        if(timeOut) {
-            let checkOutDateTime = new Date(`${date}T${timeOut}:00`);
-
-            /** 
-             * MIDNIGHT LOGIC:
-             * If the Out-Time is mathematically EARLIER than the In-Time on the same date string,
-             * it means the employee worked past midnight into the next day.
-             * (Example: In 09:00 AM, Out 12:30 AM)
-             */
-            if (checkOutDateTime <= checkInDateTime) {
-                checkOutDateTime.setDate(checkOutDateTime.getDate() + 1);
+            if(timeOut) {
+                let checkOutDateTime = new Date(`${date}T${timeOut}:00`);
+                if (checkOutDateTime <= checkInDateTime) {
+                    checkOutDateTime.setDate(checkOutDateTime.getDate() + 1);
+                }
+                updates[`${path}/outTime`] = checkOutDateTime.toISOString();
+                const durationMinutes = Math.floor((checkOutDateTime - checkInDateTime) / 60000);
+                const otMinutes = durationMinutes - 720;
+                updates[`${path}/otMinutes`] = otMinutes;
             }
 
-            updates[`${path}/outTime`] = checkOutDateTime.toISOString();
+            await update(dbRef(db), updates);
 
-            // 4. Calculate OT based on 12 Hour shift (720 mins)
-            const durationMinutes = Math.floor((checkOutDateTime - checkInDateTime) / 60000);
-            const otMinutes = durationMinutes - 720;
-            updates[`${path}/otMinutes`] = otMinutes;
+            statusEl.style.color = "green";
+            statusEl.innerText = `✅ Success: Updated ${emp}`;
+            
+            if(date === new Date().toISOString().split('T')[0]) {
+                if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
+            }
+            if(typeof loadAttendanceHistory === 'function') loadAttendanceHistory();
+
+            document.getElementById('override-time-in').value = "";
+            document.getElementById('override-time-out').value = "";
+
+        } catch(e) {
+            console.error(e);
+            statusEl.style.color = "red";
+            statusEl.innerText = "❌ Error: " + e.message;
         }
-
-        // 5. Push to Firebase
-        await update(dbRef(db), updates);
-
-        // 6. UI Feedback
-        statusEl.style.color = "green";
-        statusEl.innerText = `✅ Success: Updated ${emp}`;
-        
-        // Refresh views if on the current day
-        if(date === new Date().toISOString().split('T')[0]) {
-            if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
-        }
-        
-        // Refresh the local history table if it's visible
-        if(typeof loadAttendanceHistory === 'function') loadAttendanceHistory();
-
-        // Clear time inputs after successful save
-        document.getElementById('override-time-in').value = "";
-        document.getElementById('override-time-out').value = "";
-
-    } catch(e) {
-        console.error(e);
-        statusEl.style.color = "red";
-        statusEl.innerText = "❌ Error: " + e.message;
     }
-}
 
     window.markAdminAbsent = async function() {
         if(!confirm("Mark this employee as ABSENT? This will clear current logs.")) return;
@@ -1358,7 +1299,6 @@ let tempWastageItems = [];
         const statusEl = document.getElementById('override-status');
         
         try {
-            // Remove the node for that employee on that date
             await remove(dbRef(db, `attendance/${date}/${emp}`));
             statusEl.innerText = `✅ Marked ABSENT: ${emp}`;
             if(date === new Date().toISOString().split('T')[0]) loadAdminDashboard();
@@ -1378,6 +1318,7 @@ let tempWastageItems = [];
             () => { badge.className = 'loc-badge loc-err'; badge.innerHTML = 'GPS Error'; window.isLocationValid = false; }
         );
     }
+    
     function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) { var R = 6371; var dLat = deg2rad(lat2-lat1); var dLon = deg2rad(lon2-lon1); var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c; }
     function deg2rad(deg) { return deg * (Math.PI/180); }
 
@@ -1396,18 +1337,15 @@ let tempWastageItems = [];
         const now = new Date();
 
         try {
-            // 1. Fetch the check-in time
             const snap = await get(child(dbRef(db), `attendance/${today}/${currentUser}`));
             if (!snap.exists()) { alert("Check-in record not found!"); return; }
             
             const inTimeData = snap.val().inTime;
             const inDate = new Date(inTimeData);
 
-            // 2. Calculate Exact Duration vs 12 Hours (720 minutes)
             const durationMinutes = Math.floor((now - inDate) / 60000);
             const otMinutes = durationMinutes - 720; 
 
-            // 3. Save to DB
             await update(dbRef(db, `attendance/${today}/${currentUser}`), {
                 outTime: now.toISOString(),
                 otMinutes: otMinutes
@@ -1456,331 +1394,222 @@ let tempWastageItems = [];
         link.click();
         document.body.removeChild(link);
     }
-    
 
-            window.openWastageModal = function() {
-            // Load existing data from DB state
-            tempWastageItems = activeIndent && activeIndent.wastageList ? [...activeIndent.wastageList] : [];
-            tempWastageImg = activeIndent && activeIndent.wastageImg ? activeIndent.wastageImg : null;
-            tempWastagePath = activeIndent && activeIndent.wastageStoragePath ? activeIndent.wastageStoragePath : null;
+    // ==========================================
+    // NEW WASTAGE LOGIC (ITEM SELECTION)
+    // ==========================================
+    window.openWastageModal = function() {
+        tempWastageItems = activeIndent && activeIndent.wastageList ? [...activeIndent.wastageList] : [];
+        tempWastageImg = activeIndent && activeIndent.wastageImg ? activeIndent.wastageImg : null;
+        tempWastagePath = activeIndent && activeIndent.wastageStoragePath ? activeIndent.wastageStoragePath : null;
 
-            // Populate the dropdown with items from today's order
-            const sel = document.getElementById('wastage-item-select');
-            sel.innerHTML = '<option value="">Select Item...</option>';
-            if(activeIndent && activeIndent.items) {
-                const sortedItems = [...activeIndent.items].sort((a,b) => a.name.localeCompare(b.name));
-                sortedItems.forEach(i => {
-                    sel.innerHTML += `<option value="${i.code}">${i.name}</option>`;
-                });
-            }
+        const sel = document.getElementById('wastage-item-select');
+        sel.innerHTML = '<option value="">Select Item...</option>';
+        if(activeIndent && activeIndent.items) {
+            const sortedItems = [...activeIndent.items].sort((a,b) => a.name.localeCompare(b.name));
+            sortedItems.forEach(i => {
+                sel.innerHTML += `<option value="${i.code}">${i.name}</option>`;
+            });
+        }
 
-            document.getElementById('wastage-qty').value = '';
-            
-            // Render UI
-            renderWastageList();
+        document.getElementById('wastage-qty').value = '';
+        
+        renderWastageList();
 
+        const camBtn = document.getElementById('wastage-cam-btn');
+        const camText = document.getElementById('wastage-cam-text');
+        if (tempWastageImg) {
+            camBtn.classList.add('has-img');
+            camText.innerText = "Photo Added";
+        } else {
+            camBtn.classList.remove('has-img');
+            camText.innerText = "Add Photo";
+        }
+
+        document.getElementById('wastage-modal').classList.remove('hidden');
+    }
+
+    window.addWastageItem = function() {
+        const code = document.getElementById('wastage-item-select').value;
+        const qty = parseFloat(document.getElementById('wastage-qty').value);
+        
+        if(!code || isNaN(qty) || qty <= 0) {
+            alert("Please select an item and enter a valid quantity.");
+            return;
+        }
+
+        const item = activeIndent.items.find(i => i.code == code);
+        const master = masterMap[code];
+        
+        let costPerPc = 0;
+        if(master && master.costKg && master.conv) {
+            costPerPc = master.costKg * master.conv;
+        } else if (item.myCost) {
+            costPerPc = item.myCost; 
+        }
+
+        const totalCost = costPerPc * qty;
+
+        tempWastageItems.push({
+            code: code,
+            name: item.name,
+            qty: qty,
+            cost: totalCost
+        });
+
+        document.getElementById('wastage-item-select').value = "";
+        document.getElementById('wastage-qty').value = "";
+        renderWastageList();
+    }
+
+    window.removeWastageItem = function(index) {
+        tempWastageItems.splice(index, 1);
+        renderWastageList();
+    }
+
+    window.renderWastageList = function() {
+        const container = document.getElementById('wastage-items-container');
+        const clearBtn = document.getElementById('wastage-clear-btn');
+        let html = '';
+        let total = 0;
+        
+        tempWastageItems.forEach((w, idx) => {
+            total += w.cost;
+            html += `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; font-size:12px;">
+                <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${w.name} <b style="color:var(--primary)">(x${w.qty})</b></span>
+                <span style="font-weight:bold; margin:0 10px;">₹${w.cost.toFixed(0)}</span>
+                <span class="material-icons" style="font-size:16px; color:var(--red); cursor:pointer;" onclick="removeWastageItem(${idx})">close</span>
+            </div>`;
+        });
+
+        if(tempWastageItems.length === 0) {
+            html = '<div style="padding:15px; text-align:center; color:#999; font-size:12px;">No items added yet.</div>';
+        }
+
+        container.innerHTML = html;
+        document.getElementById('wastage-total-amt').innerText = total.toFixed(0);
+
+        if(tempWastageItems.length > 0 || tempWastageImg) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+    }
+
+    window.handleWastageImage = function(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
             const camBtn = document.getElementById('wastage-cam-btn');
             const camText = document.getElementById('wastage-cam-text');
-            if (tempWastageImg) {
-                camBtn.classList.add('has-img');
-                camText.innerText = "Photo Added";
-            } else {
-                camBtn.classList.remove('has-img');
-                camText.innerText = "Add Photo";
-            }
-
-            document.getElementById('wastage-modal').classList.remove('hidden');
-        }
-
-        window.addWastageItem = function() {
-            const code = document.getElementById('wastage-item-select').value;
-            const qty = parseFloat(document.getElementById('wastage-qty').value);
             
-            if(!code || isNaN(qty) || qty <= 0) {
-                alert("Please select an item and enter a valid quantity.");
-                return;
-            }
-
-            const item = activeIndent.items.find(i => i.code == code);
-            const master = masterMap[code];
+            camText.innerText = "UPLOADING...";
             
-            // Calculate cost (Cost Per Kg * Kg Per Piece)
-            let costPerPc = 0;
-            if(master && master.costKg && master.conv) {
-                costPerPc = master.costKg * master.conv;
-            } else if (item.myCost) {
-                costPerPc = item.myCost; // Fallback
-            }
-
-            const totalCost = costPerPc * qty;
-
-            tempWastageItems.push({
-                code: code,
-                name: item.name,
-                qty: qty,
-                cost: totalCost
-            });
-
-            document.getElementById('wastage-item-select').value = "";
-            document.getElementById('wastage-qty').value = "";
-            renderWastageList();
-        }
-
-        window.removeWastageItem = function(index) {
-            tempWastageItems.splice(index, 1);
-            renderWastageList();
-        }
-
-        window.renderWastageList = function() {
-            const container = document.getElementById('wastage-items-container');
-            const clearBtn = document.getElementById('wastage-clear-btn');
-            let html = '';
-            let total = 0;
-            
-            tempWastageItems.forEach((w, idx) => {
-                total += w.cost;
-                html += `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; font-size:12px;">
-                    <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${w.name} <b style="color:var(--primary)">(x${w.qty})</b></span>
-                    <span style="font-weight:bold; margin:0 10px;">₹${w.cost.toFixed(0)}</span>
-                    <span class="material-icons" style="font-size:16px; color:var(--red); cursor:pointer;" onclick="removeWastageItem(${idx})">close</span>
-                </div>`;
-            });
-
-            if(tempWastageItems.length === 0) {
-                html = '<div style="padding:15px; text-align:center; color:#999; font-size:12px;">No items added yet.</div>';
-            }
-
-            container.innerHTML = html;
-            document.getElementById('wastage-total-amt').innerText = total.toFixed(0);
-
-            // Show CLEAR button if data exists
-            if(tempWastageItems.length > 0 || tempWastageImg) clearBtn.classList.remove('hidden');
-            else clearBtn.classList.add('hidden');
-        }
-
-        window.handleWastageImage = function(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const camBtn = document.getElementById('wastage-cam-btn');
-                const camText = document.getElementById('wastage-cam-text');
-                
-                camText.innerText = "UPLOADING...";
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 400; 
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH; 
-                        canvas.height = img.height * scaleSize;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        canvas.toBlob(async (blob) => {
-                            try {
-                                const fileName = `wastage_images/wastage_${Date.now()}.jpg`;
-                                const storageReference = sRef(storage, fileName);
-                                await uploadBytes(storageReference, blob);
-                                const downloadURL = await getDownloadURL(storageReference);
-                                
-                                tempWastageImg = downloadURL;
-                                tempWastagePath = fileName;
-                                
-                                camBtn.classList.add('has-img');
-                                camText.innerText = "Photo Added";
-                                renderWastageList(); // Refresh CLEAR button logic
-                            } catch(err) {
-                                console.error(err);
-                                alert("Upload failed.");
-                                camText.innerText = "Add Photo";
-                            }
-                        }, 'image/jpeg', 0.6);
-                    }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 400; 
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH; 
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    canvas.toBlob(async (blob) => {
+                        try {
+                            const fileName = `wastage_images/wastage_${Date.now()}.jpg`;
+                            const storageReference = sRef(storage, fileName);
+                            await uploadBytes(storageReference, blob);
+                            const downloadURL = await getDownloadURL(storageReference);
+                            
+                            tempWastageImg = downloadURL;
+                            tempWastagePath = fileName;
+                            
+                            camBtn.classList.add('has-img');
+                            camText.innerText = "Photo Added";
+                            renderWastageList(); 
+                        } catch(err) {
+                            console.error(err);
+                            alert("Upload failed.");
+                            camText.innerText = "Add Photo";
+                        }
+                    }, 'image/jpeg', 0.6);
                 }
-                reader.readAsDataURL(file);
             }
+            reader.readAsDataURL(file);
         }
+    }
 
-        window.saveWastage = async function() {
-            if(!activeIndent) return;
-            const btn = document.getElementById('wastage-save-btn');
-            btn.innerText = "SAVING...";
-            
-            let totalAmt = 0;
-            let noteArr = [];
-            
-            // Auto-generate total amount and readable text note
-            tempWastageItems.forEach(w => {
-                totalAmt += w.cost;
-                noteArr.push(`${w.name}: ${w.qty}`);
-            });
+    window.saveWastage = async function() {
+        if(!activeIndent) return;
+        const btn = document.getElementById('wastage-save-btn');
+        btn.innerText = "SAVING...";
+        
+        let totalAmt = 0;
+        let noteArr = [];
+        
+        tempWastageItems.forEach(w => {
+            totalAmt += w.cost;
+            noteArr.push(`${w.name}: ${w.qty}`);
+        });
 
-            const finalNote = noteArr.length > 0 ? noteArr.join(", ") : "";
+        const finalNote = noteArr.length > 0 ? noteArr.join(", ") : "";
+
+        const updates = {
+            'active_indent/wastageList': tempWastageItems.length > 0 ? tempWastageItems : null,
+            'active_indent/wastageAmt': totalAmt > 0 ? totalAmt : null,
+            'active_indent/wastageNote': finalNote !== "" ? finalNote : null,
+            'active_indent/wastageImg': tempWastageImg,
+            'active_indent/wastageStoragePath': tempWastagePath
+        };
+
+        try {
+            await update(dbRef(db), updates);
+            document.getElementById('wastage-modal').classList.add('hidden');
+            alert(totalAmt > 0 ? "Wastage saved: ₹" + totalAmt.toFixed(0) : "Wastage photo saved.");
+        } catch(e) { 
+            alert(e.message); 
+        } finally {
+            btn.innerText = "SAVE";
+        }
+    }
+
+    window.clearWastage = async function() {
+        if(!activeIndent) return;
+        if(!confirm("Are you sure you want to completely remove the recorded wastage?")) return;
+
+        const btn = document.getElementById('wastage-clear-btn');
+        btn.innerText = "CLEARING...";
+
+        try {
+            if (tempWastagePath) {
+                const storageReference = sRef(storage, tempWastagePath);
+                await deleteObject(storageReference).catch(e => console.log("Storage delete ignored"));
+            }
 
             const updates = {
-                'active_indent/wastageList': tempWastageItems.length > 0 ? tempWastageItems : null,
-                'active_indent/wastageAmt': totalAmt > 0 ? totalAmt : null,
-                'active_indent/wastageNote': finalNote !== "" ? finalNote : null,
-                'active_indent/wastageImg': tempWastageImg,
-                'active_indent/wastageStoragePath': tempWastagePath
+                'active_indent/wastageList': null,
+                'active_indent/wastageAmt': null,
+                'active_indent/wastageNote': null,
+                'active_indent/wastageImg': null,
+                'active_indent/wastageStoragePath': null
             };
 
-            try {
-                await update(dbRef(db), updates);
-                document.getElementById('wastage-modal').classList.add('hidden');
-                alert(totalAmt > 0 ? "Wastage saved: ₹" + totalAmt.toFixed(0) : "Wastage photo saved.");
-            } catch(e) { 
-                alert(e.message); 
-            } finally {
-                btn.innerText = "SAVE";
-            }
-        }
+            await update(dbRef(db), updates);
 
-        window.clearWastage = async function() {
-            if(!activeIndent) return;
-            if(!confirm("Are you sure you want to completely remove the recorded wastage?")) return;
-
-            const btn = document.getElementById('wastage-clear-btn');
-            btn.innerText = "CLEARING...";
-
-            try {
-                if (tempWastagePath) {
-                    const storageReference = sRef(storage, tempWastagePath);
-                    await deleteObject(storageReference).catch(e => console.log("Storage delete ignored"));
-                }
-
-                const updates = {
-                    'active_indent/wastageList': null,
-                    'active_indent/wastageAmt': null,
-                    'active_indent/wastageNote': null,
-                    'active_indent/wastageImg': null,
-                    'active_indent/wastageStoragePath': null
-                };
-
-                await update(dbRef(db), updates);
-
-                tempWastageItems = [];
-                tempWastageImg = null;
-                tempWastagePath = null;
-                document.getElementById('wastage-modal').classList.add('hidden');
-                
-                alert("Wastage cleared successfully.");
-            } catch(e) {
-                alert("Error clearing wastage: " + e.message);
-            } finally {
-                btn.innerText = "CLEAR";
-            }
-        }
-
-        window.executeFinalSubmit = async function() {
-            const btn = document.querySelector('#confirm-modal button[onclick*="executeFinalSubmit"]');
-            btn.innerHTML = 'SENDING...'; btn.disabled = true;
-            try {
-                const reviewItems = activeIndent.items.map(item => ({
-                    code: item.code, name: item.name, poQty: item.poQty, poRate: item.poRate,
-                    qty: item.savedQty !== undefined ? item.savedQty : item.poQty,
-                    actualKg: item.savedKg || 0, img: item.savedImg || null, packedBy: item.packedBy || '',
-                    editedBy: item.editedBy || null
-                }));
-                
-                // Grab the wastage data before deleting
-                const wastageAmt = activeIndent.wastageAmt || 0;
-                const wastageNote = activeIndent.wastageNote || "";
-                const wastageImg = activeIndent.wastageImg || null;
-
-                const reviewData = { 
-                    date: activeIndent.date, 
-                    items: reviewItems, 
-                    wastageAmt: wastageAmt,
-                    wastageNote: wastageNote,
-                    wastageImg: wastageImg,
-                    timestamp: Date.now() 
-                };
-                
-                await set(dbRef(db, 'completed_packing'), reviewData);
-                await remove(dbRef(db, 'active_indent'));
-                document.getElementById('confirm-modal').classList.add('hidden');
-                alert("Order Submitted Successfully!");
-                closePage('page-packing');
-            } catch (e) { alert("Error: " + e.message); btn.innerHTML = 'SEND'; btn.disabled = false; }
-        }
-
-        window.handleWastageImage = function(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const camBtn = document.getElementById('wastage-cam-btn');
-                const camText = document.getElementById('wastage-cam-text');
-                
-                camText.innerText = "UPLOADING...";
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 400; 
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH; 
-                        canvas.height = img.height * scaleSize;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        canvas.toBlob(async (blob) => {
-                            try {
-                                const fileName = `wastage_images/wastage_${Date.now()}.jpg`;
-                                const storageReference = sRef(storage, fileName);
-                                await uploadBytes(storageReference, blob);
-                                const downloadURL = await getDownloadURL(storageReference);
-                                
-                                tempWastageImg = downloadURL;
-                                tempWastagePath = fileName;
-                                
-                                camBtn.classList.add('has-img');
-                                camText.innerText = "Photo Added";
-                            } catch(err) {
-                                console.error(err);
-                                alert("Upload failed.");
-                                camText.innerText = "Add Photo";
-                            }
-                        }, 'image/jpeg', 0.6);
-                    }
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        window.saveWastage = async function() {
-            if(!activeIndent) return;
-            const btn = document.getElementById('wastage-save-btn');
-            btn.innerText = "SAVING...";
+            tempWastageItems = [];
+            tempWastageImg = null;
+            tempWastagePath = null;
+            document.getElementById('wastage-modal').classList.add('hidden');
             
-            const amt = parseFloat(document.getElementById('wastage-input').value) || 0;
-            const note = document.getElementById('wastage-note').value;
-            
-            const updates = {
-                'active_indent/wastageAmt': amt,
-                'active_indent/wastageNote': note,
-                'active_indent/wastageImg': tempWastageImg,
-                'active_indent/wastageStoragePath': tempWastagePath
-            };
-
-            try {
-                await update(dbRef(db), updates);
-                document.getElementById('wastage-modal').classList.add('hidden');
-                alert("Wastage saved!");
-            } catch(e) { 
-                alert(e.message); 
-            } finally {
-                btn.innerText = "SAVE";
-            }
+            alert("Wastage cleared successfully.");
+        } catch(e) {
+            alert("Error clearing wastage: " + e.message);
+        } finally {
+            btn.innerText = "CLEAR";
         }
+    }
 
-    // UPDATE the executeFinalSubmit function to include wastage:
     window.executeFinalSubmit = async function() {
         const btn = document.querySelector('#confirm-modal button[onclick*="executeFinalSubmit"]');
         btn.innerHTML = 'SENDING...'; btn.disabled = true;
@@ -1788,7 +1617,8 @@ let tempWastageItems = [];
             const reviewItems = activeIndent.items.map(item => ({
                 code: item.code, name: item.name, poQty: item.poQty, poRate: item.poRate,
                 qty: item.savedQty !== undefined ? item.savedQty : item.poQty,
-                actualKg: item.savedKg || 0, img: item.savedImg || null, packedBy: item.packedBy || ''
+                actualKg: item.savedKg || 0, img: item.savedImg || null, packedBy: item.packedBy || '',
+                editedBy: item.editedBy || null
             }));
             
             // Grab the wastage data before deleting
@@ -1813,6 +1643,16 @@ let tempWastageItems = [];
         } catch (e) { alert("Error: " + e.message); btn.innerHTML = 'SEND'; btn.disabled = false; }
     }
 
+    window.submitToReview = function() {
+        if(!activeIndent) { alert("No active order loaded."); return; }
+        const total = activeIndent.items.length;
+        const packed = activeIndent.items.filter(i => i.isPacked === true).length;
+        const pending = total - packed;
+        document.getElementById('conf-packed').innerText = packed;
+        document.getElementById('conf-pending').innerText = pending;
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
     // --- EXPORTS ---
     window.handleLogin = handleLogin;
     window.handleLogout = handleLogout;
@@ -1825,8 +1665,6 @@ let tempWastageItems = [];
     window.enableEditItem = enableEditItem;
     window.handleImage = handleImage;
     window.clearImage = clearImage;
-    window.submitToReview = submitToReview;
-    window.executeFinalSubmit = executeFinalSubmit;
     window.refreshAttendanceTab = refreshAttendanceTab;
     window.confirmCheckIn = confirmCheckIn;
     window.confirmCheckOut = confirmCheckOut;
