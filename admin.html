@@ -1122,11 +1122,8 @@
 
         async function loadData() {
             try {
-                const d = new Date();
-                d.setDate(d.getDate() - 31);
-                const cutoffDate = d.toISOString().split('T')[0];
-
-                const indentsQuery = query(ref(db, 'indents'), orderByChild('date'), startAt(cutoffDate));
+                // REMOVED the 31-day cutoff limit. Now it fetches all data so you can filter any date range.
+                const indentsQuery = query(ref(db, 'indents'), orderByChild('date'));
                 const snap = await get(indentsQuery);
                 if(snap.exists()) allIndents = Object.values(snap.val()).sort((a,b) => b.id - a.id);
 
@@ -1151,7 +1148,10 @@
                 renderFinance();
                 renderMaster();
                 renderDashboard();
-            } catch(e) { console.error("Data Load Error:", e); alert("Error loading data from database."); }
+            } catch(e) { 
+                console.error("Data Load Error:", e); 
+                alert("Error loading data from database."); 
+            }
         }
 
         window.switchTab = function(tabName, el) {
@@ -1402,6 +1402,9 @@
                 const pending = bill - rcvd;
                 const mtrBill = parseFloat(rec.mtrBill || 0);
 
+                // Helper to check if Swiggy has fully paid this bill
+                const isSwiggyPaid = rcvd >= (bill - 1);
+
                 allBilled += bill; 
                 allRcvd += rcvd;
 
@@ -1424,7 +1427,8 @@
                 mtrTotal += mtrBill;
                 if (rec.mtrPaid) {
                     mtrPaid += mtrBill;
-                } else if (mtrBill > 0) {
+                } else if (mtrBill > 0 && isSwiggyPaid) {
+                    // FIX: Only add to MTR Pending if Swiggy has paid us
                     mtrPend += mtrBill;
                 }
 
