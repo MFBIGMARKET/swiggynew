@@ -3080,12 +3080,18 @@ function renderHistoryDetailTable() {
              const totalLineCost = item.frozenCost; 
 
              // --- INPUTS VS DISPLAY ---
-             let qtyDisplay, weightDisplay;
+             let qtyDisplay, weightDisplay, costDisplay;
+             let cpk = item.frozenCostPerKg !== undefined ? item.frozenCostPerKg : (products.find(p => p.id === item.code)?.costKg || 0);
 
              if (isHistoryEditMode) {
                  // EDIT MODE
                  qtyDisplay = `<input type="number" class="qty-edit" value="${item.qty}" id="edit-qty-${itemIndex}" style="width:60px">`;
                  weightDisplay = `<input type="number" class="cell-input" value="${item.actualKg || 0}" id="edit-kg-${itemIndex}" step="0.001">`;
+                 costDisplay = `
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;">
+                        <input type="number" class="cell-input" value="${cpk}" id="edit-cost-${itemIndex}" step="0.01" style="width:60px;margin-bottom:2px;" title="Cost per Kg">
+                        <span style="font-size:9px;color:#888;">per kg</span>
+                    </div>`;
              } else {
                  // VIEW MODE
                  qtyDisplay = item.qty;
@@ -3096,6 +3102,7 @@ function renderHistoryDetailTable() {
                  const isDiff = Math.abs((item.actualKg || 0) - stdKg) > 0.05;
                  
                  weightDisplay = `<span style="${isDiff ? 'color:var(--primary); font-weight:bold;' : ''}">${(item.actualKg || 0).toFixed(3)}</span>`;
+                 costDisplay = `₹${totalLineCost.toFixed(0)} <div style="font-size:9px;color:#888;">(₹${cpk}/kg)</div>`;
              }
 
              // --- PHOTO BUTTON ---
@@ -3111,7 +3118,7 @@ function renderHistoryDetailTable() {
                 <td class="hd-weight t-right">${weightDisplay}</td>
                 <td class="hd-price t-right">₹${item.poRate}</td>
                 <td class="hd-total t-right">₹${totalSellPrice.toFixed(0)}</td>
-                <td class="hd-cost t-right">₹${totalLineCost.toFixed(0)}</td>
+                <td class="hd-cost t-right">${costDisplay}</td>
                 <td class="hd-img t-center">${photoHtml}</td>
                 <td class="hd-prof t-right ${item.profit<0?'text-red':'text-green'}">₹${item.profit.toFixed(0)}</td>
                 <td class="hd-marg t-right ${colorClass}">${mPct.toFixed(0)}%</td>
@@ -3138,6 +3145,7 @@ async function toggleHistoryEdit() {
         currentViewedHistory.items.forEach((item, idx) => {
             const qtyInput = document.getElementById(`edit-qty-${idx}`);
             const kgInput = document.getElementById(`edit-kg-${idx}`);
+            const costInput = document.getElementById(`edit-cost-${idx}`); // Read new cost input
             
             if(qtyInput && kgInput) {
                 const newQty = parseFloat(qtyInput.value) || 0;
@@ -3147,10 +3155,13 @@ async function toggleHistoryEdit() {
                 const master = products.find(p => p.id === item.code);
                 const conv = master ? (master.conv || 0) : 0;
                 
-                // CRITICAL FIX: Use stored frozenCostPerKg if available, otherwise Master
-                let costPerKg = item.frozenCostPerKg;
-                if (costPerKg === undefined || costPerKg === null) {
-                    costPerKg = master ? master.costKg : 0;
+                // Allow manual override of frozenCostPerKg
+                let costPerKg;
+                if (costInput) {
+                    costPerKg = parseFloat(costInput.value);
+                    if (isNaN(costPerKg)) costPerKg = 0;
+                } else {
+                    costPerKg = item.frozenCostPerKg !== undefined ? item.frozenCostPerKg : (master ? master.costKg : 0);
                 }
 
                 // Auto-calculate weight if user entered 0 Kg but has Qty (Fallback)
@@ -3972,19 +3983,21 @@ function downloadBillPDF() {
                 const csvCost = parseFloat(rawCost);
 
                 if (csvErpCode) {
-                    // Loose comparison (==) allows string "123" to match number 123
-                    const product = products.find(p => p.erpCode == csvErpCode);
+                    // FIND ALL items matching this ERP code (Loose comparison == allows "123" to match 123)
+                    const matchingProducts = products.filter(p => p.erpCode == csvErpCode);
                     
-                    if (product && !isNaN(csvCost) && product.costKg !== csvCost) {
-                        changes.push({
-                            name: product.name,
-                            oldVal: '₹' + product.costKg,
-                            newVal: '₹' + csvCost,
-                            isNew: false
-                        });
-                        
-                        pendingUpdates.push({ product: product, newCost: csvCost });
-                    }
+                    matchingProducts.forEach(product => {
+                        if (!isNaN(csvCost) && product.costKg !== csvCost) {
+                            changes.push({
+                                name: product.name,
+                                oldVal: '₹' + product.costKg,
+                                newVal: '₹' + csvCost,
+                                isNew: false
+                            });
+                            
+                            pendingUpdates.push({ product: product, newCost: csvCost });
+                        }
+                    });
                 }
             }
 
