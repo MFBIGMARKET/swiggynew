@@ -320,9 +320,22 @@
         }
 /* --- ROLE BASED VISIBILITY --- */
 /* Hide elements by default if role class is present on body */
+/* --- ROLE BASED VISIBILITY --- */
 body.role-data-entry .tab[onclick*="view-indent"],
 body.role-data-entry .tab[onclick*="view-review"],
 body.role-data-entry .tab[onclick*="view-history"] { display: none !important; }
+
+/* Hide specific Finance Columns, Actions, and KPIs for Data Entry */
+body.role-data-entry .w-fix-100,
+body.role-data-entry .w-fix-action,
+body.role-data-entry .w-fix-rcvd-amt,
+body.role-data-entry .w-fix-rcvd,
+body.role-data-entry .w-fix-days,
+body.role-data-entry .w-note,
+body.role-data-entry #view-finance .kpi-grid,
+body.role-data-entry #view-finance button[onclick="exportFinanceExcel()"] {
+    display: none !important;
+}
 
 /* --- MOBILE RESPONSIVE STYLES --- */
     /* --- MOBILE RESPONSIVE STYLES (FINAL FIX) --- */
@@ -1204,12 +1217,8 @@ window.dbUpdate = update;
             const pSnap = await window.dbGet(window.dbChild(dbRef, `products`));
             
             // Calculate date 45 days ago
-            const d = new Date();
-            d.setDate(d.getDate() - 31);
-            const cutoffDate = d.toISOString().split('T')[0];
-
-            // Use the window attached query functions
-            const indentsQuery = window.dbQuery(window.dbChild(dbRef, `indents`), window.dbOrderByChild('date'), window.dbStartAt(cutoffDate));
+            // Fetch all records so the Date Pickers work for any past month
+            const indentsQuery = window.dbQuery(window.dbChild(dbRef, `indents`), window.dbOrderByChild('date'));
             const iSnap = await window.dbGet(indentsQuery);
             
             const eSnap = await window.dbGet(window.dbChild(dbRef, `settings/expenses`));
@@ -1270,17 +1279,18 @@ window.dbUpdate = update;
 
 function startIncomingPackingListener() {
     const dbRef = window.dbRef(window.db);
-    // Listen to 'completed_packing' node
+    // Listen to 'completed_packing' node (now a collection keyed by date)
     window.dbOnValue(window.dbChild(dbRef, 'completed_packing'), (snapshot) => {
         if (snapshot.exists()) {
-            const packingData = snapshot.val();
-            // Process immediately
-            autoFinalizeBill(packingData);
+            const allCompleted = snapshot.val();
+            Object.keys(allCompleted).forEach(key => {
+                autoFinalizeBill(key, allCompleted[key]);
+            });
         }
     });
 }
 
-async function autoFinalizeBill(data) {
+async function autoFinalizeBill(key, data) {
     if (!data || !data.items) return;
 
     let totalBillAmt = 0;
@@ -1361,7 +1371,7 @@ async function autoFinalizeBill(data) {
     // Save & Clean
     try {
         await window.dbSet(window.dbRef(window.db, `indents/${historyRecord.id}`), historyRecord);
-        await window.dbRemove(window.dbRef(window.db, 'completed_packing'));
+        await window.dbRemove(window.dbRef(window.db, `completed_packing/${key}`));
         
         // Add to local array to update UI without refreshing
         indents.unshift(historyRecord);
@@ -1861,7 +1871,8 @@ function applyRole(role) {
     }
 
     function switchTab(tabId) {
-        if (currentUserRole === 'DATA_ENTRY' && tabId !== 'view-master') return;
+        // Data Entry gets Master & Finance only
+        if (currentUserRole === 'DATA_ENTRY' && tabId !== 'view-master' && tabId !== 'view-finance') return;
         currentTabId = tabId;
 
         // Hide all views
@@ -1943,14 +1954,27 @@ function applyRole(role) {
             else if (isFull) rowClass = 'row-paid';
 
             // Main Action Button
+            // Main Action Button
             const safeNote = note.replace(/'/g, "\\'");
             const modalCall = `openFinanceModal(${rec.id}, ${billAmt}, '${safeNote}', ${recvAmt}, '${billNoDisplay}', '${recvDate}')`;
 
             let actionHtml = '';
-            if (recvAmt === 0) {
-                actionHtml = `<button class="btn btn-compact" onclick="${modalCall}">Mark Paid</button>`;
-            } else {
-                actionHtml = `<span class="status-pill ${isFull?'st-received':'st-partial'}" onclick="${modalCall}">Edit</span>`;
+            
+            // DATA_ENTRY: Can only see if Swiggy paid (View Only)
+            if (currentUserRole === 'DATA_ENTRY') {
+                if (recvAmt === 0) {
+                    actionHtml = `<span class="status-pill st-pending" style="cursor:default;">Pending</span>`;
+                } else {
+                    actionHtml = `<span class="status-pill ${isFull?'st-received':'st-partial'}" style="cursor:default;">${isFull ? 'Paid' : 'Partial'}</span>`;
+                }
+            } 
+            // MANAGER/ADMIN: Full access
+            else {
+                if (recvAmt === 0) {
+                    actionHtml = `<button class="btn btn-compact" onclick="${modalCall}">Mark Paid</button>`;
+                } else {
+                    actionHtml = `<span class="status-pill ${isFull?'st-received':'st-partial'}" onclick="${modalCall}">Edit</span>`;
+                }
             }
 
             // Inside renderFinanceTable loop...
@@ -1959,6 +1983,17 @@ function applyRole(role) {
             
             // Handle MTR Bill display: Show empty if 0 for cleaner look
             const mtrBillVal = rec.mtrBill ? rec.mtrBill : ''; 
+
+        // MTR Paid Display Logic (Read-Only for Data Entry)
+            let mtrPaidHtml = '';
+            if (currentUserRole === 'DATA_ENTRY') {
+                mtrPaidHtml = `<span class="status-pill ${isMtrPaid ? 'st-received' : 'st-pending'}" style="padding:4px 8px; font-size:11px;">${isMtrPaid ? 'PAID' : 'PENDING'}</span>`;
+            } else {
+                mtrPaidHtml = `
+                    <button class="btn-mtr-toggle ${isMtrPaid ? 'active' : ''}" onclick="toggleMtrPaid(${rec.id}, ${isMtrPaid})">
+                        <span class="material-icons" style="font-size:16px">check</span>
+                    </button>`;
+            }
 
             const tr = document.createElement('tr');
             tr.className = rowClass;
@@ -1977,9 +2012,7 @@ function applyRole(role) {
                 </td>
                 
                 <td class="w-fix-mtr-paid t-center">
-                    <button class="btn-mtr-toggle ${isMtrPaid ? 'active' : ''}" onclick="toggleMtrPaid(${rec.id}, ${isMtrPaid})">
-                        <span class="material-icons" style="font-size:16px">check</span>
-                    </button>
+                    ${mtrPaidHtml}
                 </td>
                 
                 <td class="w-note t-left" title="${note}">${note}</td>
@@ -2431,9 +2464,9 @@ function closeReportModal() {
     const dbRef = window.dbRef(window.db);
     
     try {
-        const snap = await window.dbGet(window.dbChild(dbRef, 'active_indent'));
+        const snap = await window.dbGet(window.dbChild(dbRef, `active_indents/${currentViewedHistory.date}`));
         if (snap.exists()) {
-            alert("❌ Cannot Revert: Packing App has an active order pending.");
+            alert("❌ Cannot Revert: This specific date is already pending in the Packing App.");
             return;
         }
     } catch(e) {
@@ -2463,7 +2496,8 @@ function closeReportModal() {
 
     try {
         // Use Batch Upload for Safety
-        await uploadBatchedData('active_indent', activeData);
+        // Use Batch Upload For Safety
+        await uploadBatchedData('active_indents/' + activeData.date, activeData);
         
         // --- KEY FIX: Delete ONLY this specific node ---
         await window.dbRemove(window.dbRef(window.db, `indents/${currentViewedHistory.id}`));
@@ -2812,8 +2846,8 @@ function addToHistory(product, source, buy, sell) {
         btn.innerHTML = "Sending..."; btn.disabled = true;
 
         try {
-            // Use Batch Upload Helper
-            await uploadBatchedData('active_indent', stagingData);
+            // Use Batch Upload Helper to a specific Date Key
+            await uploadBatchedData('active_indents/' + stagingData.date, stagingData);
             alert("Sent to Packing App!");
             resetIndent();
         } catch (err) {

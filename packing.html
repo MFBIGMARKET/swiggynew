@@ -500,7 +500,9 @@
     const db = getDatabase(app);
     const storage = getStorage(app);
     let activeIndent = null;
-    let currentFilterMode = 'all'; 
+    let allActiveIndents = null; 
+    let currentIndentKey = null; 
+    let currentFilterMode = 'all';
     let masterMap = {}; 
     let currentUser = null;
     let historyData = [];
@@ -664,101 +666,100 @@
 
     function setupRealtimeListener() {
         const container = document.getElementById('available-container');
-        onValue(dbRef(db, 'active_indent'), (snapshot) => {
+        onValue(dbRef(db, 'active_indents'), (snapshot) => {
             if (snapshot.exists()) {
-                activeIndent = snapshot.val();
+                allActiveIndents = snapshot.val();
                 renderDashboardCard();
-                if(document.getElementById('page-packing').classList.contains('active')) filterList(); 
+                
+                // Update currently open packing view if applicable
+                if(document.getElementById('page-packing').classList.contains('active') && currentIndentKey) {
+                    if (allActiveIndents[currentIndentKey]) {
+                        activeIndent = allActiveIndents[currentIndentKey];
+                        filterList(); 
+                    } else {
+                        // The order was deleted or submitted
+                        closePage('page-packing');
+                    }
+                } 
             } else {
+                allActiveIndents = null;
                 activeIndent = null;
-                container.innerHTML = `<div class="status-msg"><span class="material-icons" style="font-size:48px; color:#ccc">assignment_turned_in</span><p>No new orders.</p></div>`;
+                container.innerHTML = `<div class="status-msg"><span class="material-icons" style="font-size:48px; color:#ccc">assignment_turned_in</span><p>No active orders.</p></div>`;
                 if(document.getElementById('page-packing').classList.contains('active')) closePage('page-packing');
             }
         });
     }
 
     function renderDashboardCard() {
-        if(!activeIndent) return;
+        if(!allActiveIndents) return;
         const container = document.getElementById('available-container');
+        container.innerHTML = '';
         
-        // --- 1. ITEMS CALCULATION ---
-        const itemCount = activeIndent.items ? activeIndent.items.length : 0;
-        let packedCount = 0;
-        if (activeIndent.items) packedCount = activeIndent.items.filter(i => i.isPacked === true).length;
-        
-        const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
-        const itemColor = itemPct === 100 ? 'var(--green)' : 'var(--primary)';
+        Object.keys(allActiveIndents).forEach(key => {
+            const indent = allActiveIndents[key];
+            
+            // --- 1. ITEMS CALCULATION ---
+            const itemCount = indent.items ? indent.items.length : 0;
+            let packedCount = 0;
+            if (indent.items) packedCount = indent.items.filter(i => i.isPacked === true).length;
+            
+            const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
+            const itemColor = itemPct === 100 ? 'var(--green)' : 'var(--primary)';
 
-        // --- 2. PACKETS (VOLUME) CALCULATION ---
-        let totalOrdPkts = 0;
-        let totalPackedPkts = 0;
-        
-        if (activeIndent.items) {
-            activeIndent.items.forEach(i => {
-                totalOrdPkts += parseFloat(i.poQty) || 0;
-                if (i.isPacked) {
-                    totalPackedPkts += parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
-                }
-            });
-        }
-        
-        const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
-        // Use a different color (like orange) for volume to distinguish, turns green when done
-        const pktColor = pktPct >= 100 ? 'var(--green)' : '#f57c00'; 
+            // --- 2. PACKETS (VOLUME) CALCULATION ---
+            let totalOrdPkts = 0;
+            let totalPackedPkts = 0;
+            
+            if (indent.items) {
+                indent.items.forEach(i => {
+                    totalOrdPkts += parseFloat(i.poQty) || 0;
+                    if (i.isPacked) {
+                        totalPackedPkts += parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
+                    }
+                });
+            }
+            
+            const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
+            const pktColor = pktPct >= 100 ? 'var(--green)' : '#f57c00'; 
 
-        // --- RENDER HTML ---
-        container.innerHTML = `
-            <div class="task-card" onclick="openPacking()">
-                
-                <!-- HEADER: Title & Date (Top Right) -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-                    <div class="task-label">Active Order</div>
-                    <div class="date-pill">${formatDateDisplay(activeIndent.date)}</div>
-                </div>
-                
-                <!-- PROGRESS 1: Unique Items -->
-                <div style="margin-bottom: 15px;">
-                    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#555; margin-bottom:6px;">
-                        <span>UNIQUE ITEMS</span>
-                        <span style="color:var(--text-main)">${packedCount} / ${itemCount} <span style="color:${itemColor}; margin-left:4px;">(${itemPct}%)</span></span>
+            // --- RENDER HTML ---
+            container.innerHTML += `
+                <div class="task-card" onclick="openPacking('${key}')" style="margin-bottom: 12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                        <div class="task-label">Active Order</div>
+                        <div class="date-pill">${formatDateDisplay(indent.date)}</div>
                     </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width:${itemPct}%; background:${itemColor}"></div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#555; margin-bottom:6px;">
+                            <span>UNIQUE ITEMS</span>
+                            <span style="color:var(--text-main)">${packedCount} / ${itemCount} <span style="color:${itemColor}; margin-left:4px;">(${itemPct}%)</span></span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width:${itemPct}%; background:${itemColor}"></div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- PROGRESS 2: Total Packets -->
-                <div style="margin-bottom: 15px;">
-                    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#555; margin-bottom:6px;">
-                        <span>TOTAL PACKETS</span>
-                        <span style="color:var(--text-main)">${totalPackedPkts} / ${totalOrdPkts} <span style="color:${pktColor}; margin-left:4px;">(${pktPct}%)</span></span>
+                    <div style="margin-bottom: 15px;">
+                        <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#555; margin-bottom:6px;">
+                            <span>TOTAL PACKETS</span>
+                            <span style="color:var(--text-main)">${totalPackedPkts} / ${totalOrdPkts} <span style="color:${pktColor}; margin-left:4px;">(${pktPct}%)</span></span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width:${pktPct}%; background:${pktColor}"></div>
+                        </div>
                     </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width:${pktPct}%; background:${pktColor}"></div>
+                    
+                    <div class="task-footer">
+                        <span class="btn-start">OPEN <span class="material-icons" style="font-size:16px">arrow_forward</span></span>
                     </div>
-                </div>
-                
-                <!-- FOOTER: Open Button -->
-                <div class="task-footer">
-                    <span class="btn-start">OPEN <span class="material-icons" style="font-size:16px">arrow_forward</span></span>
-                </div>
-                
-            </div>`;
+                </div>`;
+        });
     }
 
-    function switchTab(tabName, el) {
-        document.querySelectorAll('.tab-content').forEach(d => d.classList.remove('active'));
-        document.getElementById(`tab-${tabName}`).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
-        el.classList.add('active');
-        if(tabName === 'attendance') {
-            if(currentUser === 'ADMIN') loadAdminDashboard(); else refreshAttendanceTab();
-        }
-        if(tabName === 'history') loadHistory();
-        if(tabName === 'profile') loadAttendanceHistory();
-    }
-
-    function openPacking() {
+    window.openPacking = function(key) {
+        currentIndentKey = key;
+        activeIndent = allActiveIndents[key];
         if(!activeIndent) return;
         document.getElementById('packing-title').innerText = formatDateDisplay(activeIndent.date);
         filterList(); 
@@ -874,7 +875,7 @@
         const qtyInput = document.getElementById(`qty-${code}`);
         const kgInput = document.getElementById(`kg-${code}`);
         const updates = {};
-        const path = `active_indent/items/${idx}`;
+        const path = `active_indents/${currentIndentKey}/items/${idx}`;
         
         const wasPackedBefore = activeIndent.items[idx].isPacked === true;
         let currentEditCount = activeIndent.items[idx].editCount || 0;
@@ -897,7 +898,7 @@
     async function enableEditItem(code) {
         const idx = findItemIndex(code);
         if(idx === -1) return;
-        try { await set(dbRef(db, `active_indent/items/${idx}/isPacked`), false); } catch(e) { alert("Error: " + e.message); }
+        try { await set(dbRef(db, `active_indents/${currentIndentKey}/items/${idx}/isPacked`), false); } catch(e) { alert("Error: " + e.message); }
     }
 
     function handleImage(input, code) {
@@ -939,8 +940,8 @@
                             const idx = findItemIndex(code);
                             if(idx !== -1) { 
                                 const updates = {};
-                                updates[`active_indent/items/${idx}/savedImg`] = downloadURL;
-                                updates[`active_indent/items/${idx}/storagePath`] = fileName;
+                               updates[`active_indents/${currentIndentKey}/items/${idx}/savedImg`] = downloadURL;
+                                updates[`active_indents/${currentIndentKey}/items/${idx}/storagePath`] = fileName;
                                 await update(dbRef(db), updates); 
                             }
                         } catch(err) {
@@ -970,8 +971,8 @@
                 
                 // 2. Remove the URL from the Database
                 const updates = {};
-                updates[`active_indent/items/${idx}/savedImg`] = null;
-                updates[`active_indent/items/${idx}/storagePath`] = null;
+                updates[`active_indents/${currentIndentKey}/items/${idx}/savedImg`] = null;
+                updates[`active_indents/${currentIndentKey}/items/${idx}/storagePath`] = null;
                 await update(dbRef(db), updates); 
                 
             } catch (e) {
@@ -1555,13 +1556,12 @@
 
         const finalNote = noteArr.length > 0 ? noteArr.join(", ") : "";
 
-        const updates = {
-            'active_indent/wastageList': tempWastageItems.length > 0 ? tempWastageItems : null,
-            'active_indent/wastageAmt': totalAmt > 0 ? totalAmt : null,
-            'active_indent/wastageNote': finalNote !== "" ? finalNote : null,
-            'active_indent/wastageImg': tempWastageImg,
-            'active_indent/wastageStoragePath': tempWastagePath
-        };
+        const updates = {};
+        updates[`active_indents/${currentIndentKey}/wastageList`] = tempWastageItems.length > 0 ? tempWastageItems : null;
+        updates[`active_indents/${currentIndentKey}/wastageAmt`] = totalAmt > 0 ? totalAmt : null;
+        updates[`active_indents/${currentIndentKey}/wastageNote`] = finalNote !== "" ? finalNote : null;
+        updates[`active_indents/${currentIndentKey}/wastageImg`] = tempWastageImg;
+        updates[`active_indents/${currentIndentKey}/wastageStoragePath`] = tempWastagePath;
 
         try {
             await update(dbRef(db), updates);
@@ -1587,13 +1587,12 @@
                 await deleteObject(storageReference).catch(e => console.log("Storage delete ignored"));
             }
 
-            const updates = {
-                'active_indent/wastageList': null,
-                'active_indent/wastageAmt': null,
-                'active_indent/wastageNote': null,
-                'active_indent/wastageImg': null,
-                'active_indent/wastageStoragePath': null
-            };
+            const updates = {};
+            updates[`active_indents/${currentIndentKey}/wastageList`] = null;
+            updates[`active_indents/${currentIndentKey}/wastageAmt`] = null;
+            updates[`active_indents/${currentIndentKey}/wastageNote`] = null;
+            updates[`active_indents/${currentIndentKey}/wastageImg`] = null;
+            updates[`active_indents/${currentIndentKey}/wastageStoragePath`] = null;
 
             await update(dbRef(db), updates);
 
@@ -1635,8 +1634,8 @@
                 timestamp: Date.now() 
             };
             
-            await set(dbRef(db, 'completed_packing'), reviewData);
-            await remove(dbRef(db, 'active_indent'));
+            await set(dbRef(db, `completed_packing/${currentIndentKey}`), reviewData);
+            await remove(dbRef(db, `active_indents/${currentIndentKey}`));
             document.getElementById('confirm-modal').classList.add('hidden');
             alert("Order Submitted Successfully!");
             closePage('page-packing');

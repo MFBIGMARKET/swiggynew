@@ -632,8 +632,32 @@
         }
 
         function setupLiveListeners() {
-            onValue(ref(db, 'active_indent'), (snap) => {
-                activeIndentData = snap.val();
+            onValue(ref(db, 'active_indents'), (snap) => {
+                const allActive = snap.val();
+                if (allActive) {
+                    // Merge multiple active orders into a single view for Admin Dashboard
+                    let mergedItems = [];
+                    let totalWastage = 0;
+                    let dates = [];
+                    let mergedWastageImg = null;
+                    
+                    Object.values(allActive).forEach(indent => {
+                        if (indent.items) mergedItems.push(...indent.items);
+                        if (indent.wastageAmt) totalWastage += indent.wastageAmt;
+                        if (indent.date) dates.push(indent.date);
+                        if (indent.wastageImg) mergedWastageImg = indent.wastageImg;
+                    });
+                    
+                    activeIndentData = {
+                        date: dates.join(' & '), // Shows multiple dates combined
+                        items: mergedItems,
+                        wastageAmt: totalWastage,
+                        wastageImg: mergedWastageImg
+                    };
+                } else {
+                    activeIndentData = null;
+                }
+                
                 refreshLiveUI();
                 if(document.getElementById('page-live-detail').classList.contains('active')) {
                     renderLiveDetailList();
