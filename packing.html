@@ -499,10 +499,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const storage = getStorage(app);
+    
+    // Global State
     let activeIndent = null;
     let allActiveIndents = null; 
     let currentIndentKey = null; 
-    let currentFilterMode = 'all';
+    let currentFilterMode = 'all'; 
     let masterMap = {}; 
     let currentUser = null;
     let historyData = [];
@@ -528,10 +530,36 @@
     const ALLOWED_RADIUS_KM = 0.100;
     const TEST_MODE = false; 
 
+    // Helper: Safely extract Order Quantity bypassing "undefined" strings from old bugs
+    function getOrderQty(item) {
+        let val = item.poQty;
+        if (val === "undefined" || val === undefined || val === null) val = item.originalQty;
+        if (val === "undefined" || val === undefined || val === null) val = item.qty;
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? 0 : parsed;
+    }
+
+    // Helper: Safely parse packed quantity
+    function getPackedQty(item, fallbackOrdQty) {
+        let val = item.savedQty;
+        if (val === "undefined" || val === undefined || val === null) val = fallbackOrdQty;
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? 0 : parsed;
+    }
+
     function formatDateDisplay(dateStr) {
         if(!dateStr) return '';
-        const [y, m, d] = dateStr.split('-');
-        return `${d}/${m}/${y.slice(-2)}`;
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            if (parts[0].length === 4) {
+                // YYYY-MM-DD
+                return `${parts[2]}/${parts[1]}/${parts[0].slice(-2)}`;
+            } else if (parts[2].length === 4) {
+                // DD-MM-YYYY
+                return `${parts[0]}/${parts[1]}/${parts[2].slice(-2)}`;
+            }
+        }
+        return dateStr;
     }
 
     function init() {
@@ -585,7 +613,6 @@
         document.getElementById('prof-avatar').innerText = currentUser.charAt(0);
         document.getElementById('prof-name').innerText = currentUser;
         
-        // 1. ACCESS CONTROL: FINISH & WASTAGE BUTTONS
         const finishBtn = document.getElementById('header-finish-btn');
         const wastageBtn = document.getElementById('btn-add-wastage');
         if (currentUser === 'ADMIN' || currentUser === 'VISHAKH') {
@@ -596,7 +623,6 @@
             if(wastageBtn) wastageBtn.classList.add('hidden-force');
         }
 
-        // 2. ACCESS CONTROL: DOWNLOAD BUTTON
         const dlBtn = document.getElementById('btn-download-history');
         if (dlBtn) {
             if (currentUser === 'ADMIN' || currentUser === 'BILLING') {
@@ -606,22 +632,16 @@
             }
         }
 
-        // 3. BILLING USER LOGIC
         if (currentUser === 'BILLING') {
             document.getElementById('prof-role').innerText = 'Billing Staff';
-            
             document.getElementById('nav-task').classList.add('hidden-force');
             document.getElementById('nav-att').classList.add('hidden-force');
-            
             document.getElementById('nav-hist').classList.remove('hidden-force');
             document.getElementById('nav-prof').classList.remove('hidden-force');
-            
-            const histBtn = document.getElementById('nav-hist');
-            switchTab('history', histBtn);
+            switchTab('history', document.getElementById('nav-hist'));
             return;
         } 
         
-        // 4. STANDARD USER LOGIC
         document.getElementById('nav-task').classList.remove('hidden-force');
         document.getElementById('nav-att').classList.remove('hidden-force');
         document.getElementById('nav-prof').classList.remove('hidden-force');
@@ -631,10 +651,7 @@
             document.getElementById('staff-att-view').classList.add('hidden');
             document.getElementById('admin-att-view').classList.remove('hidden');
             document.getElementById('admin-user-filter').classList.remove('hidden'); 
-            
-            // SHOW ADMIN TOOLS IN PROFILE
             document.getElementById('admin-profile-tools').classList.remove('hidden');
-            
             loadAdminDashboard();
         } else {
             document.getElementById('prof-role').innerText = 'Staff Member';
@@ -664,29 +681,40 @@
         } catch(e) { console.error("Master data error", e); }
     }
 
+    // --- REALTIME MULTIPLE ORDERS LISTENER & AUTO-RECOVERY ---
     function setupRealtimeListener() {
         const container = document.getElementById('available-container');
         onValue(dbRef(db, 'active_indents'), (snapshot) => {
-            if (snapshot.exists()) {
-                allActiveIndents = snapshot.val();
-                renderDashboardCard();
-                
-                // Update currently open packing view if applicable
-                if(document.getElementById('page-packing').classList.contains('active') && currentIndentKey) {
-                    if (allActiveIndents[currentIndentKey]) {
-                        activeIndent = allActiveIndents[currentIndentKey];
-                        filterList(); 
-                    } else {
-                        // The order was deleted or submitted
-                        closePage('page-packing');
+            allActiveIndents = snapshot.val() || {};
+            
+            get(dbRef(db, 'active_indent')).then((oldSnap) => {
+                if (oldSnap.exists()) {
+                    const oldData = oldSnap.val();
+                    if (oldData && oldData.date) {
+                        set(dbRef(db, `active_indents/${oldData.date}`), oldData);
+                        remove(dbRef(db, 'active_indent'));
+                        return; 
                     }
-                } 
-            } else {
-                allActiveIndents = null;
-                activeIndent = null;
-                container.innerHTML = `<div class="status-msg"><span class="material-icons" style="font-size:48px; color:#ccc">assignment_turned_in</span><p>No active orders.</p></div>`;
-                if(document.getElementById('page-packing').classList.contains('active')) closePage('page-packing');
-            }
+                }
+
+                if (Object.keys(allActiveIndents).length > 0) {
+                    renderDashboardCard();
+                    
+                    if(document.getElementById('page-packing').classList.contains('active') && currentIndentKey) {
+                        if (allActiveIndents[currentIndentKey]) {
+                            activeIndent = allActiveIndents[currentIndentKey];
+                            filterList(); 
+                        } else {
+                            closePage('page-packing');
+                        }
+                    } 
+                } else {
+                    allActiveIndents = null;
+                    activeIndent = null;
+                    container.innerHTML = `<div class="status-msg"><span class="material-icons" style="font-size:48px; color:#ccc">assignment_turned_in</span><p>No active orders.</p></div>`;
+                    if(document.getElementById('page-packing').classList.contains('active')) closePage('page-packing');
+                }
+            });
         });
     }
 
@@ -697,39 +725,33 @@
         
         Object.keys(allActiveIndents).forEach(key => {
             const indent = allActiveIndents[key];
+            const itemsArray = indent.items ? (Array.isArray(indent.items) ? indent.items : Object.values(indent.items)) : [];
             
-            // --- 1. ITEMS CALCULATION ---
-            const itemCount = indent.items ? indent.items.length : 0;
-            let packedCount = 0;
-            if (indent.items) packedCount = indent.items.filter(i => i.isPacked === true).length;
-            
+            const itemCount = itemsArray.length;
+            const packedCount = itemsArray.filter(i => i.isPacked === true).length;
             const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
             const itemColor = itemPct === 100 ? 'var(--green)' : 'var(--primary)';
 
-            // --- 2. PACKETS (VOLUME) CALCULATION ---
             let totalOrdPkts = 0;
             let totalPackedPkts = 0;
             
-            if (indent.items) {
-                indent.items.forEach(i => {
-                    totalOrdPkts += parseFloat(i.poQty) || 0;
-                    if (i.isPacked) {
-                        totalPackedPkts += parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
-                    }
-                });
-            }
+            itemsArray.forEach(i => {
+                const ordQty = getOrderQty(i);
+                totalOrdPkts += ordQty;
+                if (i.isPacked) {
+                    totalPackedPkts += getPackedQty(i, ordQty);
+                }
+            });
             
             const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
             const pktColor = pktPct >= 100 ? 'var(--green)' : '#f57c00'; 
 
-            // --- RENDER HTML ---
             container.innerHTML += `
                 <div class="task-card" onclick="openPacking('${key}')" style="margin-bottom: 12px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
                         <div class="task-label">Active Order</div>
                         <div class="date-pill">${formatDateDisplay(indent.date)}</div>
                     </div>
-                    
                     <div style="margin-bottom: 15px;">
                         <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#555; margin-bottom:6px;">
                             <span>UNIQUE ITEMS</span>
@@ -739,7 +761,6 @@
                             <div class="progress-fill" style="width:${itemPct}%; background:${itemColor}"></div>
                         </div>
                     </div>
-
                     <div style="margin-bottom: 15px;">
                         <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#555; margin-bottom:6px;">
                             <span>TOTAL PACKETS</span>
@@ -749,12 +770,24 @@
                             <div class="progress-fill" style="width:${pktPct}%; background:${pktColor}"></div>
                         </div>
                     </div>
-                    
                     <div class="task-footer">
                         <span class="btn-start">OPEN <span class="material-icons" style="font-size:16px">arrow_forward</span></span>
                     </div>
                 </div>`;
         });
+    }
+
+    function switchTab(tabName, el) {
+        document.querySelectorAll('.tab-content').forEach(d => d.classList.remove('active'));
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
+        if(el) el.classList.add('active');
+        
+        if(tabName === 'attendance') {
+            if(currentUser === 'ADMIN') loadAdminDashboard(); else refreshAttendanceTab();
+        }
+        if(tabName === 'history') loadHistory();
+        if(tabName === 'profile') loadAttendanceHistory();
     }
 
     window.openPacking = function(key) {
@@ -781,9 +814,11 @@
 
     function filterList() {
         const term = document.getElementById('searchBox').value.toLowerCase();
-        const sorted = [...activeIndent.items].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        const itemsArray = activeIndent.items ? (Array.isArray(activeIndent.items) ? activeIndent.items : Object.values(activeIndent.items)) : [];
+        const sorted = [...itemsArray].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        
         const filtered = sorted.filter(item => {
-            const matchesText = item.name.toLowerCase().includes(term) || item.code.toString().includes(term);
+            const matchesText = (item.name||"").toLowerCase().includes(term) || (item.code||"").toString().includes(term);
             let matchesMode = true;
             if (currentFilterMode === 'packed') matchesMode = (item.isPacked === true);
             if (currentFilterMode === 'pending') matchesMode = (!item.isPacked);
@@ -799,14 +834,15 @@
         
         items.forEach((item) => {
             const isPacked = item.isPacked === true;
-            const valQty = parseFloat(item.savedQty !== undefined ? item.savedQty : item.poQty) || 0;
+            
+            const ordQty = getOrderQty(item);
+            const valQty = getPackedQty(item, ordQty);
             const valKg = parseFloat(item.savedKg) || 0;
-            const dispKg = item.savedKg !== undefined ? item.savedKg : '';
+            const dispKg = item.savedKg !== undefined && item.savedKg !== "undefined" && item.savedKg !== null ? item.savedKg : '';
             const imgData = item.savedImg || null;
             const disabledAttr = isPacked ? 'disabled' : '';
             
             let showEditBtn = false;
-            
             if (isPacked) {
                 if (currentUser === 'ADMIN') {
                     showEditBtn = true;
@@ -822,7 +858,7 @@
             
             if (master && master.conv > 0) {
                 const oneUnitKg = master.conv;
-                const totalTargetKg = (item.poQty * oneUnitKg).toFixed(2); 
+                const totalTargetKg = (ordQty * oneUnitKg).toFixed(2); 
                 weightInfoHTML = `<div style="font-size:11px; color:#5f6368;">1 Qty=${oneUnitKg}kg, Target=${totalTargetKg}kg</div>`;
             }
 
@@ -834,7 +870,7 @@
 
             if (isPacked) {
                 let isOver = false;
-                if (valQty > item.poQty) isOver = true; 
+                if (valQty > ordQty) isOver = true; 
                 if (!isOver && master && master.conv > 0 && valKg > 0) {
                     const stdWeight = valQty * master.conv;
                     if (valKg > (stdWeight + 0.05)) isOver = true;
@@ -847,7 +883,7 @@
             div.innerHTML = `
                 <div class="card-header"><span class="item-name">${item.name}</span><span class="item-code">#${item.code}</span></div>
                 <div class="card-body">
-                    <div class="input-group"><span class="input-label">ORDER</span><div class="val-box">${item.poQty}</div></div>
+                    <div class="input-group"><span class="input-label">ORDER</span><div class="val-box">${ordQty}</div></div>
                     <div class="input-group"><span class="input-label">PACKED</span><input type="number" inputmode="numeric" id="qty-${item.code}" value="${valQty}" class="qty-input" ${disabledAttr}></div>
                     <div class="input-group"><span class="input-label">KG/NOS</span><input type="number" inputmode="decimal" id="kg-${item.code}" placeholder="0.0" value="${dispKg}" class="qty-input" ${disabledAttr}></div>
                     <div class="input-group"><span class="input-label">PHOTO</span><div class="cam-btn ${imgData?'has-img':''}" id="btn-cam-${item.code}"><span class="material-icons">${imgData?'visibility':'camera_alt'}</span>${!imgData&&!isPacked?`<input type="file" accept="image/*" capture="environment" class="cam-input" onchange="handleImage(this,${item.code})">`:``}${imgData?`<div style="position:absolute;width:100%;height:100%;" onclick="openModal('${imgData}')"></div>`:``}${imgData&&!isPacked?`<span style="position:absolute;right:-5px;top:-5px;background:white;color:red;border-radius:50%;padding:2px;font-size:12px;border:1px solid #ccc;" onclick="clearImage(${item.code});event.stopPropagation();">X</span>`:``}</div></div>
@@ -863,22 +899,25 @@
         });
     }
 
-    function findItemIndex(code) {
-        if(!activeIndent || !activeIndent.items) return -1;
-        return activeIndent.items.findIndex(i => i.code == code);
+    function findItemKey(code) {
+        if(!activeIndent || !activeIndent.items) return null;
+        for (let key of Object.keys(activeIndent.items)) {
+            if (activeIndent.items[key].code == code) return key;
+        }
+        return null;
     }
 
     async function saveSingleItem(code) {
-        const idx = findItemIndex(code);
-        if(idx === -1) return;
+        const key = findItemKey(code);
+        if(key === null) return;
 
         const qtyInput = document.getElementById(`qty-${code}`);
         const kgInput = document.getElementById(`kg-${code}`);
         const updates = {};
-        const path = `active_indents/${currentIndentKey}/items/${idx}`;
+        const path = `active_indents/${currentIndentKey}/items/${key}`;
         
-        const wasPackedBefore = activeIndent.items[idx].isPacked === true;
-        let currentEditCount = activeIndent.items[idx].editCount || 0;
+        const wasPackedBefore = activeIndent.items[key].isPacked === true;
+        let currentEditCount = activeIndent.items[key].editCount || 0;
 
         updates[`${path}/savedQty`] = parseFloat(qtyInput.value) || 0;
         updates[`${path}/savedKg`] = parseFloat(kgInput.value) || 0;
@@ -896,16 +935,14 @@
     }
 
     async function enableEditItem(code) {
-        const idx = findItemIndex(code);
-        if(idx === -1) return;
-        try { await set(dbRef(db, `active_indents/${currentIndentKey}/items/${idx}/isPacked`), false); } catch(e) { alert("Error: " + e.message); }
+        const key = findItemKey(code);
+        if(key === null) return;
+        try { await set(dbRef(db, `active_indents/${currentIndentKey}/items/${key}/isPacked`), false); } catch(e) { alert("Error: " + e.message); }
     }
 
     function handleImage(input, code) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
-            
-            // 1. Show "Uploading..." visual feedback
             const camBtn = document.getElementById(`btn-cam-${code}`);
             const originalHtml = camBtn.innerHTML;
             camBtn.innerHTML = '<span style="font-size:10px; font-weight:bold;">UPLOADING...</span>';
@@ -915,7 +952,6 @@
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = function() {
-                    // 2. Compress the image (Max width 400px)
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 400; 
                     const scaleSize = MAX_WIDTH / img.width;
@@ -924,24 +960,18 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    // 3. Convert to Blob and Upload to Firebase Storage
                     canvas.toBlob(async (blob) => {
                         try {
                             const fileName = `packing_images/pack_${Date.now()}_${code}.jpg`;
                             const storageReference = sRef(storage, fileName);
-                            
-                            // Upload it
                             await uploadBytes(storageReference, blob);
-                            
-                            // Get the public URL link
                             const downloadURL = await getDownloadURL(storageReference);
                             
-                            // 4. Save ONLY the URL link to the Realtime Database
-                            const idx = findItemIndex(code);
-                            if(idx !== -1) { 
+                            const key = findItemKey(code);
+                            if(key !== null) { 
                                 const updates = {};
-                               updates[`active_indents/${currentIndentKey}/items/${idx}/savedImg`] = downloadURL;
-                                updates[`active_indents/${currentIndentKey}/items/${idx}/storagePath`] = fileName;
+                                updates[`active_indents/${currentIndentKey}/items/${key}/savedImg`] = downloadURL;
+                                updates[`active_indents/${currentIndentKey}/items/${key}/storagePath`] = fileName;
                                 await update(dbRef(db), updates); 
                             }
                         } catch(err) {
@@ -949,7 +979,7 @@
                             alert("Upload failed. Check connection.");
                             camBtn.innerHTML = originalHtml;
                         }
-                    }, 'image/jpeg', 0.6); // 0.6 is 60% quality (great for fast uploads)
+                    }, 'image/jpeg', 0.6); 
                 }
             }
             reader.readAsDataURL(file);
@@ -958,28 +988,25 @@
 
     async function clearImage(code) {
         if(!confirm('Remove image?')) return;
-        const idx = findItemIndex(code);
-        if(idx !== -1) { 
-            const item = activeIndent.items[idx];
-            
+        const key = findItemKey(code);
+        if(key !== null) { 
+            const item = activeIndent.items[key];
             try {
-                // 1. Delete the file from Storage to save server space
                 if (item.storagePath) {
                     const storageReference = sRef(storage, item.storagePath);
                     await deleteObject(storageReference).catch(e => console.log("Storage delete ignored"));
                 }
-                
-                // 2. Remove the URL from the Database
                 const updates = {};
-                updates[`active_indents/${currentIndentKey}/items/${idx}/savedImg`] = null;
-                updates[`active_indents/${currentIndentKey}/items/${idx}/storagePath`] = null;
+                updates[`active_indents/${currentIndentKey}/items/${key}/savedImg`] = null;
+                updates[`active_indents/${currentIndentKey}/items/${key}/storagePath`] = null;
                 await update(dbRef(db), updates); 
-                
             } catch (e) {
                 console.error(e);
             }
         }
     }
+
+    // --- HISTORY, ATTENDANCE, ADMIN LOGIC ---
 
     async function loadHistory() {
         const histContainer = document.getElementById('history-list');
@@ -1039,7 +1066,7 @@
         if(!displayItems) { container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">No Items.</div>'; return; }
 
         const filtered = displayItems.filter(item => {
-            const matchesText = item.name.toLowerCase().includes(term) || item.code.toString().includes(term);
+            const matchesText = (item.name||"").toLowerCase().includes(term) || (item.code||"").toString().includes(term);
             let isOver = false;
             const valQty = parseFloat(item.qty) || 0; 
             const valKg = parseFloat(item.actualKg) || 0;
@@ -1149,18 +1176,13 @@
                     
                     if (r.out && r.ot !== undefined) { 
                         totalNetOT += r.ot;
-                        
                         const absOT = Math.abs(r.ot);
                         const h = Math.floor(absOT / 60); 
                         const m = absOT % 60; 
                         
-                        if (r.ot > 0) {
-                            otDisplay = `<span class="ot-val ot-pos">+${h}h ${m}m</span>`; 
-                        } else if (r.ot < 0) {
-                            otDisplay = `<span class="ot-val ot-neg">-${h}h ${m}m</span>`; 
-                        } else {
-                            otDisplay = `<span class="ot-val ot-neu">0h 0m</span>`;
-                        }
+                        if (r.ot > 0) otDisplay = `<span class="ot-val ot-pos">+${h}h ${m}m</span>`; 
+                        else if (r.ot < 0) otDisplay = `<span class="ot-val ot-neg">-${h}h ${m}m</span>`; 
+                        else otDisplay = `<span class="ot-val ot-neu">0h 0m</span>`;
                     }
 
                     tbody.innerHTML += `
@@ -1175,24 +1197,17 @@
                 const absTotal = Math.abs(totalNetOT);
                 const th = Math.floor(absTotal / 60);
                 const tm = absTotal % 60;
-                
                 let totalClass = 'ot-neu';
                 let totalSign = '';
                 
-                if (totalNetOT > 0) { 
-                    totalClass = 'ot-pos'; 
-                    totalSign = '+'; 
-                } else if (totalNetOT < 0) { 
-                    totalClass = 'ot-neg'; 
-                    totalSign = '-'; 
-                }
+                if (totalNetOT > 0) { totalClass = 'ot-pos'; totalSign = '+'; } 
+                else if (totalNetOT < 0) { totalClass = 'ot-neg'; totalSign = '-'; }
                 
                 tbody.innerHTML += `
                     <tr class="row-total">
                         <td colspan="3" style="text-align:right; font-size:11px; color:#666;">NET OT FOR MONTH:</td>
                         <td><span class="ot-val ${totalClass}" style="font-size:12px;">${totalSign}${th}h ${tm}m</span></td>
                     </tr>`;
-                    
             } else { 
                 tbody.innerHTML = '<tr><td colspan="4" style="color:#ccc; padding:20px;">No data.</td></tr>'; 
             }
@@ -1233,7 +1248,6 @@
         } catch(e) { console.error(e); }
     }
 
-    // --- ADMIN MANUAL ATTENDANCE LOGIC ---
     window.openAdminOverride = function() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('override-date').value = today;
@@ -1359,32 +1373,26 @@
         }
     }
 
-    function openModal(src) { document.getElementById('img-content').src = src; document.getElementById('img-modal').style.display = 'block'; }
+    window.openModal = function(src) { document.getElementById('img-content').src = src; document.getElementById('img-modal').style.display = 'block'; }
 
-    // --- CSV DOWNLOAD ---
     function downloadHistoryCSV() {
         if (!currentHistoryRec || !currentHistoryRec.items) {
             alert("No data available to download.");
             return;
         }
-
         const dateStr = currentHistoryRec.date;
         let csvContent = "ERP Code,Code,Item Name,Ordered Qty,Packed Qty,Weight (Kg)\n";
-
         currentHistoryRec.items.forEach(item => {
             const cleanName = item.name ? `"${item.name.replace(/"/g, '""')}"` : "Unknown";
             const ordQty = item.originalQty || item.poQty || 0;
             const pckQty = item.qty || 0;
             const weight = item.actualKg || 0;
-            
             let erpCode = "";
             if (masterMap[item.code] && masterMap[item.code].erpCode) {
                 erpCode = `"${masterMap[item.code].erpCode}"`; 
             }
-
             csvContent += `${erpCode},${item.code},${cleanName},${ordQty},${pckQty},${weight}\n`;
         });
-
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
@@ -1396,9 +1404,7 @@
         document.body.removeChild(link);
     }
 
-    // ==========================================
-    // NEW WASTAGE LOGIC (ITEM SELECTION)
-    // ==========================================
+    // --- WASTAGE LOGIC ---
     window.openWastageModal = function() {
         tempWastageItems = activeIndent && activeIndent.wastageList ? [...activeIndent.wastageList] : [];
         tempWastageImg = activeIndent && activeIndent.wastageImg ? activeIndent.wastageImg : null;
@@ -1407,14 +1413,14 @@
         const sel = document.getElementById('wastage-item-select');
         sel.innerHTML = '<option value="">Select Item...</option>';
         if(activeIndent && activeIndent.items) {
-            const sortedItems = [...activeIndent.items].sort((a,b) => a.name.localeCompare(b.name));
+            const itemsArray = Array.isArray(activeIndent.items) ? activeIndent.items : Object.values(activeIndent.items);
+            const sortedItems = [...itemsArray].sort((a,b) => (a.name||"").localeCompare(b.name||""));
             sortedItems.forEach(i => {
                 sel.innerHTML += `<option value="${i.code}">${i.name}</option>`;
             });
         }
 
         document.getElementById('wastage-qty').value = '';
-        
         renderWastageList();
 
         const camBtn = document.getElementById('wastage-cam-btn');
@@ -1434,29 +1440,19 @@
         const code = document.getElementById('wastage-item-select').value;
         const qty = parseFloat(document.getElementById('wastage-qty').value);
         
-        if(!code || isNaN(qty) || qty <= 0) {
-            alert("Please select an item and enter a valid quantity.");
-            return;
-        }
+        if(!code || isNaN(qty) || qty <= 0) { alert("Please select an item and enter a valid quantity."); return; }
 
-        const item = activeIndent.items.find(i => i.code == code);
+        const itemsArray = Array.isArray(activeIndent.items) ? activeIndent.items : Object.values(activeIndent.items);
+        const item = itemsArray.find(i => i.code == code);
         const master = masterMap[code];
         
         let costPerPc = 0;
-        if(master && master.costKg && master.conv) {
-            costPerPc = master.costKg * master.conv;
-        } else if (item.myCost) {
-            costPerPc = item.myCost; 
-        }
+        if(master && master.costKg && master.conv) { costPerPc = master.costKg * master.conv; } 
+        else if (item && item.myCost) { costPerPc = item.myCost; }
 
         const totalCost = costPerPc * qty;
 
-        tempWastageItems.push({
-            code: code,
-            name: item.name,
-            qty: qty,
-            cost: totalCost
-        });
+        tempWastageItems.push({ code: code, name: item.name, qty: qty, cost: totalCost });
 
         document.getElementById('wastage-item-select').value = "";
         document.getElementById('wastage-qty').value = "";
@@ -1484,9 +1480,7 @@
             </div>`;
         });
 
-        if(tempWastageItems.length === 0) {
-            html = '<div style="padding:15px; text-align:center; color:#999; font-size:12px;">No items added yet.</div>';
-        }
+        if(tempWastageItems.length === 0) { html = '<div style="padding:15px; text-align:center; color:#999; font-size:12px;">No items added yet.</div>'; }
 
         container.innerHTML = html;
         document.getElementById('wastage-total-amt').innerText = total.toFixed(0);
@@ -1500,9 +1494,7 @@
             const file = input.files[0];
             const camBtn = document.getElementById('wastage-cam-btn');
             const camText = document.getElementById('wastage-cam-text');
-            
             camText.innerText = "UPLOADING...";
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
@@ -1515,17 +1507,14 @@
                     canvas.height = img.height * scaleSize;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
                     canvas.toBlob(async (blob) => {
                         try {
                             const fileName = `wastage_images/wastage_${Date.now()}.jpg`;
                             const storageReference = sRef(storage, fileName);
                             await uploadBytes(storageReference, blob);
                             const downloadURL = await getDownloadURL(storageReference);
-                            
                             tempWastageImg = downloadURL;
                             tempWastagePath = fileName;
-                            
                             camBtn.classList.add('has-img');
                             camText.innerText = "Photo Added";
                             renderWastageList(); 
@@ -1548,12 +1537,7 @@
         
         let totalAmt = 0;
         let noteArr = [];
-        
-        tempWastageItems.forEach(w => {
-            totalAmt += w.cost;
-            noteArr.push(`${w.name}: ${w.qty}`);
-        });
-
+        tempWastageItems.forEach(w => { totalAmt += w.cost; noteArr.push(`${w.name}: ${w.qty}`); });
         const finalNote = noteArr.length > 0 ? noteArr.join(", ") : "";
 
         const updates = {};
@@ -1567,11 +1551,8 @@
             await update(dbRef(db), updates);
             document.getElementById('wastage-modal').classList.add('hidden');
             alert(totalAmt > 0 ? "Wastage saved: ₹" + totalAmt.toFixed(0) : "Wastage photo saved.");
-        } catch(e) { 
-            alert(e.message); 
-        } finally {
-            btn.innerText = "SAVE";
-        }
+        } catch(e) { alert(e.message); } 
+        finally { btn.innerText = "SAVE"; }
     }
 
     window.clearWastage = async function() {
@@ -1586,56 +1567,49 @@
                 const storageReference = sRef(storage, tempWastagePath);
                 await deleteObject(storageReference).catch(e => console.log("Storage delete ignored"));
             }
-
             const updates = {};
             updates[`active_indents/${currentIndentKey}/wastageList`] = null;
             updates[`active_indents/${currentIndentKey}/wastageAmt`] = null;
             updates[`active_indents/${currentIndentKey}/wastageNote`] = null;
             updates[`active_indents/${currentIndentKey}/wastageImg`] = null;
             updates[`active_indents/${currentIndentKey}/wastageStoragePath`] = null;
-
+            
             await update(dbRef(db), updates);
 
-            tempWastageItems = [];
-            tempWastageImg = null;
-            tempWastagePath = null;
+            tempWastageItems = []; tempWastageImg = null; tempWastagePath = null;
             document.getElementById('wastage-modal').classList.add('hidden');
-            
             alert("Wastage cleared successfully.");
-        } catch(e) {
-            alert("Error clearing wastage: " + e.message);
-        } finally {
-            btn.innerText = "CLEAR";
-        }
+        } catch(e) { alert("Error clearing wastage: " + e.message); } 
+        finally { btn.innerText = "CLEAR"; }
     }
 
     window.executeFinalSubmit = async function() {
         const btn = document.querySelector('#confirm-modal button[onclick*="executeFinalSubmit"]');
         btn.innerHTML = 'SENDING...'; btn.disabled = true;
         try {
-            const reviewItems = activeIndent.items.map(item => ({
-                code: item.code, name: item.name, poQty: item.poQty, poRate: item.poRate,
-                qty: item.savedQty !== undefined ? item.savedQty : item.poQty,
-                actualKg: item.savedKg || 0, img: item.savedImg || null, packedBy: item.packedBy || '',
-                editedBy: item.editedBy || null
-            }));
+            const itemsArray = activeIndent.items ? (Array.isArray(activeIndent.items) ? activeIndent.items : Object.values(activeIndent.items)) : [];
+            const reviewItems = itemsArray.map(item => {
+                const ordQty = getOrderQty(item);
+                return {
+                    code: item.code, name: item.name, poQty: ordQty, poRate: item.poRate,
+                    qty: getPackedQty(item, ordQty),
+                    actualKg: item.savedKg || 0, img: item.savedImg || null, packedBy: item.packedBy || '',
+                    editedBy: item.editedBy || null
+                };
+            });
             
-            // Grab the wastage data before deleting
-            const wastageAmt = activeIndent.wastageAmt || 0;
-            const wastageNote = activeIndent.wastageNote || "";
-            const wastageImg = activeIndent.wastageImg || null;
-
             const reviewData = { 
                 date: activeIndent.date, 
                 items: reviewItems, 
-                wastageAmt: wastageAmt,
-                wastageNote: wastageNote,
-                wastageImg: wastageImg,
+                wastageAmt: activeIndent.wastageAmt || 0,
+                wastageNote: activeIndent.wastageNote || "",
+                wastageImg: activeIndent.wastageImg || null,
                 timestamp: Date.now() 
             };
             
             await set(dbRef(db, `completed_packing/${currentIndentKey}`), reviewData);
             await remove(dbRef(db, `active_indents/${currentIndentKey}`));
+            
             document.getElementById('confirm-modal').classList.add('hidden');
             alert("Order Submitted Successfully!");
             closePage('page-packing');
@@ -1644,19 +1618,19 @@
 
     window.submitToReview = function() {
         if(!activeIndent) { alert("No active order loaded."); return; }
-        const total = activeIndent.items.length;
-        const packed = activeIndent.items.filter(i => i.isPacked === true).length;
-        const pending = total - packed;
+        const itemsArray = activeIndent.items ? (Array.isArray(activeIndent.items) ? activeIndent.items : Object.values(activeIndent.items)) : [];
+        const total = itemsArray.length;
+        const packed = itemsArray.filter(i => i.isPacked === true).length;
+        
         document.getElementById('conf-packed').innerText = packed;
-        document.getElementById('conf-pending').innerText = pending;
+        document.getElementById('conf-pending').innerText = total - packed;
         document.getElementById('confirm-modal').classList.remove('hidden');
     }
 
-    // --- EXPORTS ---
+    // --- GLOBAL EXPORTS ---
     window.handleLogin = handleLogin;
     window.handleLogout = handleLogout;
     window.switchTab = switchTab;
-    window.openPacking = openPacking;
     window.closePage = closePage;
     window.toggleFilterMode = toggleFilterMode;
     window.filterList = filterList;
@@ -1672,11 +1646,6 @@
     window.toggleHistoryFilterMode = toggleHistoryFilterMode;
     window.filterHistoryList = filterHistoryList;
     window.loadAttendanceHistory = loadAttendanceHistory;
-    window.openModal = openModal;
-    window.downloadHistoryCSV = downloadHistoryCSV;
-    window.openAdminOverride = openAdminOverride;
-    window.saveAdminOverride = saveAdminOverride;
-    window.markAdminAbsent = markAdminAbsent;
 
     init();
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(console.error); }

@@ -631,44 +631,34 @@
             setupLiveListeners(); 
         }
 
+        
+
+        let currentDetailKey = null; // Tracks which active order you are viewing
+
         function setupLiveListeners() {
+            // 1. Listen for Active Packing Orders (Handles Multiple)
             onValue(ref(db, 'active_indents'), (snap) => {
-                const allActive = snap.val();
-                if (allActive) {
-                    // Merge multiple active orders into a single view for Admin Dashboard
-                    let mergedItems = [];
-                    let totalWastage = 0;
-                    let dates = [];
-                    let mergedWastageImg = null;
-                    
-                    Object.values(allActive).forEach(indent => {
-                        if (indent.items) mergedItems.push(...indent.items);
-                        if (indent.wastageAmt) totalWastage += indent.wastageAmt;
-                        if (indent.date) dates.push(indent.date);
-                        if (indent.wastageImg) mergedWastageImg = indent.wastageImg;
-                    });
-                    
-                    activeIndentData = {
-                        date: dates.join(' & '), // Shows multiple dates combined
-                        items: mergedItems,
-                        wastageAmt: totalWastage,
-                        wastageImg: mergedWastageImg
-                    };
-                } else {
-                    activeIndentData = null;
-                }
-                
+                activeIndentData = snap.val(); // Keep the raw object structure: { 'date1': {...}, 'date2': {...} }
                 refreshLiveUI();
+                
+                // If the admin is currently looking at a specific order's details, update it live
                 if(document.getElementById('page-live-detail').classList.contains('active')) {
-                    renderLiveDetailList();
+                    if (activeIndentData && activeIndentData[currentDetailKey]) {
+                        renderLiveDetailList();
+                    } else {
+                        closeLiveDetail(); // Close if the order was submitted/deleted
+                    }
                 }
             });
 
+            // 2. Listen for Today's Staff Attendance
             const today = new Date().toISOString().split('T')[0];
             onValue(ref(db, `attendance/${today}`), (snap) => {
                 const data = snap.val() || {};
                 const staff = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU'];
                 const grid = document.getElementById('live-att-grid');
+                if(!grid) return;
+                
                 let html = '';
                 
                 staff.forEach(name => {
@@ -699,15 +689,16 @@
                 grid.innerHTML = html;
             });
         }
-
-        window.openLiveDetail = function() {
-            if(!activeIndentData) return;
-            document.getElementById('live-detail-date').innerText = formatDateFull(activeIndentData.date);
+        window.openLiveDetail = function(key) {
+            currentDetailKey = key;
+            if(!activeIndentData || !activeIndentData[key]) return;
+            document.getElementById('live-detail-date').innerText = formatDateFull(activeIndentData[key].date);
             renderLiveDetailList();
             document.getElementById('page-live-detail').classList.add('active');
         }
 
         window.closeLiveDetail = function() {
+            currentDetailKey = null;
             document.getElementById('page-live-detail').classList.remove('active');
         }
 
@@ -801,36 +792,52 @@
         }
 
         window.refreshLiveUI = function() {
-            const data = activeIndentData;
+            const dataMap = activeIndentData;
             const packContainer = document.getElementById('live-pack-content');
             const finCard = document.getElementById('card-live-fin');
             const finGrid = document.getElementById('live-fin-grid');
             const perfCard = document.getElementById('card-live-perf');
             const perfContent = document.getElementById('live-perf-content');
             
-            if(!data || !packContainer) return;
-
-            const itemCount = data.items ? data.items.length : 0;
-            const packedCount = data.items ? data.items.filter(i => i.isPacked === true).length : 0;
-            const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
-            let totalOrdPkts = 0, totalPackedPkts = 0, indentGoal = 0, expectedCost = 0;
+            if(!dataMap || Object.keys(dataMap).length === 0) {
+                packContainer.parentElement.onclick = null;
+                packContainer.innerHTML = '<div class="no-order">No active orders</div>';
+                if(finCard) finCard.style.display = 'none';
+                if(perfCard) perfCard.style.display = 'none';
+                return;
+            }
 
             const masterLoaded = Object.keys(masterMap).length > 0;
             
-            // For Employee Performance Tile
-            const perfData = {};
+            let perfData = {};
             let maxPkts = 0;
+            let totalIndentGoal = 0;
+            let totalExpectedCost = 0;
+            let totalActiveWastage = 0;
+            let totalEstExp = 0;
+            let packHtml = '';
 
-            if (data.items) {
-                data.items.forEach(i => {
-                    const poQ = parseFloat(i.poQty) || 0;
-                    const savedQ = parseFloat(i.savedQty !== undefined ? i.savedQty : i.poQty) || 0;
+            // Process each active order individually
+            Object.keys(dataMap).forEach(key => {
+                const data = dataMap[key];
+                const itemsArray = data.items ? (Array.isArray(data.items) ? data.items : Object.values(data.items)) : [];
+                
+                const itemCount = itemsArray.length;
+                const packedCount = itemsArray.filter(i => i.isPacked === true).length;
+                const itemPct = itemCount > 0 ? Math.round((packedCount / itemCount) * 100) : 0;
+                
+                let ordPkts = 0;
+                let packedPkts = 0;
+                let orderIndentGoal = 0;
+                let orderExpectedCost = 0;
+                
+                itemsArray.forEach(i => {
+                    const poQ = parseFloat(i.poQty !== undefined ? i.poQty : (i.originalQty || 0)) || 0;
+                    const savedQ = parseFloat(i.savedQty !== undefined ? i.savedQty : poQ) || 0;
                     
-                    totalOrdPkts += poQ;
+                    ordPkts += poQ;
                     if (i.isPacked) {
-                        totalPackedPkts += savedQ;
-                        
-                        // Accumulate Performance Data
+                        packedPkts += savedQ;
                         if (i.packedBy) {
                             if (!perfData[i.packedBy]) perfData[i.packedBy] = { pkts: 0, edits: 0 };
                             perfData[i.packedBy].pkts += savedQ;
@@ -839,62 +846,76 @@
                     }
                     
                     const itemRev = poQ * (parseFloat(i.poRate) || 0);
-                    indentGoal += itemRev;
+                    orderIndentGoal += itemRev;
                     
                     const master = masterMap[i.code];
                     if (master) {
                         const estKg = poQ * (parseFloat(master.conv) || 0);
-                        expectedCost += (estKg * (parseFloat(master.costKg) || 0));
+                        orderExpectedCost += (estKg * (parseFloat(master.costKg) || 0));
                     }
                 });
-            }
 
-            // Pack Progress
-            const pktPct = totalOrdPkts > 0 ? Math.round((totalPackedPkts / totalOrdPkts) * 100) : 0;
-            
-            packContainer.parentElement.onclick = () => openLiveDetail();
-            packContainer.innerHTML = `
-                <div class="live-badge-row" style="margin-bottom: 16px;">
-                    <div class="live-indicator">
-                        <div class="pulse-dot"></div> Live Packing
-                    </div>
-                    <div style="background:#eef2f7; color:#475569; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">
-                        ${formatDateFull(data.date)} 
-                    </div>
-                </div>
+                totalIndentGoal += orderIndentGoal;
+                totalExpectedCost += orderExpectedCost;
+                const wastage = parseFloat(data.wastageAmt) || 0;
+                totalActiveWastage += wastage;
 
-                <div style="margin-bottom: 15px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span class="stat-label" style="font-size:11px;">Unique Items</span>
-                        <span class="stat-value" style="font-size:12px;">
-                            ${packedCount} / ${itemCount} 
-                            <span class="pct-label" style="color:var(--primary); margin-left:5px;">${itemPct}%</span>
-                        </span>
-                    </div>
-                    <div class="progress-track-clean">
-                        <div class="progress-fill-clean" style="width:${itemPct}%; background:var(--primary)"></div>
-                    </div>
-                </div>
+                // Safe Expense Calc bypassing date format bugs
+                let orderEstExp = 0;
+                if (expenseSettings && data.date) {
+                    let dObj = new Date(); // Fallback
+                    if (data.date.includes('-')) {
+                        const parts = data.date.split('-');
+                        if(parts[0].length === 4) dObj = new Date(data.date);
+                        else if(parts[2].length === 4) dObj = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                    }
+                    const dayIdx = isNaN(dObj.getDay()) ? new Date().getDay() : dObj.getDay();
+                    const daySet = expenseSettings.days[dayIdx] || {wage:0, transport:0};
+                    const packExp = (orderIndentGoal / 1000) * (expenseSettings.packingRate || 0);
+                    orderEstExp = (daySet.wage || 0) + (daySet.transport || 0) + packExp + wastage;
+                }
+                totalEstExp += orderEstExp;
 
-                <div style="margin-bottom: 5px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span class="stat-label" style="font-size:11px;">Total Packets</span>
-                        <span class="stat-value" style="font-size:12px;">
-                            ${totalPackedPkts} / ${totalOrdPkts} 
-                            <span class="pct-label" style="color:#f59e0b; margin-left:5px;">${pktPct}%</span>
-                        </span>
-                    </div>
-                    <div class="progress-track-clean" style="margin-bottom: 0 !important;">
-                        <div class="progress-fill-clean" style="width:${pktPct}%; background:#f59e0b"></div>
-                    </div>
-                </div>
+                const pktPct = ordPkts > 0 ? Math.round((packedPkts / ordPkts) * 100) : 0;
 
-                <div class="tap-hint" style="margin-top: 15px; border-top: 1px solid #f1f1f1; padding-top: 10px;">
-                    Tap to monitor individual items
-                </div>
-            `;
+                // Create a clickable mini-card for this specific order
+                packHtml += `
+                    <div style="border: 1px solid #edf2f7; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: pointer; background: #fafbfc; transition: 0.2s;" onclick="openLiveDetail('${key}')">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <div class="live-indicator" style="font-size:12px;">
+                                <div class="pulse-dot"></div> ${formatDateFull(data.date)}
+                            </div>
+                            <span class="material-icons" style="font-size:16px; color:#ccc;">chevron_right</span>
+                        </div>
 
-            // Employee Performance Render
+                        <div style="margin-bottom: 10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <span class="stat-label" style="font-size:10px;">Items</span>
+                                <span class="stat-value" style="font-size:11px;">${packedCount} / ${itemCount} <span class="pct-label" style="color:var(--primary);">${itemPct}%</span></span>
+                            </div>
+                            <div class="progress-track-clean" style="height:6px !important;">
+                                <div class="progress-fill-clean" style="width:${itemPct}%; background:var(--primary)"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <span class="stat-label" style="font-size:10px;">Packets</span>
+                                <span class="stat-value" style="font-size:11px;">${packedPkts} / ${ordPkts} <span class="pct-label" style="color:#f59e0b;">${pktPct}%</span></span>
+                            </div>
+                            <div class="progress-track-clean" style="height:6px !important;">
+                                <div class="progress-fill-clean" style="width:${pktPct}%; background:#f59e0b"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Insert separate Packing Status tiles
+            packContainer.parentElement.onclick = null; // Unbind outer card click
+            packContainer.innerHTML = packHtml;
+
+            // Combine Packer Performance into one tile
             if (perfCard && perfContent) {
                 perfCard.style.display = 'block';
                 let perfHtml = '';
@@ -923,21 +944,10 @@
                 perfContent.innerHTML = perfHtml;
             }
 
-            // Expected Profit Render (With Live Wastage Alert)
-            let estExp = 0;
-            const activeWastage = parseFloat(data.wastageAmt) || 0;
-
-            if (expenseSettings && data.date) {
-                const dObj = data.date.includes('-') && data.date.split('-')[0].length === 4 ? new Date(data.date) : new Date();
-                const dayIdx = dObj.getDay();
-                const daySet = expenseSettings.days[dayIdx];
-                const packExp = (indentGoal / 1000) * expenseSettings.packingRate;
-                estExp = (daySet.wage || 0) + (daySet.transport || 0) + packExp + activeWastage;
-            }
-
-            const estGross = indentGoal - expectedCost;
-            const estNet = estGross - estExp;
-            const estMgn = indentGoal > 0 ? (estNet / indentGoal * 100).toFixed(1) : 0;
+            // Combine Expected Profit into one tile
+            const estGross = totalIndentGoal - totalExpectedCost;
+            const estNet = estGross - totalEstExp;
+            const estMgn = totalIndentGoal > 0 ? (estNet / totalIndentGoal * 100).toFixed(1) : 0;
 
             if(finCard && finGrid) {
                 finCard.style.display = 'block';
@@ -946,18 +956,16 @@
                 } else {
                     finGrid.className = "live-fin-grid-2x2"; 
                     
-                    // Wastage Banner
-                    const wastageBannerHtml = activeWastage > 0 ? `
+                    const wastageBannerHtml = totalActiveWastage > 0 ? `
                         <div style="background:#fff3e0; color:var(--orange); padding:8px; border-radius:6px; font-size:11px; font-weight:700; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                            <span>Wastage Recorded: ₹${activeWastage}</span> 
-                            ${data.wastageImg ? `<span class="material-icons" style="font-size:16px; cursor:pointer; color:var(--primary);" onclick="viewLivePhoto('${data.wastageImg}')">image</span>` : ''}
+                            <span>Wastage Recorded: ₹${totalActiveWastage.toFixed(0)}</span> 
                         </div>` : '';
 
                     finCard.innerHTML = `
                         <div class="live-badge-row" style="margin-bottom: 15px;">
                             <div class="live-indicator" style="color:var(--purple)">
                                 <span class="material-icons" style="font-size:16px;">payments</span>
-                                Expected Profit
+                                Expected Profit (Sum)
                             </div>
                             <div style="font-size:10px; color:#94a3b8; font-weight:700;">ESTIMATE</div>
                         </div>
@@ -965,11 +973,11 @@
                         <div class="live-fin-grid-2x2" id="live-fin-grid">
                             <div class="live-fin-tile" style="background:#f8fafc;">
                                 <div class="fin-label">Indent Goal</div>
-                                <div class="fin-val">₹${indentGoal.toFixed(0)}</div>
+                                <div class="fin-val">₹${totalIndentGoal.toFixed(0)}</div>
                             </div>
                             <div class="live-fin-tile" style="background:#fffaf5; border-color:#ffeada;">
                                 <div class="fin-label" style="color:var(--orange)">Est. Expense</div>
-                                <div class="fin-val" style="color:var(--orange)">₹${estExp.toFixed(0)}</div>
+                                <div class="fin-val" style="color:var(--orange)">₹${totalEstExp.toFixed(0)}</div>
                             </div>
                             <div class="live-fin-tile" style="background:#f0f7ff; border-color:#d0e3ff;">
                                 <div class="fin-label" style="color:var(--primary)">Net Profit</div>
@@ -999,33 +1007,37 @@
             const container = document.getElementById('live-detail-list');
             const searchTerm = document.getElementById('liveSearch').value.toLowerCase();
             
-            if(!activeIndentData || !activeIndentData.items) return;
+            if(!currentDetailKey || !activeIndentData || !activeIndentData[currentDetailKey]) return;
+            
+            const data = activeIndentData[currentDetailKey];
+            const itemsArray = data.items ? (Array.isArray(data.items) ? data.items : Object.values(data.items)) : [];
             
             container.innerHTML = '';
             
-            const filteredItems = activeIndentData.items.filter(item => {
-                const matchesSearch = item.name.toLowerCase().includes(searchTerm) || item.code.toString().includes(searchTerm);
+            const filteredItems = itemsArray.filter(item => {
+                const matchesSearch = (item.name||"").toLowerCase().includes(searchTerm) || (item.code||"").toString().includes(searchTerm);
                 let matchesFilter = true;
                 if(liveFilterMode === 'pending') matchesFilter = !item.isPacked;
                 if(liveFilterMode === 'packed') matchesFilter = item.isPacked;
                 return matchesSearch && matchesFilter;
-            }).sort((a, b) => a.name.localeCompare(b.name));
+            }).sort((a, b) => (a.name||"").localeCompare(b.name||""));
 
             filteredItems.forEach(item => {
                 const isPacked = item.isPacked === true;
-                const valQty = parseFloat(item.savedQty !== undefined ? item.savedQty : item.poQty) || 0;
+                const poQ = parseFloat(item.poQty !== undefined ? item.poQty : (item.originalQty || 0)) || 0;
+                const valQty = parseFloat(item.savedQty !== undefined ? item.savedQty : poQ) || 0;
                 const valKg = parseFloat(item.savedKg) || 0;
                 
                 const master = masterMap[item.code];
                 let targetWeightHTML = '';
                 if (master && master.conv > 0) {
-                    const targetKg = (item.poQty * master.conv).toFixed(2);
+                    const targetKg = (poQ * master.conv).toFixed(2);
                     targetWeightHTML = `<div class="li-target-info">Target: ${targetKg}kg</div>`;
                 }
 
                 let cardClass = 'live-item-card';
                 if (isPacked) {
-                    let isOver = (valQty > item.poQty);
+                    let isOver = (valQty > poQ);
                     if (!isOver && master && master.conv > 0 && valKg > 0) {
                         const stdWeight = valQty * master.conv;
                         if (valKg > (stdWeight + 0.05)) isOver = true;
@@ -1044,7 +1056,7 @@
                         <span class="li-code">#${item.code}</span>
                     </div>
                     <div class="li-body">
-                        <div class="li-col"><span class="li-label">Order</span><span class="li-val" style="background:#f1f3f4; color:#555; border-color:#eee;">${item.poQty}</span></div>
+                        <div class="li-col"><span class="li-label">Order</span><span class="li-val" style="background:#f1f3f4; color:#555; border-color:#eee;">${poQ}</span></div>
                         <div class="li-col"><span class="li-label">Packed</span><span class="li-val" style="${isPacked ? 'background:#c8e6c9; color:#1b5e20; border-color:#a5d6a7;' : ''}">${isPacked ? valQty : '-'}</span></div>
                         <div class="li-col"><span class="li-label">Weight</span><span class="li-val" style="${valKg > 0 ? 'background:#e8f0fe; color:#1a73e8; border-color:#d2e3fc;' : ''}">${valKg > 0 ? valKg.toFixed(2) : '-'}</span></div>
                         <div class="li-col">

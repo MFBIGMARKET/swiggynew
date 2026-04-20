@@ -708,6 +708,16 @@ body.role-data-entry #view-finance button[onclick="exportFinanceExcel()"] {
     <!-- VIEW: INDENT ANALYZER -->
     <div id="view-indent" class="hidden">
         
+        <!-- ACTIVE ORDERS IN PACKING APP -->
+        <div class="card" style="margin-bottom: 20px; border-top: 4px solid var(--primary);">
+            <div class="card-header" style="background:#f8f9fa;">
+                <span class="card-title" style="color:var(--primary); font-weight:700;">Currently Packing</span>
+            </div>
+            <div id="active-indents-list" style="padding: 15px; background: #fff;">
+                <div style="color:#999; padding:10px;">Loading active orders...</div>
+            </div>
+        </div>
+
         <!-- Upload State -->
         <div id="indent-upload-area" class="upload-area" onclick="document.getElementById('indentInput').click()">
             <input type="file" id="indentInput" accept=".csv" style="display:none" onchange="handleIndentUpload(this)">
@@ -1268,6 +1278,12 @@ window.dbUpdate = update;
             
             // NEW: START LISTENER
             startIncomingPackingListener();
+
+            // NEW: LISTEN TO ACTIVE ORDERS IN PACKING APP
+            window.dbOnValue(window.dbChild(dbRef, 'active_indents'), (snapshot) => {
+                const activeData = snapshot.val();
+                window.renderActiveIndents(activeData);
+            });
 
         } catch (error) {
             console.error("Error", error);
@@ -2864,6 +2880,56 @@ function addToHistory(product, source, buy, sell) {
         document.getElementById('indent-date-display').classList.add('hidden-badge');
         document.getElementById('indent-upload-area').classList.remove('hidden');
         document.getElementById('indent-preview').classList.add('hidden');
+    }
+
+    // --- NEW: ACTIVE ORDERS MANAGEMENT ---
+    window.renderActiveIndents = function(data) {
+        const container = document.getElementById('active-indents-list');
+        if (!container) return;
+        
+        if (!data || Object.keys(data).length === 0) {
+            container.innerHTML = '<div style="color:#999; padding:10px; font-style:italic;">No active orders in the packing app.</div>';
+            return;
+        }
+        
+        let html = '<div style="display:flex; gap:15px; flex-wrap:wrap;">';
+        Object.keys(data).forEach(key => {
+            const indent = data[key];
+            const itemsArray = indent.items ? (Array.isArray(indent.items) ? indent.items : Object.values(indent.items)) : [];
+            const total = itemsArray.length;
+            const packed = itemsArray.filter(i => i.isPacked).length;
+            const pct = total > 0 ? Math.round((packed/total)*100) : 0;
+            
+            html += `
+                <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:15px; width:280px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0; color:var(--text-main); font-size:16px;">${formatDate(indent.date)}</h4>
+                        <button class="btn-icon" style="color:var(--red); padding:4px; background:#ffebee;" onclick="deleteActiveIndent('${key}')" title="Cancel/Delete Order">
+                            <span class="material-icons" style="font-size:18px;">delete</span>
+                        </button>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-sub); margin-bottom:8px; display:flex; justify-content:space-between;">
+                        <span>Items Packed:</span>
+                        <b>${packed} / ${total} <span style="color:var(--primary)">(${pct}%)</span></b>
+                    </div>
+                    <div style="width:100%; background:#f1f3f4; height:8px; border-radius:4px; overflow:hidden;">
+                        <div style="width:${pct}%; height:100%; background:${pct===100?'var(--green)':'var(--primary)'}; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    window.deleteActiveIndent = async function(key) {
+        if(!confirm(`⚠️ Are you sure you want to delete the active order for ${key}?\n\nThis will immediately remove it from the packers' screens.`)) return;
+        try {
+            await window.dbRemove(window.dbRef(window.db, `active_indents/${key}`));
+            // Note: The realtime listener will automatically refresh the UI
+        } catch(e) {
+            alert("Error deleting order: " + e.message);
+        }
     }
 
    function renderIndentHistory() {
