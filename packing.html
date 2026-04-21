@@ -369,6 +369,10 @@
         
         <!-- NEW DOWNLOAD BUTTON -->
         <div style="margin-left: auto; display:flex; gap:10px;">
+            <!-- WASTAGE HISTORY BUTTON -->
+            <button id="btn-view-wastage-history" class="icon-btn hidden-force" onclick="viewHistoryWastage()" title="View Wastage">
+                <span class="material-icons" style="color:var(--orange)">delete_sweep</span>
+            </button>
             <button id="btn-download-history" class="icon-btn hidden-force" onclick="downloadHistoryCSV()" title="Download Excel">
                 <span class="material-icons" style="color:var(--primary)">file_download</span>
             </button>
@@ -477,6 +481,30 @@
             <button id="wastage-clear-btn" onclick="clearWastage()" class="hidden" style="flex:1; padding:15px; background:white; border:none; border-right:1px solid #eee; color:var(--red); font-weight:bold; cursor:pointer;">CLEAR</button>
             <button onclick="document.getElementById('wastage-modal').classList.add('hidden')" style="flex:1; padding:15px; background:white; border:none; border-right:1px solid #eee; color:#666; font-weight:bold; cursor:pointer;">CANCEL</button>
             <button id="wastage-save-btn" onclick="saveWastage()" style="flex:1; padding:15px; background:var(--orange); border:none; color:white; font-weight:bold; cursor:pointer;">SAVE</button>
+        </div>
+    </div>
+</div>
+<!-- HISTORY WASTAGE MODAL (READ ONLY) -->
+<div id="history-wastage-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <div style="padding:20px; text-align:center;">
+            <h3 style="margin-top:0; color:var(--orange);">Recorded Wastage</h3>
+            
+            <!-- List of items -->
+            <div id="hw-items-container" style="max-height:150px; overflow-y:auto; border:1px solid #eee; border-radius:6px; margin-bottom:15px; text-align:left; background:#fafafa;">
+            </div>
+
+            <!-- Total -->
+            <div style="font-size:18px; font-weight:bold; margin-bottom:10px; color:var(--text-main);">
+                Total: ₹<span id="hw-total-amt">0</span>
+            </div>
+            
+            <!-- Notes & Photo -->
+            <div id="hw-note" style="font-size:12px; color:#666; margin-bottom:15px; font-style:italic;"></div>
+            <div id="hw-img-container"></div>
+        </div>
+        <div style="display:flex; border-top:1px solid #eee;">
+            <button onclick="document.getElementById('history-wastage-modal').classList.add('hidden')" style="flex:1; padding:15px; background:white; border:none; color:#666; font-weight:bold; cursor:pointer;">CLOSE</button>
         </div>
     </div>
 </div>
@@ -615,12 +643,16 @@
         
         const finishBtn = document.getElementById('header-finish-btn');
         const wastageBtn = document.getElementById('btn-add-wastage');
+        const histWastageBtn = document.getElementById('btn-view-wastage-history'); // New Button
+
         if (currentUser === 'ADMIN' || currentUser === 'VISHAKH') {
             if(finishBtn) finishBtn.classList.remove('hidden-force');
             if(wastageBtn) wastageBtn.classList.remove('hidden-force');
+            if(histWastageBtn) histWastageBtn.classList.remove('hidden-force');
         } else {
             if(finishBtn) finishBtn.classList.add('hidden-force');
             if(wastageBtn) wastageBtn.classList.add('hidden-force');
+            if(histWastageBtn) histWastageBtn.classList.add('hidden-force');
         }
 
         const dlBtn = document.getElementById('btn-download-history');
@@ -662,6 +694,50 @@
         }
         
         switchTab('available', document.getElementById('nav-task'));
+    }
+
+    window.viewHistoryWastage = function() {
+        if (!currentHistoryRec) return;
+
+        const container = document.getElementById('hw-items-container');
+        const amtSpan = document.getElementById('hw-total-amt');
+        const noteDiv = document.getElementById('hw-note');
+        const imgDiv = document.getElementById('hw-img-container');
+
+        // Extract data (fallback to 0/empty if not present)
+        const wList = currentHistoryRec.wastageList || [];
+        const wAmt = currentHistoryRec.wastageAmt || 0;
+        const wNote = currentHistoryRec.wastageNote || '';
+        const wImg = currentHistoryRec.wastageImg || null;
+
+        // Build Item List HTML
+        let html = '';
+        if (wList.length === 0) {
+            html = '<div style="padding:15px; text-align:center; color:#999; font-size:12px;">No specific items recorded.</div>';
+        } else {
+            wList.forEach(w => {
+                html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; font-size:12px;">
+                    <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${w.name} <b style="color:var(--primary)">(x${w.qty})</b></span>
+                    <span style="font-weight:bold; margin:0 10px;">₹${w.cost.toFixed(0)}</span>
+                </div>`;
+            });
+        }
+        container.innerHTML = html;
+        
+        // Update Totals & Notes
+        amtSpan.innerText = wAmt.toFixed(0);
+        noteDiv.innerText = wNote ? `"${wNote}"` : '';
+
+        // Add Photo Button if image exists
+        if (wImg) {
+            imgDiv.innerHTML = `<button onclick="openModal('${wImg}')" style="background:var(--primary); color:white; border:none; border-radius:6px; padding:8px 16px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><span class="material-icons">image</span> View Photo</button>`;
+        } else {
+            imgDiv.innerHTML = '<span style="color:#999; font-size:12px;">No photo attached</span>';
+        }
+
+        // Show Modal
+        document.getElementById('history-wastage-modal').classList.remove('hidden');
     }
 
     function handleLogout() {
@@ -964,7 +1040,11 @@
                         try {
                             const fileName = `packing_images/pack_${Date.now()}_${code}.jpg`;
                             const storageReference = sRef(storage, fileName);
-                            await uploadBytes(storageReference, blob);
+                            
+                            // EXPLICITLY TELL FIREBASE IT IS A JPEG
+                            const metadata = { contentType: 'image/jpeg' };
+                            
+                            await uploadBytes(storageReference, blob, metadata);
                             const downloadURL = await getDownloadURL(storageReference);
                             
                             const key = findItemKey(code);
@@ -976,7 +1056,7 @@
                             }
                         } catch(err) {
                             console.error(err);
-                            alert("Upload failed. Check connection.");
+                            alert("Upload failed. Make sure you are using a local server (http://) and not a local file (file://).");
                             camBtn.innerHTML = originalHtml;
                         }
                     }, 'image/jpeg', 0.6); 
@@ -1511,7 +1591,11 @@
                         try {
                             const fileName = `wastage_images/wastage_${Date.now()}.jpg`;
                             const storageReference = sRef(storage, fileName);
-                            await uploadBytes(storageReference, blob);
+                            
+                            // EXPLICITLY TELL FIREBASE IT IS A JPEG
+                            const metadata = { contentType: 'image/jpeg' };
+                            
+                            await uploadBytes(storageReference, blob, metadata);
                             const downloadURL = await getDownloadURL(storageReference);
                             tempWastageImg = downloadURL;
                             tempWastagePath = fileName;
@@ -1520,7 +1604,7 @@
                             renderWastageList(); 
                         } catch(err) {
                             console.error(err);
-                            alert("Upload failed.");
+                            alert("Upload failed. Make sure you are using a local server (http://) and not a local file (file://).");
                             camText.innerText = "Add Photo";
                         }
                     }, 'image/jpeg', 0.6);
@@ -1646,6 +1730,9 @@
     window.toggleHistoryFilterMode = toggleHistoryFilterMode;
     window.filterHistoryList = filterHistoryList;
     window.loadAttendanceHistory = loadAttendanceHistory;
+    window.downloadHistoryCSV = downloadHistoryCSV; // <--- ADDED THIS LINE
+    window.openModal = openModal;                   // <--- ALSO ADDED THIS (just in case!)
+
 
     init();
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(console.error); }
