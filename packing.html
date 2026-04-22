@@ -214,6 +214,7 @@
             <option value="RAJEEV">RAJEEV</option>
             <option value="MOUSUM">MOUSUM</option>
             <option value="YADHU">YADHU</option>
+            <option value="MAHAMUD">MAHAMUD</option>
             <option value="ADMIN">ADMIN</option>
             <option value="BILLING">BILLING (Office)</option>
         </select>
@@ -268,11 +269,39 @@
             </div>
         </div>
 
+        <!-- MONTHLY WASTAGE REPORT MODAL -->
+<div id="monthly-wastage-modal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-height: 80vh; display: flex; flex-direction: column;">
+        <div style="padding:15px; background:#fff3e0; text-align:center; border-bottom:1px solid #ffe0b2;">
+            <h3 style="margin:0; color:var(--orange); font-size:16px;">Monthly Wastage</h3>
+            <div style="font-size:12px; color:#d84315; font-weight:700; margin-top:4px;" id="mw-month-label"></div>
+        </div>
+        
+        <div class="stat-grid" style="padding:10px; background:white; border-bottom:1px solid #eee;">
+            <div class="stat-item"><div class="stat-label">Total Value</div><div class="stat-num" style="color:var(--red); font-size:20px;">₹<span id="mw-total-amt">0</span></div></div>
+            <div class="stat-item"><div class="stat-label">Days Logged</div><div class="stat-num" style="color:var(--primary); font-size:20px;" id="mw-days-count">0</div></div>
+        </div>
+
+        <div id="mw-items-container" style="overflow-y:auto; flex:1; background:#fafafa;">
+            <!-- Aggregated items injected here -->
+        </div>
+
+        <div style="display:flex; border-top:1px solid #eee;">
+            <button onclick="document.getElementById('monthly-wastage-modal').classList.add('hidden')" style="flex:1; padding:12px; background:white; border:none; color:#666; font-weight:bold; cursor:pointer;">CLOSE</button>
+        </div>
+    </div>
+</div>
+
         <!-- TAB 3: HISTORY -->
         <div id="tab-history" class="tab-content">
             <div class="hist-header">
                 <span class="section-title">Past Orders</span>
-                <input type="month" id="hist-month-filter" class="month-picker" onchange="loadHistory()">
+                <div style="display:flex; gap:5px; align-items:center;">
+                    <button id="btn-monthly-wastage" class="icon-btn hidden-force" onclick="openMonthlyWastage()" title="Wastage Report" style="background:#fff3e0; color:var(--orange); border-radius:6px; padding:4px 8px; border:1px solid #ffe0b2;">
+                        <span class="material-icons" style="font-size:18px;">assessment</span>
+                    </button>
+                    <input type="month" id="hist-month-filter" class="month-picker" onchange="loadHistory()">
+                </div>
             </div>
             <div id="history-list"></div>
         </div>
@@ -298,6 +327,7 @@
                             <option value="RAJEEV">RAJEEV</option>
                             <option value="MOUSUM">MOUSUM</option>
                             <option value="YADHU">YADHU</option>
+                            <option value="MAHAMUD">MAHAMUD</option>
                         </select>
                         <input type="month" id="prof-month-filter" class="month-picker" onchange="loadAttendanceHistory()">
                     </div>
@@ -422,6 +452,7 @@
                 <option value="RAJEEV">RAJEEV</option>
                 <option value="MOUSUM">MOUSUM</option>
                 <option value="YADHU">YADHU</option>
+                <option value="MAHAMUD">MAHAMUD</option>
             </select>
             
             <!-- NEW TIME INPUTS -->
@@ -549,6 +580,7 @@
         'RAJEEV': 'Raj@345',
         'MOUSUM': 'Mou@789',
         'YADHU': 'Yad@234',
+        'MAHAMUD': 'Mah@456',
         'ADMIN': 'Admin#098',
         'BILLING': 'Bill@123'
     };
@@ -643,13 +675,20 @@
         
         const finishBtn = document.getElementById('header-finish-btn');
         const wastageBtn = document.getElementById('btn-add-wastage');
-        const histWastageBtn = document.getElementById('btn-view-wastage-history'); // New Button
+        const histWastageBtn = document.getElementById('btn-view-wastage-history'); 
+        const monthlyWastageBtn = document.getElementById('btn-monthly-wastage'); // Monthly Report
 
         if (currentUser === 'ADMIN' || currentUser === 'VISHAKH') {
             if(finishBtn) finishBtn.classList.remove('hidden-force');
             if(wastageBtn) wastageBtn.classList.remove('hidden-force');
             if(histWastageBtn) histWastageBtn.classList.remove('hidden-force');
+            if(monthlyWastageBtn) monthlyWastageBtn.classList.remove('hidden-force');
         } else {
+            if(finishBtn) finishBtn.classList.add('hidden-force');
+            if(wastageBtn) wastageBtn.classList.add('hidden-force');
+            if(histWastageBtn) histWastageBtn.classList.add('hidden-force');
+            if(monthlyWastageBtn) monthlyWastageBtn.classList.add('hidden-force');
+        
             if(finishBtn) finishBtn.classList.add('hidden-force');
             if(wastageBtn) wastageBtn.classList.add('hidden-force');
             if(histWastageBtn) histWastageBtn.classList.add('hidden-force');
@@ -1101,6 +1140,7 @@
                 if(filterVal) {
                     historyDataLocal = historyDataLocal.filter(rec => rec.date.startsWith(filterVal));
                 }
+                window.currentMonthHistory = historyDataLocal; // Save data for the Monthly Report
                 histContainer.innerHTML = '';
                 if(historyDataLocal.length === 0) { histContainer.innerHTML = '<div class="status-msg">No history found for this month.</div>'; return; }
                 historyDataLocal.forEach((rec, idx) => {
@@ -1113,6 +1153,96 @@
             } else { histContainer.innerHTML = '<div class="status-msg">No history found.</div>'; }
         } catch(e) { histContainer.innerHTML = `<div class="status-msg">Error</div>`; }
     }
+
+    window.openMonthlyWastage = function() {
+        if (!window.currentMonthHistory) {
+            alert("Please wait for history to load.");
+            return;
+        }
+        
+        let totalAmt = 0;
+        let daysCount = 0;
+        let dayWiseData = [];
+
+        // 1. Extract and Group Data Day-by-Day
+        window.currentMonthHistory.forEach(rec => {
+            const wAmt = rec.wastageAmt || 0;
+            const wList = rec.wastageList || [];
+            const wNote = rec.wastageNote || '';
+
+            if (wAmt > 0 || wList.length > 0 || wNote) {
+                totalAmt += wAmt;
+                daysCount++;
+                
+                dayWiseData.push({
+                    date: rec.date,
+                    amt: wAmt,
+                    note: wNote,
+                    items: wList
+                });
+            }
+        });
+
+        // 2. Sort Newest to Oldest
+        dayWiseData.sort((a, b) => b.date.localeCompare(a.date));
+
+        // 3. Build HTML Output
+        const listContainer = document.getElementById('mw-items-container');
+        let html = '';
+
+        if (dayWiseData.length === 0) {
+            html = '<div style="padding:20px; text-align:center; color:#999; font-size:13px;">No wastage recorded this month.</div>';
+        } else {
+            dayWiseData.forEach(day => {
+                // Day Header (Date + Daily Total)
+                html += `
+                <div style="background:white; margin-bottom:8px; border:1px solid #e0e0e0; border-radius:6px; overflow:hidden; margin: 10px;">
+                    <div style="background:#f1f3f4; padding:10px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e0e0e0;">
+                        <span style="font-weight:900; color:var(--text-main); font-size:14px;">${formatDateDisplay(day.date)}</span>
+                        <span style="font-weight:900; color:var(--red); font-size:14px;">₹${day.amt.toFixed(0)}</span>
+                    </div>
+                    <div style="padding:5px 15px;">`;
+
+                // Day Items (For New Data)
+                if (day.items && day.items.length > 0) {
+                    day.items.forEach(i => {
+                        html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed #eee; font-size:13px;">
+                            <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${i.name} <b style="color:var(--text-sub); font-weight:normal; margin-left:4px;">(x${i.qty})</b></span>
+                            <span style="font-weight:700; margin-left:10px; color:#555;">₹${i.cost.toFixed(0)}</span>
+                        </div>`;
+                    });
+                } 
+                // ONLY show warning if there are NO items AND NO note (For completely blank data)
+                else if (day.amt > 0 && (!day.note || day.note.trim() === '')) {
+                    html += `<div style="padding:8px 0; font-size:12px; color:#888; font-style:italic;">Amount recorded without details.</div>`;
+                }
+
+                // Day Note (Acts as breakdown for legacy data, or extra info for new data)
+                if (day.note && day.note.trim() !== '') {
+                    // Check if it's legacy data (no structured items). If so, change label from "Note:" to "Items:"
+                    const label = (day.items && day.items.length > 0) ? "Note" : "Legacy Items";
+                    
+                    html += `<div style="padding:8px 0; font-size:12px; color:#555; background:#fffcf2; border-radius:4px; margin-top:5px; padding-left:8px; border-left:3px solid var(--orange);"><i><b>${label}:</b> ${day.note}</i></div>`;
+                }
+
+                html += `</div></div>`;
+            });
+        }
+        
+        // 4. Update DOM Elements
+        listContainer.innerHTML = html;
+        document.getElementById('mw-total-amt').innerText = totalAmt.toFixed(0);
+        document.getElementById('mw-days-count').innerText = daysCount;
+        
+        // Update Month Label
+        const filterVal = document.getElementById('hist-month-filter').value;
+        const [yyyy, mm] = filterVal ? filterVal.split('-') : ["All", "Time"];
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        document.getElementById('mw-month-label').innerText = filterVal ? `${monthNames[parseInt(mm)-1]} ${yyyy}` : "All Time";
+
+        document.getElementById('monthly-wastage-modal').classList.remove('hidden');
+    };
 
     function openHistoryDetail(rec) {
         currentHistoryRec = rec;
@@ -1307,7 +1437,7 @@
             if(snap.exists()) {
                 const data = snap.val();
                 let html = '';
-                const staffList = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU'];
+                const staffList = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU', 'MAHAMUD'];
                 staffList.forEach(name => {
                     const userLog = data[name];
                     let status = '<span style="color:#ccc">Absent</span>';
@@ -1526,14 +1656,26 @@
         const item = itemsArray.find(i => i.code == code);
         const master = masterMap[code];
         
+        // Calculate the exact cost for this specific quantity
         let costPerPc = 0;
         if(master && master.costKg && master.conv) { costPerPc = master.costKg * master.conv; } 
         else if (item && item.myCost) { costPerPc = item.myCost; }
 
         const totalCost = costPerPc * qty;
 
-        tempWastageItems.push({ code: code, name: item.name, qty: qty, cost: totalCost });
+        // Check if this item is already in the list
+        const existingIdx = tempWastageItems.findIndex(w => w.code == code);
+        
+        if (existingIdx > -1) {
+            // MERGE: If it exists, just add the new quantity and cost to the existing line
+            tempWastageItems[existingIdx].qty += qty;
+            tempWastageItems[existingIdx].cost += totalCost;
+        } else {
+            // NEW: If it doesn't exist, create a new line
+            tempWastageItems.push({ code: code, name: item.name, qty: qty, cost: totalCost });
+        }
 
+        // Reset the inputs
         document.getElementById('wastage-item-select').value = "";
         document.getElementById('wastage-qty').value = "";
         renderWastageList();
@@ -1685,6 +1827,7 @@
             const reviewData = { 
                 date: activeIndent.date, 
                 items: reviewItems, 
+                wastageList: activeIndent.wastageList || null, // <--- ADDED THIS LINE
                 wastageAmt: activeIndent.wastageAmt || 0,
                 wastageNote: activeIndent.wastageNote || "",
                 wastageImg: activeIndent.wastageImg || null,

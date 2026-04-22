@@ -1356,6 +1356,9 @@ async function autoFinalizeBill(key, data) {
     const wastageAmount = parseFloat(data.wastageAmt) || 0;
     const wastageNote = data.wastageNote || "";
     const wastageImg = data.wastageImg || null;
+    const wastageList = data.wastageList || null; // <--- ADDED THIS LINE
+
+    // Financials
 
     // Financials
     // Pass wastageAmount as the 5th parameter so it gets added to total expenses
@@ -1363,6 +1366,7 @@ async function autoFinalizeBill(key, data) {
     const grossProfit = totalBillAmt - totalRealCost;
     const netProfit = grossProfit - expenseObj.total;
 
+    // Create History Record
     // Create History Record
     const historyRecord = {
         id: Date.now(),
@@ -1379,6 +1383,7 @@ async function autoFinalizeBill(key, data) {
         netProfit: netProfit,
         
         // Include Wastage details to be saved permanently
+        wastageList: wastageList, // <--- ADDED THIS LINE
         wastageAmt: wastageAmount,
         wastageNote: wastageNote,
         wastageImg: wastageImg
@@ -2413,6 +2418,7 @@ function closeReportModal() {
         let idxQty = h.findIndex(x=>x.toUpperCase().includes('INDENTS'));
         let idxRate = h.findIndex(x=>x.toUpperCase().includes('COST'));
         let idxName = h.findIndex(x=>x.toUpperCase().includes('PRODUCT_NAME'));
+        let idxUom = h.findIndex(x=>x.toUpperCase() === 'WEIGHT' || x.toUpperCase().includes('UOM')); // Extracts UOM
         
         let dateIdx = h.findIndex(x=>x.toUpperCase().includes('DATE'));
         if (dateIdx === -1) dateIdx = 0; 
@@ -2447,6 +2453,7 @@ function closeReportModal() {
             const qty = parseFloat(r[idxQty])||0;
             const poRate = parseFloat(r[idxRate])||0; 
             const csvName = idxName > -1 ? r[idxName] : 'Unknown';
+            const csvUom = idxUom > -1 ? r[idxUom].trim() : ''; // Get UOM from WEIGHT column
 
             const master = products.find(p => p && p.id === code);
             let myCost = 0;
@@ -2459,6 +2466,7 @@ function closeReportModal() {
             currentIndent.push({ 
                 code, 
                 name: csvName, 
+                uom: csvUom, // Store the UOM here
                 originalQty: qty, 
                 qty: qty, 
                 poRate, 
@@ -2466,6 +2474,7 @@ function closeReportModal() {
                 profit, 
                 marginPct 
             });
+            
         }
         
         recalculateCurrentIndent();
@@ -2694,77 +2703,88 @@ function addToHistory(product, source, buy, sell) {
 }
 
     function applyIndentPricesToMaster() {
-    let changes = [];
-    let pendingUpdates = [];
-    let pendingNewItems = [];
+        let changes = [];
+        let pendingUpdates = [];
+        let pendingNewItems = [];
 
-    currentIndent.forEach(item => {
-        let master = products.find(p => p && p.id === item.code);
+        currentIndent.forEach(item => {
+            let master = products.find(p => p && p.id === item.code);
 
-        if (master) {
-            // Existing Item: Check Price Difference
-            if (master.spPiece !== item.poRate) {
+            if (master) {
+                // Existing Item: Check if Price OR UOM has changed
+                let hasPriceChange = master.spPiece !== item.poRate;
+                // Only update UOM if the CSV actually provided one, and it's different
+                let hasUomChange = item.uom && item.uom !== "" && master.uom !== item.uom;
+
+                if (hasPriceChange || hasUomChange) {
+                    changes.push({
+                        name: master.name,
+                        oldVal: `₹${master.spPiece} (${master.uom || '-'})`,
+                        newVal: `₹${item.poRate} (${item.uom || master.uom || '-'})`,
+                        isNew: false
+                    });
+                    
+                    pendingUpdates.push({ 
+                        product: master, 
+                        newPrice: item.poRate,
+                        newUom: item.uom && item.uom !== "" ? item.uom : master.uom
+                    });
+                }
+            } else {
+                // New Item
                 changes.push({
-                    name: master.name,
-                    oldVal: '₹' + master.spPiece,
-                    newVal: '₹' + item.poRate,
-                    isNew: false
+                    name: item.name || 'New Item',
+                    oldVal: '---',
+                    newVal: `₹${item.poRate} (${item.uom || 'Unit'})`,
+                    isNew: true
+                });
+
+                const newItem = {
+                    id: item.code,
+                    name: item.name || 'New Item',
+                    uom: item.uom || 'Unit',
+                    conv: 1,
+                    costKg: 0,
+                    spPiece: item.poRate,
+                    history: []
+                };
+                // Init history for new item
+                newItem.history.push({
+                    date: new Date().toISOString().split('T')[0],
+                    source: 'New via Indent',
+                    buy: 0,
+                    sell: item.poRate
                 });
                 
-                pendingUpdates.push({ product: master, newPrice: item.poRate });
+                pendingNewItems.push(newItem);
             }
-        } else {
-            // New Item
-            changes.push({
-                name: item.name || 'New Item',
-                oldVal: '---',
-                newVal: '₹' + item.poRate,
-                isNew: true
-            });
+        });
 
-            const newItem = {
-                id: item.code,
-                name: item.name || 'New Item',
-                uom: 'Unit',
-                conv: 1,
-                costKg: 0,
-                spPiece: item.poRate,
-                history: []
-            };
-            // Init history for new item
-            newItem.history.push({
-                date: new Date().toISOString().split('T')[0],
-                source: 'New via Indent',
-                buy: 0,
-                sell: item.poRate
-            });
+        const summary = `Found ${pendingUpdates.length} updates (Prices/UOM) and ${pendingNewItems.length} new items.`;
+
+        showChangeReport('Indent Updates', summary, changes, () => {
+            // --- COMMIT CHANGES ---
             
-            pendingNewItems.push(newItem);
-        }
-    });
+            // 1. Update Existing
+            pendingUpdates.forEach(u => {
+                if (u.product.spPiece !== u.newPrice) {
+                    addToHistory(u.product, 'Indent Update', u.product.costKg, u.newPrice);
+                }
+                u.product.spPiece = u.newPrice;
+                u.product.uom = u.newUom; // Save the updated UOM
+            });
 
-    const summary = `Found ${pendingUpdates.length} price updates and ${pendingNewItems.length} new items.`;
+            // 2. Add New
+            pendingNewItems.forEach(item => {
+                products.push(item);
+            });
 
-    showChangeReport('Indent Price Updates', summary, changes, () => {
-        // --- COMMIT CHANGES ---
-        
-        // 1. Update Existing
-        pendingUpdates.forEach(u => {
-            addToHistory(u.product, 'Indent Update', u.product.costKg, u.newPrice);
-            u.product.spPiece = u.newPrice;
+            saveData('products', products);
+            renderMasterTable();
+            switchTab('view-master');
+            resetIndent();
         });
-
-        // 2. Add New
-        pendingNewItems.forEach(item => {
-            products.push(item);
-        });
-
-        saveData('products', products);
-        renderMasterTable();
-        switchTab('view-master');
-        resetIndent();
-    });
-}
+    }
 
     // --- 4. PACKING REVIEW LOGIC (UPDATED WITH EDITING) ---
     
