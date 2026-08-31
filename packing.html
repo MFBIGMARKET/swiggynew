@@ -1350,81 +1350,112 @@
         const filterVal = document.getElementById('prof-month-filter').value;
         const tbody = document.getElementById('att-history-body');
         
+        if (!filterVal) {
+            tbody.innerHTML = '<tr><td colspan="4" style="color:#ccc; padding:20px;">Please select a month.</td></tr>'; 
+            return;
+        }
+
         tbody.innerHTML = '<tr><td colspan="4" style="color:#999; padding:20px;">Loading...</td></tr>';
         
         try {
             const snap = await get(dbRef(db, 'attendance'));
-            if(snap.exists()) {
-                const allData = snap.val();
-                const rows = [];
+            const allData = snap.exists() ? snap.val() : {};
+            
+            const [yearStr, monthStr] = filterVal.split('-');
+            const year = parseInt(yearStr);
+            const month = parseInt(monthStr);
+            
+            const now = new Date();
+            let lastDay;
+            // If the selected month is the current month, only show days up to today
+            if (now.getFullYear() === year && now.getMonth() + 1 === month) {
+                lastDay = now.getDate(); 
+            } else {
+                // Otherwise, show all days in that month
+                lastDay = new Date(year, month, 0).getDate(); 
+            }
+
+            const rows = [];
+            
+            for (let d = 1; d <= lastDay; d++) {
+                const dayStr = String(d).padStart(2, '0');
+                const dateStr = `${yearStr}-${monthStr}-${dayStr}`;
                 
-                Object.keys(allData).forEach(date => {
-                    if (filterVal && date.substring(0, 7) !== filterVal) return;
-                    const dayData = allData[date][targetUser];
-                    if (dayData) { 
-                        rows.push({ 
-                            date: date, 
-                            in: dayData.inTime, 
-                            out: dayData.outTime, 
-                            ot: dayData.otMinutes || 0 
-                        }); 
-                    }
-                });
-                
-                rows.sort((a,b) => b.date.localeCompare(a.date));
-                tbody.innerHTML = '';
-                
-                if(rows.length === 0) { 
-                    tbody.innerHTML = '<tr><td colspan="4" style="color:#ccc; padding:20px;">No records.</td></tr>'; 
-                    return; 
+                let dayData = null;
+                if (allData[dateStr] && allData[dateStr][targetUser]) {
+                    dayData = allData[dateStr][targetUser];
                 }
                 
-                let totalNetOT = 0;
-
-                rows.forEach(r => {
-                    const day = r.date.split('-')[2];
-                    const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-                    const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
-
-                    let otDisplay = `<span style="color:#ccc">-</span>`;
-                    
-                    if (r.out && r.ot !== undefined) { 
-                        totalNetOT += r.ot;
-                        const absOT = Math.abs(r.ot);
-                        const h = Math.floor(absOT / 60); 
-                        const m = absOT % 60; 
-                        
-                        if (r.ot > 0) otDisplay = `<span class="ot-val ot-pos">+${h}h ${m}m</span>`; 
-                        else if (r.ot < 0) otDisplay = `<span class="ot-val ot-neg">-${h}h ${m}m</span>`; 
-                        else otDisplay = `<span class="ot-val ot-neu">0h 0m</span>`;
-                    }
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="font-weight:700">${day}</td>
-                            <td>${inT}</td>
-                            <td>${outT}</td>
-                            <td>${otDisplay}</td> 
-                        </tr>`;
+                rows.push({
+                    date: dateStr,
+                    dayDisplay: dayStr,
+                    in: dayData ? dayData.inTime : null,
+                    out: dayData ? dayData.outTime : null,
+                    ot: dayData ? (dayData.otMinutes || 0) : null,
+                    isPresent: !!dayData
                 });
-                
-                const absTotal = Math.abs(totalNetOT);
-                const th = Math.floor(absTotal / 60);
-                const tm = absTotal % 60;
-                let totalClass = 'ot-neu';
-                let totalSign = '';
-                
-                if (totalNetOT > 0) { totalClass = 'ot-pos'; totalSign = '+'; } 
-                else if (totalNetOT < 0) { totalClass = 'ot-neg'; totalSign = '-'; }
-                
-                tbody.innerHTML += `
-                    <tr class="row-total">
-                        <td colspan="3" style="text-align:right; font-size:11px; color:#666;">NET OT FOR MONTH:</td>
-                        <td><span class="ot-val ${totalClass}" style="font-size:12px;">${totalSign}${th}h ${tm}m</span></td>
-                    </tr>`;
-            } else { 
-                tbody.innerHTML = '<tr><td colspan="4" style="color:#ccc; padding:20px;">No data.</td></tr>'; 
             }
+            
+            // Sort to show the newest date at the top
+            rows.sort((a,b) => b.date.localeCompare(a.date));
+            
+            tbody.innerHTML = '';
+            let totalNetOT = 0;
+
+            rows.forEach(r => {
+                if (!r.isPresent) {
+                    // Blank row for absent days
+                    tbody.innerHTML += `
+                        <tr style="background-color: #fafafa;">
+                            <td style="font-weight:700; color:#999;">${r.dayDisplay}</td>
+                            <td style="color:#ccc;">-</td>
+                            <td style="color:#ccc;">-</td>
+                            <td style="color:#ccc;">-</td>
+                        </tr>`;
+                    return;
+                }
+
+                // Row for present days
+                const inT = r.in ? new Date(r.in).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+                const outT = r.out ? new Date(r.out).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '-';
+
+                let otDisplay = `<span style="color:#ccc">-</span>`;
+                
+                if (r.out && r.ot !== null) { 
+                    totalNetOT += r.ot;
+                    const absOT = Math.abs(r.ot);
+                    const h = Math.floor(absOT / 60); 
+                    const m = absOT % 60; 
+                    
+                    if (r.ot > 0) otDisplay = `<span class="ot-val ot-pos">+${h}h ${m}m</span>`; 
+                    else if (r.ot < 0) otDisplay = `<span class="ot-val ot-neg">-${h}h ${m}m</span>`; 
+                    else otDisplay = `<span class="ot-val ot-neu">0h 0m</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:700">${r.dayDisplay}</td>
+                        <td>${inT}</td>
+                        <td>${outT}</td>
+                        <td>${otDisplay}</td> 
+                    </tr>`;
+            });
+            
+            const absTotal = Math.abs(totalNetOT);
+            const th = Math.floor(absTotal / 60);
+            const tm = absTotal % 60;
+            let totalClass = 'ot-neu';
+            let totalSign = '';
+            
+            if (totalNetOT > 0) { totalClass = 'ot-pos'; totalSign = '+'; } 
+            else if (totalNetOT < 0) { totalClass = 'ot-neg'; totalSign = '-'; }
+            
+            tbody.innerHTML += `
+                <tr class="row-total">
+                    <td colspan="3" style="text-align:right; font-size:11px; color:#666;">NET OT FOR MONTH:</td>
+                    <td><span class="ot-val ${totalClass}" style="font-size:12px;">${totalSign}${th}h ${tm}m</span></td>
+                </tr>`;
+                
         } catch(e) { 
             console.error(e); 
             tbody.innerHTML = '<tr><td colspan="4" style="color:red; padding:20px;">Error loading history.</td></tr>';
