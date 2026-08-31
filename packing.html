@@ -215,6 +215,7 @@
             <option value="MOUSUM">MOUSUM</option>
             <option value="YADHU">YADHU</option>
             <option value="MAHAMUD">MAHAMUD</option>
+            <option value="ZAMIR">ZAMIR</option>
             <option value="ADMIN">ADMIN</option>
             <option value="BILLING">BILLING (Office)</option>
         </select>
@@ -328,6 +329,7 @@
                             <option value="MOUSUM">MOUSUM</option>
                             <option value="YADHU">YADHU</option>
                             <option value="MAHAMUD">MAHAMUD</option>
+                            <option value="ZAMIR">ZAMIR</option>
                         </select>
                         <input type="month" id="prof-month-filter" class="month-picker" onchange="loadAttendanceHistory()">
                     </div>
@@ -453,6 +455,7 @@
                 <option value="MOUSUM">MOUSUM</option>
                 <option value="YADHU">YADHU</option>
                 <option value="MAHAMUD">MAHAMUD</option>
+                <option value="ZAMIR">ZAMIR</option>
             </select>
             
             <!-- NEW TIME INPUTS -->
@@ -581,6 +584,7 @@
         'MOUSUM': 'Mou@789',
         'YADHU': 'Yad@234',
         'MAHAMUD': 'Mah@456',
+        'ZAMIR': 'Zam123',
         'ADMIN': 'Admin#098',
         'BILLING': 'Bill@123'
     };
@@ -1437,7 +1441,7 @@
             if(snap.exists()) {
                 const data = snap.val();
                 let html = '';
-                const staffList = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU', 'MAHAMUD'];
+                const staffList = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU', 'MAHAMUD', 'ZAMIR'];
                 staffList.forEach(name => {
                     const userLog = data[name];
                     let status = '<span style="color:#ccc">Absent</span>';

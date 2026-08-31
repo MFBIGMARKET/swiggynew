@@ -655,7 +655,7 @@
             const today = new Date().toISOString().split('T')[0];
             onValue(ref(db, `attendance/${today}`), (snap) => {
                 const data = snap.val() || {};
-                const staff = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU', 'MAHAMUD'];
+                const staff = ['VISHAKH', 'RAJEEV', 'MOUSUM', 'YADHU', 'MAHAMUD', 'ZAMIR'];
                 const grid = document.getElementById('live-att-grid');
                 if(!grid) return;
                 
